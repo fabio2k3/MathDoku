@@ -1,0 +1,22 @@
+cabal-version:       2.2
+name:                MathDoku
+version:             0.1.0.0
+synopsis:            Sudoku game in Haskell
+description:         Sudoku game with UI using Gloss
+license:             MIT
+author:              Fabio Alonso
+maintainer:          your-email@example.com
+category:            Game
+build-type:          Simple
+
+executable MathDoku
+  main-is:             Main.hs
+  hs-source-dirs:      src
+  ghc-options:         -Wall -O2
+  build-depends:       base >=4.15 && <5,
+                       containers,
+                       gloss,
+                       random
+  other-modules:       Core, Solve, Generator, Hints, UI
+  default-language:    Haskell2010
+
