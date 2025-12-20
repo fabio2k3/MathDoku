@@ -9,14 +9,41 @@ maintainer:          your-email@example.com
 category:            Game
 build-type:          Simple
 
+-------------------------------------------------
+-- Ejecutable principal (Sudoku normal)
+-------------------------------------------------
 executable MathDoku
   main-is:             Main.hs
   hs-source-dirs:      src
   ghc-options:         -Wall -O2
-  build-depends:       base >=4.15 && <5,
-                       containers,
-                       gloss,
-                       random
-  other-modules:       Core, Solve, Generator, Hints, UI
+  build-depends:
+      base >=4.15 && <5
+    , containers
+    , gloss
+    , random
+  other-modules:
+      Core
+      Solve
+      Generator
+      UI
   default-language:    Haskell2010
 
+-------------------------------------------------
+-- Ejecutable de pistas (Hints UI)
+-------------------------------------------------
+executable MathDoku-Hints
+  main-is:             MainHints.hs
+  hs-source-dirs:      src
+  ghc-options:         -Wall -O2
+  build-depends:
+      base >=4.15 && <5
+    , containers
+    , gloss
+    , random
+  other-modules:
+      Core
+      Hints
+      UIHints
+      Solve
+      Generator
+  default-language:    Haskell2010
