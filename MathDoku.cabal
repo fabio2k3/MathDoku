@@ -75,6 +75,10 @@ library
     -- Base language which the package is written in.
     default-language: Haskell2010
 
+    build-depends:       base >= 4.7 && < 5
+                   , random
+                   , gloss
+
 executable MathDoku
     -- Import common warning flags.
     import:           warnings
