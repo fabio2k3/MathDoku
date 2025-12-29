@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE RankNTypes #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- | Handles timing of animation.</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--      The main point is that we want to restrict the framerate to something</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--      sensible, instead of just displaying at the machines maximum possible</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--      rate and soaking up 100% cpu.</span><span>
+</span><span id="line-8"></span><span class="hs-comment">--</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--      We also keep track of the elapsed time since the start of the program,</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--      so we can pass this to the user's animation function.</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Animate.Timing</span><span>
+</span><span id="line-13"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateBegin"><span class="hs-identifier">animateBegin</span></a></span><span>
+</span><span id="line-14"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateEnd"><span class="hs-identifier">animateEnd</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Backend</span></a></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Animate.State</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.IORef</span></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | Handles animation timing details.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--      Call this function at the start of each frame.</span><span>
+</span><span id="line-24"></span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateBegin"><span class="hs-identifier hs-type">animateBegin</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#State"><span class="hs-identifier hs-type">State</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#DisplayCallback"><span class="hs-identifier hs-type">DisplayCallback</span></a></span><span>
+</span><span id="line-25"></span><span id="animateBegin"><span class="annot"><span class="annottext">animateBegin :: IORef State -&gt; DisplayCallback
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateBegin"><span class="hs-identifier hs-var hs-var">animateBegin</span></a></span></span><span> </span><span id="local-6989586621679106091"><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span></span><span> </span><span id="local-6989586621679106092"><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106092"><span class="hs-identifier hs-var">backendRef</span></a></span></span><span>
+</span><span id="line-26"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-comment">-- write the current time into the display state</span><span>
+</span><span id="line-28"></span><span>        </span><span id="local-6989586621679106093"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106093"><span class="hs-identifier hs-var">displayTime</span></a></span></span><span>             </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO Double
+forall a. Backend a =&gt; IORef a -&gt; IO Double
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#elapsedTime"><span class="hs-identifier hs-var">elapsedTime</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106092"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-29"></span><span>        </span><span id="local-6989586621679106095"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106095"><span class="hs-identifier hs-var">displayTimeLast</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Double) -&gt; IO Double
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Double
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateDisplayTime"><span class="hs-identifier hs-var">stateDisplayTime</span></a></span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679106099"><span class="annot"><span class="annottext">displayTimeElapsed :: Double
+</span><a href="#local-6989586621679106099"><span class="hs-identifier hs-var hs-var">displayTimeElapsed</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106093"><span class="hs-identifier hs-var">displayTime</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106095"><span class="hs-identifier hs-var">displayTimeLast</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span>        </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; State) -&gt; IO ()
+forall a. IORef a -&gt; (a -&gt; a) -&gt; IO ()
+</span><span class="hs-identifier hs-var">modifyIORef'</span></span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">((State -&gt; State) -&gt; IO ()) -&gt; (State -&gt; State) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679106101"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106101"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106101"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-33"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateDisplayTime"><span class="hs-identifier hs-var">stateDisplayTime</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106093"><span class="hs-identifier hs-type">displayTime</span></a></span><span>
+</span><span id="line-34"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateDisplayTimeLast"><span class="hs-identifier hs-var">stateDisplayTimeLast</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106095"><span class="hs-identifier hs-type">displayTimeLast</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-comment">-- increment the animation time</span><span>
+</span><span id="line-37"></span><span>        </span><span id="local-6989586621679106103"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106103"><span class="hs-identifier hs-var">animate</span></a></span></span><span>        </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Bool) -&gt; IO Bool
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Bool
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimate"><span class="hs-identifier hs-var">stateAnimate</span></a></span><span>
+</span><span id="line-38"></span><span>        </span><span id="local-6989586621679106105"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679106105"><span class="hs-identifier hs-var">animateCount</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Integer) -&gt; IO Integer
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Integer
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateCount"><span class="hs-identifier hs-var">stateAnimateCount</span></a></span><span>
+</span><span id="line-39"></span><span>        </span><span id="local-6989586621679106107"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106107"><span class="hs-identifier hs-var">animateTime</span></a></span></span><span>    </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Double) -&gt; IO Double
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Double
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateTime"><span class="hs-identifier hs-var">stateAnimateTime</span></a></span><span>
+</span><span id="line-40"></span><span>        </span><span id="local-6989586621679106109"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106109"><span class="hs-identifier hs-var">animateStart</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Bool) -&gt; IO Bool
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Bool
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateStart"><span class="hs-identifier hs-var">stateAnimateStart</span></a></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">{-      when (animateCount `mod` 5 == 0)
+         $  putStr  $  &quot;  displayTime        = &quot; ++ show displayTime                ++ &quot;\n&quot;
+                    ++ &quot;  displayTimeLast    = &quot; ++ show displayTimeLast            ++ &quot;\n&quot;
+                    ++ &quot;  displayTimeElapsed = &quot; ++ show displayTimeElapsed         ++ &quot;\n&quot;
+                    ++ &quot;  fps                = &quot; ++ show (truncate $ 1 / displayTimeElapsed)   ++ &quot;\n&quot;
+-}</span><span>
+</span><span id="line-48"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106103"><span class="hs-identifier hs-var">animate</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106109"><span class="hs-identifier hs-var">animateStart</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; State) -&gt; IO ()
+forall a. IORef a -&gt; (a -&gt; a) -&gt; IO ()
+</span><span class="hs-identifier hs-var">modifyIORef'</span></span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">((State -&gt; State) -&gt; IO ()) -&gt; (State -&gt; State) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679106114"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106114"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106114"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-50"></span><span>               </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateTime"><span class="hs-identifier hs-var">stateAnimateTime</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106107"><span class="hs-identifier hs-type">animateTime</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><a href="#local-6989586621679106099"><span class="hs-identifier hs-type">displayTimeElapsed</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106103"><span class="hs-identifier hs-var">animate</span></a></span><span>
+</span><span id="line-53"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; State) -&gt; IO ()
+forall a. IORef a -&gt; (a -&gt; a) -&gt; IO ()
+</span><span class="hs-identifier hs-var">modifyIORef'</span></span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106091"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">((State -&gt; State) -&gt; IO ()) -&gt; (State -&gt; State) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679106116"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106116"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106116"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-54"></span><span>               </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateCount"><span class="hs-identifier hs-var">stateAnimateCount</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106105"><span class="hs-identifier hs-type">animateCount</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span>
+</span><span id="line-55"></span><span>               </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateAnimateStart"><span class="hs-identifier hs-var">stateAnimateStart</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">False</span></span><span>  </span><span class="hs-special">}</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | Handles animation timing details.</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--      Call this function at the end of each frame.</span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateEnd"><span class="hs-identifier hs-type">animateEnd</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#State"><span class="hs-identifier hs-type">State</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#DisplayCallback"><span class="hs-identifier hs-type">DisplayCallback</span></a></span><span>
+</span><span id="line-62"></span><span id="animateEnd"><span class="annot"><span class="annottext">animateEnd :: IORef State -&gt; DisplayCallback
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#animateEnd"><span class="hs-identifier hs-var hs-var">animateEnd</span></a></span></span><span> </span><span id="local-6989586621679106130"><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106130"><span class="hs-identifier hs-var">stateRef</span></a></span></span><span> </span><span id="local-6989586621679106131"><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106131"><span class="hs-identifier hs-var">backendRef</span></a></span></span><span>
+</span><span id="line-63"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-64"></span><span>        </span><span class="hs-comment">-- timing gate, limits the maximum frame frequency (FPS)</span><span>
+</span><span id="line-65"></span><span>        </span><span id="local-6989586621679106132"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106132"><span class="hs-identifier hs-var">timeClamp</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106130"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Double) -&gt; IO Double
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Double
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateDisplayTimeClamp"><span class="hs-identifier hs-var">stateDisplayTimeClamp</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span>        </span><span class="hs-comment">-- the start of this gate</span><span>
+</span><span id="line-68"></span><span>        </span><span id="local-6989586621679106134"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106134"><span class="hs-identifier hs-var">gateTimeStart</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO Double
+forall a. Backend a =&gt; IORef a -&gt; IO Double
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#elapsedTime"><span class="hs-identifier hs-var">elapsedTime</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106131"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span>        </span><span class="hs-comment">-- end of the previous gate</span><span>
+</span><span id="line-71"></span><span>        </span><span id="local-6989586621679106135"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106135"><span class="hs-identifier hs-var">gateTimeEnd</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106130"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; Double) -&gt; IO Double
+forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-operator hs-var">`getsIORef`</span></a></span><span> </span><span class="annot"><span class="annottext">State -&gt; Double
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateGateTimeEnd"><span class="hs-identifier hs-var">stateGateTimeEnd</span></a></span><span>
+</span><span id="line-72"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679106138"><span class="annot"><span class="annottext">gateTimeElapsed :: Double
+</span><a href="#local-6989586621679106138"><span class="hs-identifier hs-var hs-var">gateTimeElapsed</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106134"><span class="hs-identifier hs-var">gateTimeStart</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106135"><span class="hs-identifier hs-var">gateTimeEnd</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106138"><span class="hs-identifier hs-var">gateTimeElapsed</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106132"><span class="hs-identifier hs-var">timeClamp</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>   </span><span class="annot"><span class="annottext">IORef a -&gt; Double -&gt; IO ()
+forall a. Backend a =&gt; IORef a -&gt; Double -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#sleep"><span class="hs-identifier hs-var">sleep</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106131"><span class="hs-identifier hs-var">backendRef</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106132"><span class="hs-identifier hs-var">timeClamp</span></a></span><span> </span><span class="annot"><span class="annottext">Double -&gt; Double -&gt; Double
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106138"><span class="hs-identifier hs-var">gateTimeElapsed</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span>        </span><span id="local-6989586621679106141"><span class="annot"><span class="annottext">Double
+</span><a href="#local-6989586621679106141"><span class="hs-identifier hs-var">gateTimeFinal</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO Double
+forall a. Backend a =&gt; IORef a -&gt; IO Double
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#elapsedTime"><span class="hs-identifier hs-var">elapsedTime</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106131"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span>        </span><span class="annot"><span class="annottext">IORef State -&gt; (State -&gt; State) -&gt; IO ()
+forall a. IORef a -&gt; (a -&gt; a) -&gt; IO ()
+</span><span class="hs-identifier hs-var">modifyIORef'</span></span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679106130"><span class="hs-identifier hs-var">stateRef</span></a></span><span> </span><span class="annot"><span class="annottext">((State -&gt; State) -&gt; IO ()) -&gt; (State -&gt; State) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679106142"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106142"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679106142"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-80"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateGateTimeEnd"><span class="hs-identifier hs-var">stateGateTimeEnd</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106141"><span class="hs-identifier hs-type">gateTimeFinal</span></a></span><span>
+</span><span id="line-81"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.State.html#stateGateTimeElapsed"><span class="hs-identifier hs-var">stateGateTimeElapsed</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679106138"><span class="hs-identifier hs-type">gateTimeElapsed</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span id="local-6989586621679106053"><span id="local-6989586621679106054"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-identifier hs-type">getsIORef</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679106053"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679106053"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679106054"><span class="hs-identifier hs-type">r</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679106054"><span class="hs-identifier hs-type">r</span></a></span></span></span><span>
+</span><span id="line-85"></span><span id="getsIORef"><span class="annot"><span class="annottext">getsIORef :: forall a r. IORef a -&gt; (a -&gt; r) -&gt; IO r
+</span><a href="Graphics.Gloss.Internals.Interface.Animate.Timing.html#getsIORef"><span class="hs-identifier hs-var hs-var">getsIORef</span></a></span></span><span> </span><span id="local-6989586621679106145"><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106145"><span class="hs-identifier hs-var">ref</span></a></span></span><span> </span><span id="local-6989586621679106146"><span class="annot"><span class="annottext">a -&gt; r
+</span><a href="#local-6989586621679106146"><span class="hs-identifier hs-var">fun</span></a></span></span><span>
+</span><span id="line-86"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; r) -&gt; IO a -&gt; IO r
+forall (m :: * -&gt; *) a1 r. Monad m =&gt; (a1 -&gt; r) -&gt; m a1 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; r
+</span><a href="#local-6989586621679106146"><span class="hs-identifier hs-var">fun</span></a></span><span> </span><span class="annot"><span class="annottext">(IO a -&gt; IO r) -&gt; IO a -&gt; IO r
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO a
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679106145"><span class="hs-identifier hs-var">ref</span></a></span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span></pre></body></html>

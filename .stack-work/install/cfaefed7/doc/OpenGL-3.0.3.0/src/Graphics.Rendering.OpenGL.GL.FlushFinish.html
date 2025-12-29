@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.FlushFinish</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 2.3.2 (Flush and Finish) of the OpenGL 4.4</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FlushFinish</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#flush"><span class="hs-identifier">flush</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#finish"><span class="hs-identifier">finish</span></a></span><span>      </span><span>
+</span><span id="line-18"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- | Different GL implementations buffer commands in several different</span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- locations, including network buffers and the graphics accelerator itself.</span><span>
+</span><span id="line-26"></span><span class="hs-comment">-- 'flush' empties all of these buffers, causing all issued commands to be</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- executed as quickly as they are accepted by the actual rendering engine.</span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- Though this execution may not be completed in any particular time period, it</span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- does complete in finite time.</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- Because any GL program might be executed over a network, or on an accelerator</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- that buffers commands, all programs should call 'flush' whenever they count</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- on having all of their previously issued commands completed. For example,</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- call 'flush' before waiting for user input that depends on the generated</span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- image.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- Note that 'flush' can return at any time. It does not wait until the</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- execution of all previously issued GL commands is complete.</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#flush"><span class="hs-identifier hs-type">flush</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span id="flush"><span class="annot"><span class="annottext">flush :: IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#flush"><span class="hs-identifier hs-var hs-var">flush</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glFlush</span></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- | 'finish' does not return until the effects of all previously called GL</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- commands are complete. Such effects include all changes to GL state, all</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- changes to connection state, and all changes to the frame buffer contents.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- Note that 'finish' requires a round trip to the server.</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#finish"><span class="hs-identifier hs-type">finish</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span id="finish"><span class="annot"><span class="annottext">finish :: IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.FlushFinish.html#finish"><span class="hs-identifier hs-var hs-var">finish</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glFinish</span></span><span>
+</span><span id="line-51"></span></pre></body></html>

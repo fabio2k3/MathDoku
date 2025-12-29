@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Shaders.Limits</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2006-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module contains functions related to shader limits.</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Shaders.Limits</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-16"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexTextureImageUnits"><span class="hs-identifier">maxVertexTextureImageUnits</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureImageUnits"><span class="hs-identifier">maxTextureImageUnits</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxCombinedTextureImageUnits"><span class="hs-identifier">maxCombinedTextureImageUnits</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureCoords"><span class="hs-identifier">maxTextureCoords</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexUniformComponents"><span class="hs-identifier">maxVertexUniformComponents</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxFragmentUniformComponents"><span class="hs-identifier">maxFragmentUniformComponents</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexAttribs"><span class="hs-identifier">maxVertexAttribs</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVaryingFloats"><span class="hs-identifier">maxVaryingFloats</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- | Contains the number of hardware units that can be used to access texture</span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- maps from the vertex processor. The minimum legal value is 0.</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexTextureImageUnits"><span class="hs-identifier hs-type">maxVertexTextureImageUnits</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-31"></span><span id="maxVertexTextureImageUnits"><span class="annot"><span class="annottext">maxVertexTextureImageUnits :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexTextureImageUnits"><span class="hs-identifier hs-var hs-var">maxVertexTextureImageUnits</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxVertexTextureImageUnits"><span class="hs-identifier hs-var">GetMaxVertexTextureImageUnits</span></a></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- | Contains the total number of hardware units that can be used to access</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- texture maps from the fragment processor. The minimum legal value is 2.</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureImageUnits"><span class="hs-identifier hs-type">maxTextureImageUnits</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-37"></span><span id="maxTextureImageUnits"><span class="annot"><span class="annottext">maxTextureImageUnits :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureImageUnits"><span class="hs-identifier hs-var hs-var">maxTextureImageUnits</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxTextureImageUnits"><span class="hs-identifier hs-var">GetMaxTextureImageUnits</span></a></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- | Contains the total number of hardware units that can be used to access</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- texture maps from the vertex processor and the fragment processor combined.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- Note: If the vertex shader and the fragment processing stage access the same</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- texture image unit, then that counts as using two texture image units. The</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- minimum legal value is 2.</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxCombinedTextureImageUnits"><span class="hs-identifier hs-type">maxCombinedTextureImageUnits</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-46"></span><span id="maxCombinedTextureImageUnits"><span class="annot"><span class="annottext">maxCombinedTextureImageUnits :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxCombinedTextureImageUnits"><span class="hs-identifier hs-var hs-var">maxCombinedTextureImageUnits</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxCombinedTextureImageUnits"><span class="hs-identifier hs-var">GetMaxCombinedTextureImageUnits</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Contains the number of texture coordinate sets that are available. The</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- minimum legal value is 2.</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureCoords"><span class="hs-identifier hs-type">maxTextureCoords</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-52"></span><span id="maxTextureCoords"><span class="annot"><span class="annottext">maxTextureCoords :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxTextureCoords"><span class="hs-identifier hs-var hs-var">maxTextureCoords</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxTextureCoords"><span class="hs-identifier hs-var">GetMaxTextureCoords</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Contains the number of individual components (i.e., floating-point, integer</span><span>
+</span><span id="line-55"></span><span class="hs-comment">-- or boolean values) that are available for vertex shader uniform variables.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- The minimum legal value is 512.</span><span>
+</span><span id="line-57"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexUniformComponents"><span class="hs-identifier hs-type">maxVertexUniformComponents</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-58"></span><span id="maxVertexUniformComponents"><span class="annot"><span class="annottext">maxVertexUniformComponents :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexUniformComponents"><span class="hs-identifier hs-var hs-var">maxVertexUniformComponents</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxVertexUniformComponents"><span class="hs-identifier hs-var">GetMaxVertexUniformComponents</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Contains the number of individual components (i.e., floating-point, integer</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- or boolean values) that are available for fragment shader uniform variables.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- The minimum legal value is 64.</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxFragmentUniformComponents"><span class="hs-identifier hs-type">maxFragmentUniformComponents</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-65"></span><span id="maxFragmentUniformComponents"><span class="annot"><span class="annottext">maxFragmentUniformComponents :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxFragmentUniformComponents"><span class="hs-identifier hs-var hs-var">maxFragmentUniformComponents</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxFragmentUniformComponents"><span class="hs-identifier hs-var">GetMaxFragmentUniformComponents</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- | Contains the number of active vertex attributes that are available. The</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- minimum legal value is 16.</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexAttribs"><span class="hs-identifier hs-type">maxVertexAttribs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-71"></span><span id="maxVertexAttribs"><span class="annot"><span class="annottext">maxVertexAttribs :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVertexAttribs"><span class="hs-identifier hs-var hs-var">maxVertexAttribs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxVertexAttribs"><span class="hs-identifier hs-var">GetMaxVertexAttribs</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- | Contains the number of individual floating-point values available for</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- varying variables. The minimum legal value is 32.</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVaryingFloats"><span class="hs-identifier hs-type">maxVaryingFloats</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-77"></span><span id="maxVaryingFloats"><span class="annot"><span class="annottext">maxVaryingFloats :: GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#maxVaryingFloats"><span class="hs-identifier hs-var hs-var">maxVaryingFloats</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var">getLimit</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxVaryingFloats"><span class="hs-identifier hs-var">GetMaxVaryingFloats</span></a></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-type">getLimit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1I"><span class="hs-identifier hs-type">PName1I</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-80"></span><span id="getLimit"><span class="annot"><span class="annottext">getLimit :: PName1I -&gt; GettableStateVar GLsizei
+</span><a href="Graphics.Rendering.OpenGL.GL.Shaders.Limits.html#getLimit"><span class="hs-identifier hs-var hs-var">getLimit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei -&gt; GettableStateVar GLsizei
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(GettableStateVar GLsizei -&gt; GettableStateVar GLsizei)
+-&gt; (PName1I -&gt; GettableStateVar GLsizei)
+-&gt; PName1I
+-&gt; GettableStateVar GLsizei
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(GLsizei -&gt; GLsizei) -&gt; PName1I -&gt; GettableStateVar GLsizei
+forall p a. GetPName1I p =&gt; (GLsizei -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLsizei -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getSizei1"><span class="hs-identifier hs-var">getSizei1</span></a></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; GLsizei
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-81"></span></pre></body></html>

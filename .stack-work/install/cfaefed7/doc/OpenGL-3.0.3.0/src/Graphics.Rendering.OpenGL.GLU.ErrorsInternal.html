@@ -1,0 +1,860 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_GHC -fno-cse #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GLU.ErrorsInternal</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- This is a purely internal module corresponding to some parts of section 2.5</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- (GL Errors) of the OpenGL 2.1 specs and chapter 8 (Errors) of the GLU specs.</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GLU.ErrorsInternal</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier">Error</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#ErrorCategory"><span class="hs-identifier">ErrorCategory</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrors"><span class="hs-identifier">getErrors</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier">recordErrorCode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidEnum"><span class="hs-identifier">recordInvalidEnum</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidValue"><span class="hs-identifier">recordInvalidValue</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordOutOfMemory"><span class="hs-identifier">recordOutOfMemory</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.IORef</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">IORef</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">newIORef</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">readIORef</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">writeIORef</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GLU</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.IO.Unsafe</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">unsafePerformIO</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- | GL\/GLU errors consist of a general error category and a description of</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- what went wrong.</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">data</span><span> </span><span id="Error"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Error"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#ErrorCategory"><span class="hs-identifier hs-type">ErrorCategory</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-35"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679275944"><span id="local-6989586621679275951"><span class="annot"><span class="annottext">Error -&gt; Error -&gt; Bool
+(Error -&gt; Error -&gt; Bool) -&gt; (Error -&gt; Error -&gt; Bool) -&gt; Eq Error
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Error -&gt; Error -&gt; Bool
+== :: Error -&gt; Error -&gt; Bool
+$c/= :: Error -&gt; Error -&gt; Bool
+/= :: Error -&gt; Error -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679275959"><span id="local-6989586621679275966"><span id="local-6989586621679275971"><span id="local-6989586621679275975"><span id="local-6989586621679275978"><span id="local-6989586621679275981"><span id="local-6989586621679275984"><span class="annot"><span class="annottext">Eq Error
+Eq Error =&gt;
+(Error -&gt; Error -&gt; Ordering)
+-&gt; (Error -&gt; Error -&gt; Bool)
+-&gt; (Error -&gt; Error -&gt; Bool)
+-&gt; (Error -&gt; Error -&gt; Bool)
+-&gt; (Error -&gt; Error -&gt; Bool)
+-&gt; (Error -&gt; Error -&gt; Error)
+-&gt; (Error -&gt; Error -&gt; Error)
+-&gt; Ord Error
+Error -&gt; Error -&gt; Bool
+Error -&gt; Error -&gt; Ordering
+Error -&gt; Error -&gt; Error
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Error -&gt; Error -&gt; Ordering
+compare :: Error -&gt; Error -&gt; Ordering
+$c&lt; :: Error -&gt; Error -&gt; Bool
+&lt; :: Error -&gt; Error -&gt; Bool
+$c&lt;= :: Error -&gt; Error -&gt; Bool
+&lt;= :: Error -&gt; Error -&gt; Bool
+$c&gt; :: Error -&gt; Error -&gt; Bool
+&gt; :: Error -&gt; Error -&gt; Bool
+$c&gt;= :: Error -&gt; Error -&gt; Bool
+&gt;= :: Error -&gt; Error -&gt; Bool
+$cmax :: Error -&gt; Error -&gt; Error
+max :: Error -&gt; Error -&gt; Error
+$cmin :: Error -&gt; Error -&gt; Error
+min :: Error -&gt; Error -&gt; Error
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679275989"><span id="local-6989586621679275998"><span id="local-6989586621679276002"><span class="annot"><span class="annottext">Int -&gt; Error -&gt; ShowS
+[Error] -&gt; ShowS
+Error -&gt; String
+(Int -&gt; Error -&gt; ShowS)
+-&gt; (Error -&gt; String) -&gt; ([Error] -&gt; ShowS) -&gt; Show Error
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Error -&gt; ShowS
+showsPrec :: Int -&gt; Error -&gt; ShowS
+$cshow :: Error -&gt; String
+show :: Error -&gt; String
+$cshowList :: [Error] -&gt; ShowS
+showList :: [Error] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="annot"><span class="hs-comment">-- | General GL\/GLU error categories</span></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="ErrorCategory"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#ErrorCategory"><span class="hs-identifier hs-var">ErrorCategory</span></a></span></span><span>
+</span><span id="line-40"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span id="ContextLost"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#ContextLost"><span class="hs-identifier hs-var">ContextLost</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="InvalidEnum"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidEnum"><span class="hs-identifier hs-var">InvalidEnum</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="InvalidValue"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidValue"><span class="hs-identifier hs-var">InvalidValue</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="InvalidOperation"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidOperation"><span class="hs-identifier hs-var">InvalidOperation</span></a></span></span><span>
+</span><span id="line-44"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="InvalidFramebufferOperation"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidFramebufferOperation"><span class="hs-identifier hs-var">InvalidFramebufferOperation</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="OutOfMemory"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#OutOfMemory"><span class="hs-identifier hs-var">OutOfMemory</span></a></span></span><span>
+</span><span id="line-46"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="StackOverflow"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#StackOverflow"><span class="hs-identifier hs-var">StackOverflow</span></a></span></span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="StackUnderflow"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#StackUnderflow"><span class="hs-identifier hs-var">StackUnderflow</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TableTooLarge"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TableTooLarge"><span class="hs-identifier hs-var">TableTooLarge</span></a></span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TesselatorError"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="NURBSError"><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679276018"><span id="local-6989586621679276020"><span class="annot"><span class="annottext">ErrorCategory -&gt; ErrorCategory -&gt; Bool
+(ErrorCategory -&gt; ErrorCategory -&gt; Bool)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; Bool) -&gt; Eq ErrorCategory
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+== :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+$c/= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+/= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679276025"><span id="local-6989586621679276027"><span id="local-6989586621679276029"><span id="local-6989586621679276032"><span id="local-6989586621679276035"><span id="local-6989586621679276038"><span id="local-6989586621679276041"><span class="annot"><span class="annottext">Eq ErrorCategory
+Eq ErrorCategory =&gt;
+(ErrorCategory -&gt; ErrorCategory -&gt; Ordering)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; Bool)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; Bool)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; Bool)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; Bool)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory)
+-&gt; (ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory)
+-&gt; Ord ErrorCategory
+ErrorCategory -&gt; ErrorCategory -&gt; Bool
+ErrorCategory -&gt; ErrorCategory -&gt; Ordering
+ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: ErrorCategory -&gt; ErrorCategory -&gt; Ordering
+compare :: ErrorCategory -&gt; ErrorCategory -&gt; Ordering
+$c&lt; :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+&lt; :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+$c&lt;= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+&lt;= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+$c&gt; :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+&gt; :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+$c&gt;= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+&gt;= :: ErrorCategory -&gt; ErrorCategory -&gt; Bool
+$cmax :: ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory
+max :: ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory
+$cmin :: ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory
+min :: ErrorCategory -&gt; ErrorCategory -&gt; ErrorCategory
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679276044"><span id="local-6989586621679276046"><span id="local-6989586621679276049"><span class="annot"><span class="annottext">Int -&gt; ErrorCategory -&gt; ShowS
+[ErrorCategory] -&gt; ShowS
+ErrorCategory -&gt; String
+(Int -&gt; ErrorCategory -&gt; ShowS)
+-&gt; (ErrorCategory -&gt; String)
+-&gt; ([ErrorCategory] -&gt; ShowS)
+-&gt; Show ErrorCategory
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ErrorCategory -&gt; ShowS
+showsPrec :: Int -&gt; ErrorCategory -&gt; ShowS
+$cshow :: ErrorCategory -&gt; String
+show :: ErrorCategory -&gt; String
+$cshowList :: [ErrorCategory] -&gt; ShowS
+showList :: [ErrorCategory] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#makeError"><span class="hs-identifier hs-type">makeError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span>
+</span><span id="line-54"></span><span id="makeError"><span class="annot"><span class="annottext">makeError :: GLenum -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#makeError"><span class="hs-identifier hs-var hs-var">makeError</span></a></span></span><span> </span><span id="local-6989586621679276052"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-comment">-- GL errors</span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_CONTEXT_LOST</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#ContextLost"><span class="hs-identifier hs-var">ContextLost</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;context lost&quot;</span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_ENUM</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-59"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidEnum"><span class="hs-identifier hs-var">InvalidEnum</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid enumerant&quot;</span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_VALUE</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-61"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidValue"><span class="hs-identifier hs-var">InvalidValue</span></a></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid value&quot;</span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_OPERATION</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidOperation"><span class="hs-identifier hs-var">InvalidOperation</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid operation&quot;</span></span><span>
+</span><span id="line-64"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_FRAMEBUFFER_OPERATION</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidFramebufferOperation"><span class="hs-identifier hs-var">InvalidFramebufferOperation</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid framebuffer operation&quot;</span></span><span>
+</span><span id="line-66"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_OUT_OF_MEMORY</span></span><span>
+</span><span id="line-67"></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#OutOfMemory"><span class="hs-identifier hs-var">OutOfMemory</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;out of memory&quot;</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_STACK_OVERFLOW</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-69"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#StackOverflow"><span class="hs-identifier hs-var">StackOverflow</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;stack overflow&quot;</span></span><span>
+</span><span id="line-70"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_STACK_UNDERFLOW</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-71"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#StackUnderflow"><span class="hs-identifier hs-var">StackUnderflow</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;stack underflow&quot;</span></span><span>
+</span><span id="line-72"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TABLE_TOO_LARGE</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TableTooLarge"><span class="hs-identifier hs-var">TableTooLarge</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;table too large&quot;</span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="hs-comment">-- GLU errors</span><span>
+</span><span id="line-75"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_INVALID_ENUM</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-76"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidEnum"><span class="hs-identifier hs-var">InvalidEnum</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid enumerant&quot;</span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_INVALID_VALUE</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-78"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidValue"><span class="hs-identifier hs-var">InvalidValue</span></a></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid value&quot;</span></span><span>
+</span><span id="line-79"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_INVALID_OPERATION</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-80"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#InvalidOperation"><span class="hs-identifier hs-var">InvalidOperation</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid operation&quot;</span></span><span>
+</span><span id="line-81"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_OUT_OF_MEMORY</span></span><span>
+</span><span id="line-82"></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#OutOfMemory"><span class="hs-identifier hs-var">OutOfMemory</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;out of memory&quot;</span></span><span>
+</span><span id="line-83"></span><span>   </span><span class="hs-comment">-- GLU tesselator error</span><span>
+</span><span id="line-84"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR1</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-85"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluTessBeginPolygon() must precede a gluTessEndPolygon()&quot;</span></span><span>
+</span><span id="line-86"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR2</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-87"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluTessBeginContour() must precede a gluTessEndContour()&quot;</span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR3</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-89"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluTessEndPolygon() must follow a gluTessBeginPolygon()&quot;</span></span><span>
+</span><span id="line-90"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR4</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluTessEndContour() must follow a gluTessBeginContour()&quot;</span></span><span>
+</span><span id="line-92"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR5</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;a coordinate is too large&quot;</span></span><span>
+</span><span id="line-94"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR6</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-95"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;need combine callback&quot;</span></span><span>
+</span><span id="line-96"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR7</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-97"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;tesselation error 7&quot;</span></span><span>
+</span><span id="line-98"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_TESS_ERROR8</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-99"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#TesselatorError"><span class="hs-identifier hs-var">TesselatorError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;tesselation error 8&quot;</span></span><span>
+</span><span id="line-100"></span><span>   </span><span class="hs-comment">-- GLU NUBRS errors</span><span>
+</span><span id="line-101"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR1</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-102"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;spline order un-supported&quot;</span></span><span>
+</span><span id="line-103"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR2</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-104"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;too few knots&quot;</span></span><span>
+</span><span id="line-105"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR3</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-106"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;valid knot range is empty&quot;</span></span><span>
+</span><span id="line-107"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR4</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-108"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;decreasing knot sequence knot&quot;</span></span><span>
+</span><span id="line-109"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR5</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-110"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;knot multiplicity greater than order of spline&quot;</span></span><span>
+</span><span id="line-111"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR6</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-112"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluEndCurve() must follow gluBeginCurve()&quot;</span></span><span>
+</span><span id="line-113"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR7</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-114"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluBeginCurve() must precede gluEndCurve()&quot;</span></span><span>
+</span><span id="line-115"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR8</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-116"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;missing or extra geometric data&quot;</span></span><span>
+</span><span id="line-117"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR9</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-118"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;can't draw piecewise linear trimming curves&quot;</span></span><span>
+</span><span id="line-119"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR10</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-120"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;missing or extra domain data&quot;</span></span><span>
+</span><span id="line-121"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR11</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-122"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;missing or extra domain data&quot;</span></span><span>
+</span><span id="line-123"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR12</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-124"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluEndTrim() must precede gluEndSurface()&quot;</span></span><span>
+</span><span id="line-125"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR13</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-126"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluBeginSurface() must precede gluEndSurface()&quot;</span></span><span>
+</span><span id="line-127"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR14</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-128"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;curve of improper type passed as trim curve&quot;</span></span><span>
+</span><span id="line-129"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR15</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluBeginSurface() must precede gluBeginTrim()&quot;</span></span><span>
+</span><span id="line-131"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR16</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-132"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluEndTrim() must follow gluBeginTrim()&quot;</span></span><span>
+</span><span id="line-133"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR17</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-134"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluBeginTrim() must precede gluEndTrim()&quot;</span></span><span>
+</span><span id="line-135"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR18</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-136"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid or missing trim curve&quot;</span></span><span>
+</span><span id="line-137"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR19</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-138"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluBeginTrim() must precede gluPwlCurve()&quot;</span></span><span>
+</span><span id="line-139"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR20</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-140"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;piecewise linear trimming curve referenced twice&quot;</span></span><span>
+</span><span id="line-141"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR21</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-142"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;piecewise linear trimming curve and nurbs curve mixed&quot;</span></span><span>
+</span><span id="line-143"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR22</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-144"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;improper usage of trim data type&quot;</span></span><span>
+</span><span id="line-145"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR23</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-146"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;nurbs curve referenced twice&quot;</span></span><span>
+</span><span id="line-147"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR24</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-148"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;nurbs curve and piecewise linear trimming curve mixed&quot;</span></span><span>
+</span><span id="line-149"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR25</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-150"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;nurbs surface referenced twice&quot;</span></span><span>
+</span><span id="line-151"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR26</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-152"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;invalid property&quot;</span></span><span>
+</span><span id="line-153"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR27</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-154"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;gluEndSurface() must follow gluBeginSurface()&quot;</span></span><span>
+</span><span id="line-155"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR28</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-156"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;intersecting or misoriented trim curves&quot;</span></span><span>
+</span><span id="line-157"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR29</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-158"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;intersecting trim curves&quot;</span></span><span>
+</span><span id="line-159"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR30</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-160"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;UNUSED&quot;</span></span><span>
+</span><span id="line-161"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR31</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-162"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unconnected trim curves&quot;</span></span><span>
+</span><span id="line-163"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR32</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-164"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unknown knot error&quot;</span></span><span>
+</span><span id="line-165"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR33</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-166"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;negative vertex count encountered&quot;</span></span><span>
+</span><span id="line-167"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR34</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-168"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;negative byte-stride encounteed&quot;</span></span><span>
+</span><span id="line-169"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR35</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-170"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unknown type descriptor&quot;</span></span><span>
+</span><span id="line-171"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR36</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-172"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;null control point reference&quot;</span></span><span>
+</span><span id="line-173"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276052"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GLU_NURBS_ERROR37</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-174"></span><span>       </span><span class="annot"><span class="annottext">ErrorCategory -&gt; String -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-var">Error</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorCategory
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#NURBSError"><span class="hs-identifier hs-var">NURBSError</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;duplicate point on piecewise linear trimming curve&quot;</span></span><span>
+</span><span id="line-175"></span><span>   </span><span class="hs-comment">-- Something went terribly wrong...</span><span>
+</span><span id="line-176"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Error
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;makeError&quot;</span></span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-179"></span><span>
+</span><span id="line-180"></span><span class="hs-comment">-- This seems to be a common Haskell hack nowadays: A plain old global variable</span><span>
+</span><span id="line-181"></span><span class="hs-comment">-- with an associated getter and mutator. Perhaps some language/library support</span><span>
+</span><span id="line-182"></span><span class="hs-comment">-- is needed?</span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span class="hs-pragma">{-# NOINLINE</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#theRecordedErrors"><span class="hs-pragma hs-type">theRecordedErrors</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-185"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#theRecordedErrors"><span class="hs-identifier hs-type">theRecordedErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-186"></span><span id="theRecordedErrors"><span class="annot"><span class="annottext">theRecordedErrors :: IORef ([GLenum], Bool)
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#theRecordedErrors"><span class="hs-identifier hs-var hs-var">theRecordedErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (IORef ([GLenum], Bool)) -&gt; IORef ([GLenum], Bool)
+forall a. IO a -&gt; a
+</span><span class="hs-identifier hs-var">unsafePerformIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">([GLenum], Bool) -&gt; IO (IORef ([GLenum], Bool))
+forall a. a -&gt; IO (IORef a)
+</span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getRecordedErrors"><span class="hs-identifier hs-type">getRecordedErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span>
+</span><span id="line-189"></span><span id="getRecordedErrors"><span class="annot"><span class="annottext">getRecordedErrors :: IO ([GLenum], Bool)
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getRecordedErrors"><span class="hs-identifier hs-var hs-var">getRecordedErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>  </span><span class="annot"><span class="annottext">IORef ([GLenum], Bool) -&gt; IO ([GLenum], Bool)
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef ([GLenum], Bool)
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#theRecordedErrors"><span class="hs-identifier hs-var">theRecordedErrors</span></a></span><span>
+</span><span id="line-190"></span><span>
+</span><span id="line-191"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#setRecordedErrors"><span class="hs-identifier hs-type">setRecordedErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-192"></span><span id="setRecordedErrors"><span class="annot"><span class="annottext">setRecordedErrors :: ([GLenum], Bool) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#setRecordedErrors"><span class="hs-identifier hs-var hs-var">setRecordedErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IORef ([GLenum], Bool) -&gt; ([GLenum], Bool) -&gt; IO ()
+forall a. IORef a -&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">writeIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef ([GLenum], Bool)
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#theRecordedErrors"><span class="hs-identifier hs-var">theRecordedErrors</span></a></span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-195"></span><span>
+</span><span id="line-196"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getGLErrors"><span class="hs-identifier hs-type">getGLErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span>
+</span><span id="line-197"></span><span id="getGLErrors"><span class="annot"><span class="annottext">getGLErrors :: IO [GLenum]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getGLErrors"><span class="hs-identifier hs-var hs-var">getGLErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; IO [GLenum]
+forall {m :: * -&gt; *}. MonadIO m =&gt; [GLenum] -&gt; m [GLenum]
+</span><a href="#local-6989586621679276116"><span class="hs-identifier hs-var">getGLErrorsAux</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-198"></span><span>   </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679276116"><span class="annot"><span class="annottext">getGLErrorsAux :: [GLenum] -&gt; m [GLenum]
+</span><a href="#local-6989586621679276116"><span class="hs-identifier hs-var hs-var">getGLErrorsAux</span></a></span></span><span> </span><span id="local-6989586621679276132"><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276132"><span class="hs-identifier hs-var">acc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-199"></span><span>            </span><span id="local-6989586621679276133"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276133"><span class="hs-identifier hs-var">errorCode</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m GLenum
+forall (m :: * -&gt; *). MonadIO m =&gt; m GLenum
+</span><span class="hs-identifier hs-var">glGetError</span></span><span>
+</span><span id="line-200"></span><span>            </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#isError"><span class="hs-identifier hs-var">isError</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276133"><span class="hs-identifier hs-var">errorCode</span></a></span><span>
+</span><span id="line-201"></span><span>               </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; m [GLenum]
+</span><a href="#local-6989586621679276116"><span class="hs-identifier hs-var">getGLErrorsAux</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276133"><span class="hs-identifier hs-var">errorCode</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; [GLenum] -&gt; [GLenum]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276132"><span class="hs-identifier hs-var">acc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-202"></span><span>               </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; m [GLenum]
+forall a. a -&gt; m a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">([GLenum] -&gt; m [GLenum]) -&gt; [GLenum] -&gt; m [GLenum]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; [GLenum]
+forall a. [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">reverse</span></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276132"><span class="hs-identifier hs-var">acc</span></a></span><span>
+</span><span id="line-203"></span><span>
+</span><span id="line-204"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#isError"><span class="hs-identifier hs-type">isError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-205"></span><span id="isError"><span class="annot"><span class="annottext">isError :: GLenum -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#isError"><span class="hs-identifier hs-var hs-var">isError</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_NO_ERROR</span></span><span class="hs-special">)</span><span>
+</span><span id="line-206"></span><span>
+</span><span id="line-207"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-208"></span><span>
+</span><span id="line-209"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrors"><span class="hs-identifier hs-type">getErrors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-210"></span><span id="getErrors"><span class="annot"><span class="annottext">getErrors :: IO [Error]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrors"><span class="hs-identifier hs-var hs-var">getErrors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; Error) -&gt; [GLenum] -&gt; [Error]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; Error
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#makeError"><span class="hs-identifier hs-var">makeError</span></a></span><span> </span><span class="annot"><span class="annottext">([GLenum] -&gt; [Error]) -&gt; IO [GLenum] -&gt; IO [Error]
+forall a b. (a -&gt; b) -&gt; IO a -&gt; IO b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">`fmap`</span></span><span> </span><span class="annot"><span class="annottext">([GLenum] -&gt; ([GLenum], Bool)) -&gt; IO [GLenum]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrorCodesAux"><span class="hs-identifier hs-var">getErrorCodesAux</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">([GLenum], Bool) -&gt; [GLenum] -&gt; ([GLenum], Bool)
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier hs-type">recordErrorCode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-213"></span><span id="recordErrorCode"><span class="annot"><span class="annottext">recordErrorCode :: GLenum -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier hs-var hs-var">recordErrorCode</span></a></span></span><span> </span><span id="local-6989586621679276141"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276141"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-214"></span><span>   </span><span class="hs-comment">-- We don't need the return value because this calls setRecordedErrors</span><span>
+</span><span id="line-215"></span><span>   </span><span class="annot"><span class="annottext">[GLenum]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">([GLenum] -&gt; ([GLenum], Bool)) -&gt; IO [GLenum]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrorCodesAux"><span class="hs-identifier hs-var">getErrorCodesAux</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679276142"><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276142"><span class="hs-identifier hs-var">es</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276142"><span class="hs-identifier hs-var">es</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679276141"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-keyword">else</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-216"></span><span>   </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-217"></span><span>
+</span><span id="line-218"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidEnum"><span class="hs-identifier hs-type">recordInvalidEnum</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-219"></span><span id="recordInvalidEnum"><span class="annot"><span class="annottext">recordInvalidEnum :: IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidEnum"><span class="hs-identifier hs-var hs-var">recordInvalidEnum</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier hs-var">recordErrorCode</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_ENUM</span></span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidValue"><span class="hs-identifier hs-type">recordInvalidValue</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-222"></span><span id="recordInvalidValue"><span class="annot"><span class="annottext">recordInvalidValue :: IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidValue"><span class="hs-identifier hs-var hs-var">recordInvalidValue</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier hs-var">recordErrorCode</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INVALID_VALUE</span></span><span>
+</span><span id="line-223"></span><span>
+</span><span id="line-224"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordOutOfMemory"><span class="hs-identifier hs-type">recordOutOfMemory</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-225"></span><span id="recordOutOfMemory"><span class="annot"><span class="annottext">recordOutOfMemory :: IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordOutOfMemory"><span class="hs-identifier hs-var hs-var">recordOutOfMemory</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordErrorCode"><span class="hs-identifier hs-var">recordErrorCode</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_OUT_OF_MEMORY</span></span><span>
+</span><span id="line-226"></span><span>
+</span><span id="line-227"></span><span class="hs-comment">-- ToDo: Make this thread-safe</span><span>
+</span><span id="line-228"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrorCodesAux"><span class="hs-identifier hs-type">getErrorCodesAux</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span class="hs-special">]</span><span>
+</span><span id="line-229"></span><span id="getErrorCodesAux"><span class="annot"><span class="annottext">getErrorCodesAux :: ([GLenum] -&gt; ([GLenum], Bool)) -&gt; IO [GLenum]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getErrorCodesAux"><span class="hs-identifier hs-var hs-var">getErrorCodesAux</span></a></span></span><span> </span><span id="local-6989586621679276144"><span class="annot"><span class="annottext">[GLenum] -&gt; ([GLenum], Bool)
+</span><a href="#local-6989586621679276144"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-230"></span><span>   </span><span class="hs-special">(</span><span id="local-6989586621679276145"><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276145"><span class="hs-identifier hs-var">recordedErrors</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679276146"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679276146"><span class="hs-identifier hs-var">useGLErrors</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO ([GLenum], Bool)
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getRecordedErrors"><span class="hs-identifier hs-var">getRecordedErrors</span></a></span><span>
+</span><span id="line-231"></span><span>   </span><span id="local-6989586621679276147"><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276147"><span class="hs-identifier hs-var">glErrors</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO [GLenum]
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#getGLErrors"><span class="hs-identifier hs-var">getGLErrors</span></a></span><span>
+</span><span id="line-232"></span><span>   </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679276148"><span class="annot"><span class="annottext">es :: [GLenum]
+</span><a href="#local-6989586621679276148"><span class="hs-identifier hs-var hs-var">es</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679276146"><span class="hs-identifier hs-var">useGLErrors</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276145"><span class="hs-identifier hs-var">recordedErrors</span></a></span><span> </span><span class="annot"><span class="annottext">[GLenum] -&gt; [GLenum] -&gt; [GLenum]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276147"><span class="hs-identifier hs-var">glErrors</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276145"><span class="hs-identifier hs-var">recordedErrors</span></a></span><span>
+</span><span id="line-233"></span><span>   </span><span class="annot"><span class="annottext">([GLenum], Bool) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#setRecordedErrors"><span class="hs-identifier hs-var">setRecordedErrors</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[GLenum] -&gt; ([GLenum], Bool)
+</span><a href="#local-6989586621679276144"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276148"><span class="hs-identifier hs-var">es</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-234"></span><span>   </span><span class="annot"><span class="annottext">[GLenum] -&gt; IO [GLenum]
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">[GLenum]
+</span><a href="#local-6989586621679276148"><span class="hs-identifier hs-var">es</span></a></span><span>
+</span><span id="line-235"></span></pre></body></html>

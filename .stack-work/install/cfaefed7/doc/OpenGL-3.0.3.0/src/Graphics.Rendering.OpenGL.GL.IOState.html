@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-3"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.IOState</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- This is a purely internal module for an IO monad with a pointer as an</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- additional state, basically a /StateT (Ptr s) IO a/.</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.IOState</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier">IOState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#getIOState"><span class="hs-identifier">getIOState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#peekIOState"><span class="hs-identifier">peekIOState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#evalIOState"><span class="hs-identifier">evalIOState</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#nTimes"><span class="hs-identifier">nTimes</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span class="hs-cpp">
+
+#if !MIN_VERSION_base(4,8,0)
+</span><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Control.Applicative</span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-identifier">Applicative</span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span class="hs-cpp">
+#endif
+</span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">ap</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">liftM</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">replicateM</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Ptr</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">plusPtr</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Storable</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Storable</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">sizeOf</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier">peek</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">newtype</span><span> </span><span id="IOState"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span></span><span> </span><span id="local-6989586621679267095"><span class="annot"><a href="#local-6989586621679267095"><span class="hs-identifier hs-type">s</span></a></span></span><span> </span><span id="local-6989586621679267096"><span class="annot"><a href="#local-6989586621679267096"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="IOState"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="runIOState"><span class="annot"><span class="annottext">forall s a. IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#runIOState"><span class="hs-identifier hs-var hs-var">runIOState</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679267095"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679267096"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679267095"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679267112"><span id="local-6989586621679267196"><span id="local-6989586621679267200"><span id="local-6989586621679267203"><span class="annot"><span class="hs-identifier hs-type">Applicative</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267112"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span></span></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>   </span><span id="local-6989586621679267208"><span class="annot"><span class="annottext">pure :: forall a. a -&gt; IOState s a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">pure</span></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; IOState s a
+forall a. a -&gt; IOState s a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span>
+</span><span id="line-35"></span><span>   </span><span id="local-6989586621679267210"><span class="annot"><span class="annottext">&lt;*&gt; :: forall a b. IOState s (a -&gt; b) -&gt; IOState s a -&gt; IOState s b
+</span><span class="hs-operator hs-var hs-var hs-var hs-var">(&lt;*&gt;)</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOState s (a -&gt; b) -&gt; IOState s a -&gt; IOState s b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m (a -&gt; b) -&gt; m a -&gt; m b
+</span><span class="hs-identifier hs-var">ap</span></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679267211"><span id="local-6989586621679267214"><span class="annot"><span class="hs-identifier hs-type">Functor</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267211"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-38"></span><span>   </span><span id="local-6989586621679267218"><span class="annot"><span class="annottext">fmap :: forall a b. (a -&gt; b) -&gt; IOState s a -&gt; IOState s b
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">fmap</span></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(a -&gt; b) -&gt; IOState s a -&gt; IOState s b
+forall (m :: * -&gt; *) a1 r. Monad m =&gt; (a1 -&gt; r) -&gt; m a1 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM</span></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679267113"><span id="local-6989586621679267223"><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267113"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-41"></span><span>   </span><span id="local-6989586621679267229"><span class="annot"><span class="annottext">return :: forall a. a -&gt; IOState s a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">return</span></span></span><span> </span><span id="local-6989586621679267230"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267230"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a)
+-&gt; (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679267231"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267231"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(a, Ptr s) -&gt; IO (a, Ptr s)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267230"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267231"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>   </span><span id="local-6989586621679267233"><span class="annot"><span class="annottext">IOState s a
+</span><a href="#local-6989586621679267233"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679267234"><span class="annot"><span class="annottext">&gt;&gt;= :: forall a b. IOState s a -&gt; (a -&gt; IOState s b) -&gt; IOState s b
+</span><span class="hs-operator hs-var hs-var hs-var hs-var">&gt;&gt;=</span></span></span><span> </span><span id="local-6989586621679267235"><span class="annot"><span class="annottext">a -&gt; IOState s b
+</span><a href="#local-6989586621679267235"><span class="hs-identifier hs-var">k</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO (b, Ptr s)) -&gt; IOState s b
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO (b, Ptr s)) -&gt; IOState s b)
+-&gt; (Ptr s -&gt; IO (b, Ptr s)) -&gt; IOState s b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679267236"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267236"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679267237"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267237"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679267238"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267238"><span class="hs-identifier hs-var">s'</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+forall s a. IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#runIOState"><span class="hs-identifier hs-var">runIOState</span></a></span><span> </span><span class="annot"><span class="annottext">IOState s a
+</span><a href="#local-6989586621679267233"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267236"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">IOState s b -&gt; Ptr s -&gt; IO (b, Ptr s)
+forall s a. IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#runIOState"><span class="hs-identifier hs-var">runIOState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; IOState s b
+</span><a href="#local-6989586621679267235"><span class="hs-identifier hs-var">k</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267237"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267238"><span class="hs-identifier hs-var">s'</span></a></span><span class="hs-cpp">
+#if MIN_VERSION_base(4,13,0)
+</span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679267148"><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267148"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span></span><span> </span><span class="hs-keyword">where</span><span class="hs-cpp">
+#endif
+</span><span>   </span><span id="local-6989586621679267246"><span class="annot"><span class="annottext">fail :: forall a. String -&gt; IOState s a
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">fail</span></span></span><span> </span><span id="local-6989586621679267247"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679267247"><span class="hs-identifier hs-var">str</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a)
+-&gt; (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="annot"><span class="annottext">Ptr s
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO (a, Ptr s)
+forall a. String -&gt; IO a
+forall (m :: * -&gt; *) a. MonadFail m =&gt; String -&gt; m a
+</span><span class="hs-identifier hs-var">fail</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679267247"><span class="hs-identifier hs-var">str</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span id="local-6989586621679267150"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#getIOState"><span class="hs-identifier hs-type">getIOState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267150"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679267150"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-49"></span><span id="getIOState"><span class="annot"><span class="annottext">getIOState :: forall s. IOState s (Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#getIOState"><span class="hs-identifier hs-var hs-var">getIOState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO (Ptr s, Ptr s)) -&gt; IOState s (Ptr s)
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO (Ptr s, Ptr s)) -&gt; IOState s (Ptr s))
+-&gt; (Ptr s -&gt; IO (Ptr s, Ptr s)) -&gt; IOState s (Ptr s)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679267249"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267249"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Ptr s, Ptr s) -&gt; IO (Ptr s, Ptr s)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267249"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267249"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span id="local-6989586621679267152"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#putIOState"><span class="hs-identifier hs-type">putIOState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679267152"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267152"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-52"></span><span id="putIOState"><span class="annot"><span class="annottext">putIOState :: forall s. Ptr s -&gt; IOState s ()
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#putIOState"><span class="hs-identifier hs-var hs-var">putIOState</span></a></span></span><span> </span><span id="local-6989586621679267252"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267252"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO ((), Ptr s)) -&gt; IOState s ()
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO ((), Ptr s)) -&gt; IOState s ())
+-&gt; (Ptr s -&gt; IO ((), Ptr s)) -&gt; IOState s ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="annot"><span class="annottext">Ptr s
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">((), Ptr s) -&gt; IO ((), Ptr s)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267252"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span id="local-6989586621679267154"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#peekIOState"><span class="hs-identifier hs-type">peekIOState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Storable</span></span><span> </span><span class="annot"><a href="#local-6989586621679267154"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267154"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267154"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-55"></span><span id="peekIOState"><span class="annot"><span class="annottext">peekIOState :: forall a. Storable a =&gt; IOState a a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#peekIOState"><span class="hs-identifier hs-var hs-var">peekIOState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-56"></span><span>   </span><span id="local-6989586621679267260"><span class="annot"><span class="annottext">Ptr a
+</span><a href="#local-6989586621679267260"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IOState a (Ptr a)
+forall s. IOState s (Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#getIOState"><span class="hs-identifier hs-var">getIOState</span></a></span><span>
+</span><span id="line-57"></span><span>   </span><span id="local-6989586621679267261"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267261"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO a -&gt; IOState a a
+forall a s. IO a -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#liftIOState"><span class="hs-identifier hs-var">liftIOState</span></a></span><span> </span><span class="annot"><span class="annottext">(IO a -&gt; IOState a a) -&gt; IO a -&gt; IOState a a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Ptr a -&gt; IO a
+forall a. Storable a =&gt; Ptr a -&gt; IO a
+</span><span class="hs-identifier hs-var">peek</span></span><span> </span><span class="annot"><span class="annottext">Ptr a
+</span><a href="#local-6989586621679267260"><span class="hs-identifier hs-var">ptr</span></a></span><span>
+</span><span id="line-58"></span><span>   </span><span class="annot"><span class="annottext">Ptr a -&gt; IOState a ()
+forall s. Ptr s -&gt; IOState s ()
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#putIOState"><span class="hs-identifier hs-var">putIOState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ptr a
+</span><a href="#local-6989586621679267260"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr a -&gt; Int -&gt; Ptr a
+forall a b. Ptr a -&gt; Int -&gt; Ptr b
+</span><span class="hs-operator hs-var">`plusPtr`</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; Int
+forall a. Storable a =&gt; a -&gt; Int
+</span><span class="hs-identifier hs-var">sizeOf</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267261"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>   </span><span class="annot"><span class="annottext">a -&gt; IOState a a
+forall a. a -&gt; IOState a a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267261"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span id="local-6989586621679267157"><span id="local-6989586621679267158"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#liftIOState"><span class="hs-identifier hs-type">liftIOState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679267157"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267158"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267157"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-62"></span><span id="liftIOState"><span class="annot"><span class="annottext">liftIOState :: forall a s. IO a -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#liftIOState"><span class="hs-identifier hs-var hs-var">liftIOState</span></a></span></span><span> </span><span id="local-6989586621679267265"><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679267265"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall s a. (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-var">IOState</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a)
+-&gt; (Ptr s -&gt; IO (a, Ptr s)) -&gt; IOState s a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679267266"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267266"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679267267"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267267"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679267265"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">(a, Ptr s) -&gt; IO (a, Ptr s)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267267"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267266"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span id="local-6989586621679267164"><span id="local-6989586621679267165"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#evalIOState"><span class="hs-identifier hs-type">evalIOState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267164"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267165"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679267164"><span class="hs-identifier hs-type">s</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679267165"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-65"></span><span id="evalIOState"><span class="annot"><span class="annottext">evalIOState :: forall s a. IOState s a -&gt; Ptr s -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#evalIOState"><span class="hs-identifier hs-var hs-var">evalIOState</span></a></span></span><span> </span><span id="local-6989586621679267270"><span class="annot"><span class="annottext">IOState s a
+</span><a href="#local-6989586621679267270"><span class="hs-identifier hs-var">m</span></a></span></span><span> </span><span id="local-6989586621679267271"><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267271"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679267272"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267272"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+forall s a. IOState s a -&gt; Ptr s -&gt; IO (a, Ptr s)
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#runIOState"><span class="hs-identifier hs-var">runIOState</span></a></span><span> </span><span class="annot"><span class="annottext">IOState s a
+</span><a href="#local-6989586621679267270"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr s
+</span><a href="#local-6989586621679267271"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-special">;</span><span> </span><span class="annot"><span class="annottext">a -&gt; IO a
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267272"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span id="local-6989586621679267168"><span id="local-6989586621679267169"><span id="local-6989586621679267170"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#nTimes"><span class="hs-identifier hs-type">nTimes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integral</span></span><span> </span><span class="annot"><a href="#local-6989586621679267168"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679267168"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267169"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267170"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679267169"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679267170"><span class="hs-identifier hs-type">c</span></a></span><span class="hs-special">]</span></span></span></span><span>
+</span><span id="line-68"></span><span id="nTimes"><span class="annot"><span class="annottext">nTimes :: forall a b c. Integral a =&gt; a -&gt; IOState b c -&gt; IOState b [c]
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#nTimes"><span class="hs-identifier hs-var hs-var">nTimes</span></a></span></span><span> </span><span id="local-6989586621679267278"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267278"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; IOState b c -&gt; IOState b [c]
+forall (m :: * -&gt; *) a. Applicative m =&gt; Int -&gt; m a -&gt; m [a]
+</span><span class="hs-identifier hs-var">replicateM</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679267278"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span></pre></body></html>

@@ -1,0 +1,737 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Texturing.Queries</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module offers various texture queries.</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.Queries</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-16"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier">TextureQuery</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureInternalFormat"><span class="hs-identifier">textureInternalFormat</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize1D"><span class="hs-identifier">textureSize1D</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize2D"><span class="hs-identifier">textureSize2D</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize3D"><span class="hs-identifier">textureSize3D</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureBorder"><span class="hs-identifier">textureBorder</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBASizes"><span class="hs-identifier">textureRGBASizes</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSharedSize"><span class="hs-identifier">textureSharedSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensitySize"><span class="hs-identifier">textureIntensitySize</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceSize"><span class="hs-identifier">textureLuminanceSize</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIndexSize"><span class="hs-identifier">textureIndexSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthBits"><span class="hs-identifier">textureDepthBits</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureCompressedImageSize"><span class="hs-identifier">textureCompressedImageSize</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureProxyOK"><span class="hs-identifier">textureProxyOK</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier">DataRepresentation</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBATypes"><span class="hs-identifier">textureRGBATypes</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensityType"><span class="hs-identifier">textureIntensityType</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceType"><span class="hs-identifier">textureLuminanceType</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthType"><span class="hs-identifier">textureDepthType</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Utils</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.DataType</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.GLboolean</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PeekPoke</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelRectangles</span></a></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.PixelInternalFormat.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.PixelInternalFormat</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.Specification</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget</span></a></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexSpec.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.VertexSpec</span></a></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="TexLevelParameter"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TexLevelParameter"><span class="hs-identifier hs-var">TexLevelParameter</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-40"></span><span>     </span><span id="TextureInternalFormat"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureInternalFormat"><span class="hs-identifier hs-var">TextureInternalFormat</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureWidth"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureHeight"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureHeight"><span class="hs-identifier hs-var">TextureHeight</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureDepth"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepth"><span class="hs-identifier hs-var">TextureDepth</span></a></span></span><span>
+</span><span id="line-44"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureBorder"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBorder"><span class="hs-identifier hs-var">TextureBorder</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureRedSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedSize"><span class="hs-identifier hs-var">TextureRedSize</span></a></span></span><span>
+</span><span id="line-46"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureGreenSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenSize"><span class="hs-identifier hs-var">TextureGreenSize</span></a></span></span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureBlueSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueSize"><span class="hs-identifier hs-var">TextureBlueSize</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureAlphaSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaSize"><span class="hs-identifier hs-var">TextureAlphaSize</span></a></span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureIntensitySize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensitySize"><span class="hs-identifier hs-var">TextureIntensitySize</span></a></span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureLuminanceSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceSize"><span class="hs-identifier hs-var">TextureLuminanceSize</span></a></span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureIndexSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIndexSize"><span class="hs-identifier hs-var">TextureIndexSize</span></a></span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthBits"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#DepthBits"><span class="hs-identifier hs-var">DepthBits</span></a></span></span><span>
+</span><span id="line-53"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompressedImageSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressedImageSize"><span class="hs-identifier hs-var">TextureCompressedImageSize</span></a></span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompressed"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressed"><span class="hs-identifier hs-var">TextureCompressed</span></a></span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureSharedSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureSharedSize"><span class="hs-identifier hs-var">TextureSharedSize</span></a></span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureRedType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedType"><span class="hs-identifier hs-var">TextureRedType</span></a></span></span><span>
+</span><span id="line-57"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureGreenType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenType"><span class="hs-identifier hs-var">TextureGreenType</span></a></span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureBlueType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueType"><span class="hs-identifier hs-var">TextureBlueType</span></a></span></span><span>
+</span><span id="line-59"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureAlphaType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaType"><span class="hs-identifier hs-var">TextureAlphaType</span></a></span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureLuminanceType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceType"><span class="hs-identifier hs-var">TextureLuminanceType</span></a></span></span><span>
+</span><span id="line-61"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureIntensityType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensityType"><span class="hs-identifier hs-var">TextureIntensityType</span></a></span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureDepthType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepthType"><span class="hs-identifier hs-var">TextureDepthType</span></a></span></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#marshalTexLevelParameter"><span class="hs-identifier hs-type">marshalTexLevelParameter</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TexLevelParameter"><span class="hs-identifier hs-type">TexLevelParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-65"></span><span id="marshalTexLevelParameter"><span class="annot"><span class="annottext">marshalTexLevelParameter :: TexLevelParameter -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#marshalTexLevelParameter"><span class="hs-identifier hs-var hs-var">marshalTexLevelParameter</span></a></span></span><span> </span><span id="local-6989586621679298183"><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="#local-6989586621679298183"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="#local-6989586621679298183"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-66"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureInternalFormat"><span class="hs-identifier hs-var">TextureInternalFormat</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_INTERNAL_FORMAT</span></span><span>
+</span><span id="line-67"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_WIDTH</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureHeight"><span class="hs-identifier hs-var">TextureHeight</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_HEIGHT</span></span><span>
+</span><span id="line-69"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepth"><span class="hs-identifier hs-var">TextureDepth</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_DEPTH</span></span><span>
+</span><span id="line-70"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBorder"><span class="hs-identifier hs-var">TextureBorder</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BORDER</span></span><span>
+</span><span id="line-71"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedSize"><span class="hs-identifier hs-var">TextureRedSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_RED_SIZE</span></span><span>
+</span><span id="line-72"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenSize"><span class="hs-identifier hs-var">TextureGreenSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_GREEN_SIZE</span></span><span>
+</span><span id="line-73"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueSize"><span class="hs-identifier hs-var">TextureBlueSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BLUE_SIZE</span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaSize"><span class="hs-identifier hs-var">TextureAlphaSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_ALPHA_SIZE</span></span><span>
+</span><span id="line-75"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensitySize"><span class="hs-identifier hs-var">TextureIntensitySize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_INTENSITY_SIZE</span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceSize"><span class="hs-identifier hs-var">TextureLuminanceSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_LUMINANCE_SIZE</span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIndexSize"><span class="hs-identifier hs-var">TextureIndexSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_INDEX_SIZE_EXT</span></span><span>
+</span><span id="line-78"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#DepthBits"><span class="hs-identifier hs-var">DepthBits</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_DEPTH_BITS</span></span><span>
+</span><span id="line-79"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressedImageSize"><span class="hs-identifier hs-var">TextureCompressedImageSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPRESSED_IMAGE_SIZE</span></span><span>
+</span><span id="line-80"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressed"><span class="hs-identifier hs-var">TextureCompressed</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPRESSED</span></span><span>
+</span><span id="line-81"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureSharedSize"><span class="hs-identifier hs-var">TextureSharedSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_SHARED_SIZE</span></span><span>
+</span><span id="line-82"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedType"><span class="hs-identifier hs-var">TextureRedType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_RED_TYPE_ARB</span></span><span>
+</span><span id="line-83"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenType"><span class="hs-identifier hs-var">TextureGreenType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_GREEN_TYPE_ARB</span></span><span>
+</span><span id="line-84"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueType"><span class="hs-identifier hs-var">TextureBlueType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BLUE_TYPE_ARB</span></span><span>
+</span><span id="line-85"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaType"><span class="hs-identifier hs-var">TextureAlphaType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_ALPHA_TYPE_ARB</span></span><span>
+</span><span id="line-86"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceType"><span class="hs-identifier hs-var">TextureLuminanceType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_LUMINANCE_TYPE_ARB</span></span><span>
+</span><span id="line-87"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensityType"><span class="hs-identifier hs-var">TextureIntensityType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_INTENSITY_TYPE_ARB</span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepthType"><span class="hs-identifier hs-var">TextureDepthType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_DEPTH_TYPE_ARB</span></span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="hs-keyword">type</span><span> </span><span id="TextureQuery"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-var">TextureQuery</span></a></span></span><span> </span><span id="local-6989586621679298207"><span class="annot"><a href="#local-6989586621679298207"><span class="hs-identifier hs-type">t</span></a></span></span><span> </span><span id="local-6989586621679298208"><span class="annot"><a href="#local-6989586621679298208"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679298207"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Level"><span class="hs-identifier hs-type">Level</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><a href="#local-6989586621679298208"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span id="local-6989586621679298036"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureInternalFormat"><span class="hs-identifier hs-type">textureInternalFormat</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298036"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298036"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.PixelInternalFormat.html#PixelInternalFormat"><span class="hs-identifier hs-type">PixelInternalFormat</span></a></span></span><span>
+</span><span id="line-95"></span><span id="textureInternalFormat"><span class="annot"><span class="annottext">textureInternalFormat :: forall t.
+QueryableTextureTarget t =&gt;
+TextureQuery t PixelInternalFormat
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureInternalFormat"><span class="hs-identifier hs-var hs-var">textureInternalFormat</span></a></span></span><span> </span><span id="local-6989586621679298213"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298213"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298214"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298214"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-96"></span><span>   </span><span class="annot"><span class="annottext">IO PixelInternalFormat -&gt; IO PixelInternalFormat
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO PixelInternalFormat -&gt; IO PixelInternalFormat)
+-&gt; IO PixelInternalFormat -&gt; IO PixelInternalFormat
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-97"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; PixelInternalFormat)
+-&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO PixelInternalFormat
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; PixelInternalFormat
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.PixelInternalFormat.html#unmarshalPixelInternalFormat"><span class="hs-identifier hs-var">unmarshalPixelInternalFormat</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298213"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298214"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureInternalFormat"><span class="hs-identifier hs-var">TextureInternalFormat</span></a></span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize1D"><span class="hs-identifier hs-type">textureSize1D</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#TextureTarget1D"><span class="hs-identifier hs-type">TextureTarget1D</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize1D"><span class="hs-identifier hs-type">TextureSize1D</span></a></span><span>
+</span><span id="line-100"></span><span id="textureSize1D"><span class="annot"><span class="annottext">textureSize1D :: TextureQuery TextureTarget1D TextureSize1D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize1D"><span class="hs-identifier hs-var hs-var">textureSize1D</span></a></span></span><span> </span><span id="local-6989586621679298218"><span class="annot"><span class="annottext">TextureTarget1D
+</span><a href="#local-6989586621679298218"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298219"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298219"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-101"></span><span>   </span><span class="annot"><span class="annottext">IO TextureSize1D -&gt; IO TextureSize1D
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO TextureSize1D -&gt; IO TextureSize1D)
+-&gt; IO TextureSize1D -&gt; IO TextureSize1D
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-102"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; TextureSize1D) -&gt; IO GLint -&gt; IO TextureSize1D
+forall (m :: * -&gt; *) a1 r. Monad m =&gt; (a1 -&gt; r) -&gt; m a1 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; TextureSize1D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize1D"><span class="hs-identifier hs-var">TextureSize1D</span></a></span><span>
+</span><span id="line-103"></span><span>            </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget1D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget1D
+</span><a href="#local-6989586621679298218"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298219"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize2D"><span class="hs-identifier hs-type">textureSize2D</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#TextureTarget2D"><span class="hs-identifier hs-type">TextureTarget2D</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize2D"><span class="hs-identifier hs-type">TextureSize2D</span></a></span><span>
+</span><span id="line-106"></span><span id="textureSize2D"><span class="annot"><span class="annottext">textureSize2D :: TextureQuery TextureTarget2D TextureSize2D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize2D"><span class="hs-identifier hs-var hs-var">textureSize2D</span></a></span></span><span> </span><span id="local-6989586621679298222"><span class="annot"><span class="annottext">TextureTarget2D
+</span><a href="#local-6989586621679298222"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298223"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298223"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-107"></span><span>   </span><span class="annot"><span class="annottext">IO TextureSize2D -&gt; IO TextureSize2D
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO TextureSize2D -&gt; IO TextureSize2D)
+-&gt; IO TextureSize2D -&gt; IO TextureSize2D
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-108"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint -&gt; TextureSize2D)
+-&gt; IO GLint -&gt; IO GLint -&gt; IO TextureSize2D
+forall (m :: * -&gt; *) a1 a2 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM2</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; TextureSize2D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize2D"><span class="hs-identifier hs-var">TextureSize2D</span></a></span><span>
+</span><span id="line-109"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget2D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget2D
+</span><a href="#local-6989586621679298222"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298223"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget2D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget2D
+</span><a href="#local-6989586621679298222"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298223"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureHeight"><span class="hs-identifier hs-var">TextureHeight</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize3D"><span class="hs-identifier hs-type">textureSize3D</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#TextureTarget3D"><span class="hs-identifier hs-type">TextureTarget3D</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize3D"><span class="hs-identifier hs-type">TextureSize3D</span></a></span><span>
+</span><span id="line-113"></span><span id="textureSize3D"><span class="annot"><span class="annottext">textureSize3D :: TextureQuery TextureTarget3D TextureSize3D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSize3D"><span class="hs-identifier hs-var hs-var">textureSize3D</span></a></span></span><span> </span><span id="local-6989586621679298226"><span class="annot"><span class="annottext">TextureTarget3D
+</span><a href="#local-6989586621679298226"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298227"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298227"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-114"></span><span>   </span><span class="annot"><span class="annottext">IO TextureSize3D -&gt; IO TextureSize3D
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO TextureSize3D -&gt; IO TextureSize3D)
+-&gt; IO TextureSize3D -&gt; IO TextureSize3D
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-115"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint -&gt; GLint -&gt; TextureSize3D)
+-&gt; IO GLint -&gt; IO GLint -&gt; IO GLint -&gt; IO TextureSize3D
+forall (m :: * -&gt; *) a1 a2 a3 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; a3 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m a3 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM3</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLint -&gt; TextureSize3D
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#TextureSize3D"><span class="hs-identifier hs-var">TextureSize3D</span></a></span><span>
+</span><span id="line-116"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget3D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget3D
+</span><a href="#local-6989586621679298226"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298227"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-117"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget3D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget3D
+</span><a href="#local-6989586621679298226"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298227"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureHeight"><span class="hs-identifier hs-var">TextureHeight</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint)
+-&gt; TextureTarget3D -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">TextureTarget3D
+</span><a href="#local-6989586621679298226"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298227"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepth"><span class="hs-identifier hs-var">TextureDepth</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span id="local-6989586621679298064"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureBorder"><span class="hs-identifier hs-type">textureBorder</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298064"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298064"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Border"><span class="hs-identifier hs-type">Border</span></a></span></span><span>
+</span><span id="line-121"></span><span id="textureBorder"><span class="annot"><span class="annottext">textureBorder :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureBorder"><span class="hs-identifier hs-var hs-var">textureBorder</span></a></span></span><span> </span><span id="local-6989586621679298235"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298235"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298236"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298236"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-122"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-123"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298235"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298236"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBorder"><span class="hs-identifier hs-var">TextureBorder</span></a></span><span>
+</span><span id="line-124"></span><span>
+</span><span id="line-125"></span><span id="local-6989586621679298066"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBASizes"><span class="hs-identifier hs-type">textureRGBASizes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298066"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298066"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-126"></span><span id="textureRGBASizes"><span class="annot"><span class="annottext">textureRGBASizes :: forall t. QueryableTextureTarget t =&gt; TextureQuery t (Color4 GLint)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBASizes"><span class="hs-identifier hs-var hs-var">textureRGBASizes</span></a></span></span><span> </span><span id="local-6989586621679298252"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298252"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298253"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298253"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-127"></span><span>   </span><span class="annot"><span class="annottext">IO (Color4 GLint) -&gt; IO (Color4 GLint)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Color4 GLint) -&gt; IO (Color4 GLint))
+-&gt; IO (Color4 GLint) -&gt; IO (Color4 GLint)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-128"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; Color4 GLint)
+-&gt; IO GLint
+-&gt; IO GLint
+-&gt; IO GLint
+-&gt; IO GLint
+-&gt; IO (Color4 GLint)
+forall (m :: * -&gt; *) a1 a2 a3 a4 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; a3 -&gt; a4 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m a3 -&gt; m a4 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM4</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; Color4 GLint
+forall a. a -&gt; a -&gt; a -&gt; a -&gt; Color4 a
+</span><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-var">Color4</span></a></span><span>
+</span><span id="line-129"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298252"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298253"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedSize"><span class="hs-identifier hs-var">TextureRedSize</span></a></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298252"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298253"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenSize"><span class="hs-identifier hs-var">TextureGreenSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298252"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298253"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueSize"><span class="hs-identifier hs-var">TextureBlueSize</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298252"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298253"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaSize"><span class="hs-identifier hs-var">TextureAlphaSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span id="local-6989586621679298256"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSharedSize"><span class="hs-identifier hs-type">textureSharedSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298256"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298256"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span></span><span>
+</span><span id="line-135"></span><span id="textureSharedSize"><span class="annot"><span class="annottext">textureSharedSize :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureSharedSize"><span class="hs-identifier hs-var hs-var">textureSharedSize</span></a></span></span><span> </span><span id="local-6989586621679298261"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298261"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298262"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298262"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-136"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-137"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298261"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298262"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureSharedSize"><span class="hs-identifier hs-var">TextureSharedSize</span></a></span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span id="local-6989586621679298263"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensitySize"><span class="hs-identifier hs-type">textureIntensitySize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298263"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298263"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span></span><span>
+</span><span id="line-140"></span><span id="textureIntensitySize"><span class="annot"><span class="annottext">textureIntensitySize :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensitySize"><span class="hs-identifier hs-var hs-var">textureIntensitySize</span></a></span></span><span> </span><span id="local-6989586621679298268"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298268"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298269"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298269"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-141"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-142"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298268"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298269"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensitySize"><span class="hs-identifier hs-var">TextureIntensitySize</span></a></span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span id="local-6989586621679298270"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceSize"><span class="hs-identifier hs-type">textureLuminanceSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298270"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298270"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span></span><span>
+</span><span id="line-145"></span><span id="textureLuminanceSize"><span class="annot"><span class="annottext">textureLuminanceSize :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceSize"><span class="hs-identifier hs-var hs-var">textureLuminanceSize</span></a></span></span><span> </span><span id="local-6989586621679298275"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298275"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298276"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298276"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-146"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-147"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298275"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298276"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceSize"><span class="hs-identifier hs-var">TextureLuminanceSize</span></a></span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span id="local-6989586621679298277"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIndexSize"><span class="hs-identifier hs-type">textureIndexSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298277"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298277"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span></span><span>
+</span><span id="line-150"></span><span id="textureIndexSize"><span class="annot"><span class="annottext">textureIndexSize :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIndexSize"><span class="hs-identifier hs-var hs-var">textureIndexSize</span></a></span></span><span> </span><span id="local-6989586621679298282"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298282"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298283"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298283"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-151"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-152"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298282"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298283"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIndexSize"><span class="hs-identifier hs-var">TextureIndexSize</span></a></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span id="local-6989586621679298284"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthBits"><span class="hs-identifier hs-type">textureDepthBits</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298284"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298284"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span></span><span>
+</span><span id="line-155"></span><span id="textureDepthBits"><span class="annot"><span class="annottext">textureDepthBits :: forall t. QueryableTextureTarget t =&gt; TextureQuery t GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthBits"><span class="hs-identifier hs-var hs-var">textureDepthBits</span></a></span></span><span> </span><span id="local-6989586621679298289"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298289"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298290"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298290"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-156"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; IO GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLint -&gt; IO GLint) -&gt; IO GLint -&gt; IO GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-157"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO GLint
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298289"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298290"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#DepthBits"><span class="hs-identifier hs-var">DepthBits</span></a></span><span>
+</span><span id="line-158"></span><span>
+</span><span id="line-159"></span><span id="local-6989586621679298081"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureCompressedImageSize"><span class="hs-identifier hs-type">textureCompressedImageSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298081"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298081"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-160"></span><span id="textureCompressedImageSize"><span class="annot"><span class="annottext">textureCompressedImageSize :: forall t. QueryableTextureTarget t =&gt; TextureQuery t (Maybe GLint)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureCompressedImageSize"><span class="hs-identifier hs-var hs-var">textureCompressedImageSize</span></a></span></span><span> </span><span id="local-6989586621679298301"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298301"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298302"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298302"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-161"></span><span>   </span><span class="annot"><span class="annottext">IO (Maybe GLint) -&gt; IO (Maybe GLint)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Maybe GLint) -&gt; IO (Maybe GLint))
+-&gt; IO (Maybe GLint) -&gt; IO (Maybe GLint)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-162"></span><span>      </span><span id="local-6989586621679298303"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679298303"><span class="hs-identifier hs-var">isCompressed</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; Bool) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO Bool
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; Bool
+forall a. (Eq a, Num a) =&gt; a -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html#unmarshalGLboolean"><span class="hs-identifier hs-var">unmarshalGLboolean</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298301"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298302"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressed"><span class="hs-identifier hs-var">TextureCompressed</span></a></span><span>
+</span><span id="line-163"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679298303"><span class="hs-identifier hs-var">isCompressed</span></a></span><span>
+</span><span id="line-164"></span><span>         </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; Maybe GLint)
+-&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe GLint)
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLint -&gt; Maybe GLint
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; Maybe GLint) -&gt; (GLint -&gt; GLint) -&gt; GLint -&gt; Maybe GLint
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298301"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298302"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureCompressedImageSize"><span class="hs-identifier hs-var">TextureCompressedImageSize</span></a></span><span>
+</span><span id="line-165"></span><span>         </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe GLint -&gt; IO (Maybe GLint)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Maybe GLint
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span id="local-6989586621679298090"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureProxyOK"><span class="hs-identifier hs-type">textureProxyOK</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298090"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298090"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-168"></span><span id="textureProxyOK"><span class="annot"><span class="annottext">textureProxyOK :: forall t. ParameterizedTextureTarget t =&gt; TextureQuery t Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureProxyOK"><span class="hs-identifier hs-var hs-var">textureProxyOK</span></a></span></span><span> </span><span id="local-6989586621679298310"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298310"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298311"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298311"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-169"></span><span>   </span><span class="annot"><span class="annottext">IO Bool -&gt; IO Bool
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO Bool) -&gt; IO Bool -&gt; IO Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-170"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; Bool) -&gt; GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO Bool
+forall a.
+(GLint -&gt; a) -&gt; GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteri"><span class="hs-identifier hs-var">getTexLevelParameteri</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; Bool
+forall a. (Eq a, Num a) =&gt; a -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html#unmarshalGLboolean"><span class="hs-identifier hs-var">unmarshalGLboolean</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLenum
+forall t. ParameterizedTextureTarget t =&gt; t -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalParameterizedTextureTargetProxy"><span class="hs-identifier hs-var">marshalParameterizedTextureTargetProxy</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298310"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298311"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureWidth"><span class="hs-identifier hs-var">TextureWidth</span></a></span><span>
+</span><span id="line-171"></span><span>
+</span><span id="line-172"></span><span id="local-6989586621679298095"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBATypes"><span class="hs-identifier hs-type">textureRGBATypes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298095"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298095"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier hs-type">DataRepresentation</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-173"></span><span id="textureRGBATypes"><span class="annot"><span class="annottext">textureRGBATypes :: forall t.
+QueryableTextureTarget t =&gt;
+TextureQuery t (Color4 (Maybe DataRepresentation))
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureRGBATypes"><span class="hs-identifier hs-var hs-var">textureRGBATypes</span></a></span></span><span> </span><span id="local-6989586621679298320"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298320"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298321"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298321"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-174"></span><span>   </span><span class="annot"><span class="annottext">IO (Color4 (Maybe DataRepresentation))
+-&gt; IO (Color4 (Maybe DataRepresentation))
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Color4 (Maybe DataRepresentation))
+ -&gt; IO (Color4 (Maybe DataRepresentation)))
+-&gt; IO (Color4 (Maybe DataRepresentation))
+-&gt; IO (Color4 (Maybe DataRepresentation))
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-175"></span><span>      </span><span class="annot"><span class="annottext">(Maybe DataRepresentation
+ -&gt; Maybe DataRepresentation
+ -&gt; Maybe DataRepresentation
+ -&gt; Maybe DataRepresentation
+ -&gt; Color4 (Maybe DataRepresentation))
+-&gt; IO (Maybe DataRepresentation)
+-&gt; IO (Maybe DataRepresentation)
+-&gt; IO (Maybe DataRepresentation)
+-&gt; IO (Maybe DataRepresentation)
+-&gt; IO (Color4 (Maybe DataRepresentation))
+forall (m :: * -&gt; *) a1 a2 a3 a4 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; a3 -&gt; a4 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m a3 -&gt; m a4 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM4</span></span><span> </span><span class="annot"><span class="annottext">Maybe DataRepresentation
+-&gt; Maybe DataRepresentation
+-&gt; Maybe DataRepresentation
+-&gt; Maybe DataRepresentation
+-&gt; Color4 (Maybe DataRepresentation)
+forall a. a -&gt; a -&gt; a -&gt; a -&gt; Color4 a
+</span><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-var">Color4</span></a></span><span>
+</span><span id="line-176"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298320"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298321"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureRedType"><span class="hs-identifier hs-var">TextureRedType</span></a></span><span>  </span><span class="hs-special">)</span><span>
+</span><span id="line-177"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298320"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298321"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureGreenType"><span class="hs-identifier hs-var">TextureGreenType</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-178"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298320"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298321"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureBlueType"><span class="hs-identifier hs-var">TextureBlueType</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span>             </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298320"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298321"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureAlphaType"><span class="hs-identifier hs-var">TextureAlphaType</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-180"></span><span>
+</span><span id="line-181"></span><span id="local-6989586621679298098"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-type">getDataRepr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298098"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679298098"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Level"><span class="hs-identifier hs-type">Level</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TexLevelParameter"><span class="hs-identifier hs-type">TexLevelParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier hs-type">DataRepresentation</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-182"></span><span id="getDataRepr"><span class="annot"><span class="annottext">getDataRepr :: forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var hs-var">getDataRepr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; Maybe DataRepresentation)
+-&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; Maybe DataRepresentation
+</span><a href="Graphics.Rendering.OpenGL.GL.DataType.html#unmarshalDataRepresentation"><span class="hs-identifier hs-var">unmarshalDataRepresentation</span></a></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; Maybe DataRepresentation)
+-&gt; (GLint -&gt; GLenum) -&gt; GLint -&gt; Maybe DataRepresentation
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLenum
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span>
+</span><span id="line-183"></span><span>
+</span><span id="line-184"></span><span id="local-6989586621679298100"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensityType"><span class="hs-identifier hs-type">textureIntensityType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298100"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298100"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier hs-type">DataRepresentation</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-185"></span><span id="textureIntensityType"><span class="annot"><span class="annottext">textureIntensityType :: forall t.
+QueryableTextureTarget t =&gt;
+TextureQuery t (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureIntensityType"><span class="hs-identifier hs-var hs-var">textureIntensityType</span></a></span></span><span> </span><span id="local-6989586621679298331"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298331"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298332"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298332"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation))
+-&gt; IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298331"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298332"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureIntensityType"><span class="hs-identifier hs-var">TextureIntensityType</span></a></span><span>
+</span><span id="line-186"></span><span>
+</span><span id="line-187"></span><span id="local-6989586621679298333"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceType"><span class="hs-identifier hs-type">textureLuminanceType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298333"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298333"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier hs-type">DataRepresentation</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-188"></span><span id="textureLuminanceType"><span class="annot"><span class="annottext">textureLuminanceType :: forall t.
+QueryableTextureTarget t =&gt;
+TextureQuery t (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureLuminanceType"><span class="hs-identifier hs-var hs-var">textureLuminanceType</span></a></span></span><span> </span><span id="local-6989586621679298336"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298336"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298337"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298337"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation))
+-&gt; IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298336"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298337"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureLuminanceType"><span class="hs-identifier hs-var">TextureLuminanceType</span></a></span><span>
+</span><span id="line-189"></span><span>
+</span><span id="line-190"></span><span id="local-6989586621679298338"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthType"><span class="hs-identifier hs-type">textureDepthType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298338"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureQuery"><span class="hs-identifier hs-type">TextureQuery</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298338"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.DataType.html#DataRepresentation"><span class="hs-identifier hs-type">DataRepresentation</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-191"></span><span id="textureDepthType"><span class="annot"><span class="annottext">textureDepthType :: forall t.
+QueryableTextureTarget t =&gt;
+TextureQuery t (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#textureDepthType"><span class="hs-identifier hs-var hs-var">textureDepthType</span></a></span></span><span> </span><span id="local-6989586621679298341"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298341"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298342"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298342"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation))
+-&gt; IO (Maybe DataRepresentation) -&gt; IO (Maybe DataRepresentation)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+forall t.
+QueryableTextureTarget t =&gt;
+t -&gt; GLint -&gt; TexLevelParameter -&gt; IO (Maybe DataRepresentation)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getDataRepr"><span class="hs-identifier hs-var">getDataRepr</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679298341"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298342"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TextureDepthType"><span class="hs-identifier hs-var">TextureDepthType</span></a></span><span>
+</span><span id="line-192"></span><span>
+</span><span id="line-193"></span><span id="local-6989586621679298045"><span id="local-6989586621679298046"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-type">getTexLevelParameteriNoProxy</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679298045"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679298046"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679298045"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Level"><span class="hs-identifier hs-type">Level</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TexLevelParameter"><span class="hs-identifier hs-type">TexLevelParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679298046"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-194"></span><span id="getTexLevelParameteriNoProxy"><span class="annot"><span class="annottext">getTexLevelParameteriNoProxy :: forall t a.
+QueryableTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteriNoProxy"><span class="hs-identifier hs-var hs-var">getTexLevelParameteriNoProxy</span></a></span></span><span> </span><span id="local-6989586621679298345"><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679298345"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; a) -&gt; GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+forall a.
+(GLint -&gt; a) -&gt; GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteri"><span class="hs-identifier hs-var">getTexLevelParameteri</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679298345"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO a)
+-&gt; (t -&gt; GLenum) -&gt; t -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; GLenum
+forall t. QueryableTextureTarget t =&gt; t -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalQueryableTextureTarget"><span class="hs-identifier hs-var">marshalQueryableTextureTarget</span></a></span><span>
+</span><span id="line-195"></span><span>
+</span><span id="line-196"></span><span id="local-6989586621679298093"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteri"><span class="hs-identifier hs-type">getTexLevelParameteri</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679298093"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Level"><span class="hs-identifier hs-type">Level</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#TexLevelParameter"><span class="hs-identifier hs-type">TexLevelParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679298093"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-197"></span><span id="getTexLevelParameteri"><span class="annot"><span class="annottext">getTexLevelParameteri :: forall a.
+(GLint -&gt; a) -&gt; GLenum -&gt; GLint -&gt; TexLevelParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#getTexLevelParameteri"><span class="hs-identifier hs-var hs-var">getTexLevelParameteri</span></a></span></span><span> </span><span id="local-6989586621679298354"><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679298354"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679298355"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679298355"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679298356"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298356"><span class="hs-identifier hs-var">level</span></a></span></span><span> </span><span id="local-6989586621679298357"><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="#local-6989586621679298357"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-198"></span><span>   </span><span class="annot"><span class="annottext">GLint -&gt; (Ptr GLint -&gt; IO a) -&gt; IO a
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLint -&gt; IO a) -&gt; IO a) -&gt; (Ptr GLint -&gt; IO a) -&gt; IO a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679298359"><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679298359"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-199"></span><span>      </span><span class="annot"><span class="annottext">GLenum -&gt; GLint -&gt; GLenum -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLint -&gt; GLenum -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexLevelParameteriv</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679298355"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679298356"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TexLevelParameter -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Queries.html#marshalTexLevelParameter"><span class="hs-identifier hs-var">marshalTexLevelParameter</span></a></span><span> </span><span class="annot"><span class="annottext">TexLevelParameter
+</span><a href="#local-6989586621679298357"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679298359"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-200"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; a) -&gt; Ptr GLint -&gt; IO a
+forall a b. Storable a =&gt; (a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek1"><span class="hs-identifier hs-var">peek1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679298354"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679298359"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-201"></span></pre></body></html>

@@ -1,0 +1,527 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS -fspec-constr-count=5 #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE Rank2Types #-}</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Backend.Types</span><span>
+</span><span id="line-5"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Backend.Types</span></a></span><span>
+</span><span id="line-6"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Display.html"><span class="hs-identifier">Graphics.Gloss.Data.Display</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.IORef</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Display.html"><span class="hs-identifier">Graphics.Gloss.Data.Display</span></a></span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- | The functions every backend window managed backend needs to support.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--   The Backend module interfaces with the window manager, and handles opening</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--   and closing the window, and managing key events etc.</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--   It doesn't know anything about drawing lines or setting colors.</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--   When we get a display callback, Gloss will perform OpenGL actions, and</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   the backend needs to have OpenGL in a state where it's able to accept them.</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">class</span><span> </span><span id="Backend"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-var">Backend</span></a></span></span><span> </span><span id="local-6989586621679104920"><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-comment">-- | Initialize the state used by the backend. If you don't use any state,</span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-comment">-- make a Unit-like type; see the GLUT backend for an example.</span><span>
+</span><span id="line-24"></span><span>        </span><span id="initBackendState"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#initBackendState"><span class="hs-identifier hs-type">initBackendState</span></a></span></span><span>           </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span>        </span><span class="hs-comment">-- | Perform any initialization that needs to happen before opening a window</span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-comment">--   The Boolean flag indicates if any debug information should be printed to</span><span>
+</span><span id="line-28"></span><span>        </span><span class="hs-comment">--   the terminal</span><span>
+</span><span id="line-29"></span><span>        </span><span id="initializeBackend"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#initializeBackend"><span class="hs-identifier hs-type">initializeBackend</span></a></span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>        </span><span class="hs-comment">-- | Perform any deinitialization and close the backend.</span><span>
+</span><span id="line-32"></span><span>        </span><span id="exitBackend"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#exitBackend"><span class="hs-identifier hs-type">exitBackend</span></a></span></span><span>                </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span>        </span><span class="hs-comment">-- | Open a window with the given display mode.</span><span>
+</span><span id="line-35"></span><span>        </span><span id="openWindow"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#openWindow"><span class="hs-identifier hs-type">openWindow</span></a></span></span><span>                 </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Display.html#Display"><span class="hs-identifier hs-type">Display</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-comment">-- | Dump information about the backend to the terminal.</span><span>
+</span><span id="line-38"></span><span>        </span><span id="dumpBackendState"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#dumpBackendState"><span class="hs-identifier hs-type">dumpBackendState</span></a></span></span><span>           </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-comment">-- | Install the display callbacks.</span><span>
+</span><span id="line-41"></span><span>        </span><span id="installDisplayCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installDisplayCallback"><span class="hs-identifier hs-type">installDisplayCallback</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span>        </span><span class="hs-comment">-- | Install the window close callback.</span><span>
+</span><span id="line-44"></span><span>        </span><span id="installWindowCloseCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installWindowCloseCallback"><span class="hs-identifier hs-type">installWindowCloseCallback</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span>        </span><span class="hs-comment">-- | Install the reshape callbacks.</span><span>
+</span><span id="line-47"></span><span>        </span><span id="installReshapeCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installReshapeCallback"><span class="hs-identifier hs-type">installReshapeCallback</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>        </span><span class="hs-comment">-- | Install the keymouse press callbacks.</span><span>
+</span><span id="line-50"></span><span>        </span><span id="installKeyMouseCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installKeyMouseCallback"><span class="hs-identifier hs-type">installKeyMouseCallback</span></a></span></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-comment">-- | Install the mouse motion callbacks.</span><span>
+</span><span id="line-53"></span><span>        </span><span id="installMotionCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installMotionCallback"><span class="hs-identifier hs-type">installMotionCallback</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span>        </span><span class="hs-comment">-- | Install the idle callbacks.</span><span>
+</span><span id="line-56"></span><span>        </span><span id="installIdleCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#installIdleCallback"><span class="hs-identifier hs-type">installIdleCallback</span></a></span></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>        </span><span class="hs-comment">-- | The mainloop of the backend.</span><span>
+</span><span id="line-59"></span><span>        </span><span id="runMainLoop"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#runMainLoop"><span class="hs-identifier hs-type">runMainLoop</span></a></span></span><span>                </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-comment">-- | A function that signals that screen has to be updated.</span><span>
+</span><span id="line-62"></span><span>        </span><span id="postRedisplay"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#postRedisplay"><span class="hs-identifier hs-type">postRedisplay</span></a></span></span><span>              </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span>        </span><span class="hs-comment">-- | Function that returns (width,height) of the window in pixels.</span><span>
+</span><span id="line-65"></span><span>        </span><span id="getWindowDimensions"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#getWindowDimensions"><span class="hs-identifier hs-type">getWindowDimensions</span></a></span></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span>        </span><span class="hs-comment">-- | Function that returns (width,height) of a fullscreen window in pixels.</span><span>
+</span><span id="line-68"></span><span>        </span><span id="getScreenSize"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#getScreenSize"><span class="hs-identifier hs-type">getScreenSize</span></a></span></span><span>              </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span>        </span><span class="hs-comment">-- | Function that reports the time elapsed since the application started.</span><span>
+</span><span id="line-71"></span><span>        </span><span class="hs-comment">--   (in seconds)</span><span>
+</span><span id="line-72"></span><span>        </span><span id="elapsedTime"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#elapsedTime"><span class="hs-identifier hs-type">elapsedTime</span></a></span></span><span>                </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span>        </span><span class="hs-comment">-- | Function that puts the current thread to sleep for 'n' seconds.</span><span>
+</span><span id="line-75"></span><span>        </span><span id="sleep"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#sleep"><span class="hs-identifier hs-type">sleep</span></a></span></span><span>                      </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104920"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Double</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- The callbacks should work for all backends. We pass a reference to the</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- backend state so that the callbacks have access to the class dictionary and</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- can thus call the appropriate backend functions.</span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="annot"><span class="hs-comment">-- | Display callback has no arguments.</span></span><span>
+</span><span id="line-83"></span><span class="hs-keyword">type</span><span> </span><span id="DisplayCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#DisplayCallback"><span class="hs-identifier hs-var">DisplayCallback</span></a></span></span><span>
+</span><span id="line-84"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104941"><span class="annot"><a href="#local-6989586621679104941"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104941"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104941"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><span class="hs-comment">-- | Arguments: KeyType, Key Up \/ Down, Ctrl \/ Alt \/ Shift pressed, latest mouse location.</span></span><span>
+</span><span id="line-87"></span><span class="hs-keyword">type</span><span> </span><span id="KeyboardMouseCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyboardMouseCallback"><span class="hs-identifier hs-var">KeyboardMouseCallback</span></a></span></span><span>
+</span><span id="line-88"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104943"><span class="annot"><a href="#local-6989586621679104943"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104943"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104943"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Key"><span class="hs-identifier hs-type">Key</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyState"><span class="hs-identifier hs-type">KeyState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Modifiers"><span class="hs-identifier hs-type">Modifiers</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="annot"><span class="hs-comment">-- | Arguments: (PosX,PosY) in pixels.</span></span><span>
+</span><span id="line-91"></span><span class="hs-keyword">type</span><span> </span><span id="MotionCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MotionCallback"><span class="hs-identifier hs-var">MotionCallback</span></a></span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104945"><span class="annot"><a href="#local-6989586621679104945"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104945"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104945"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span class="annot"><span class="hs-comment">-- | No arguments.</span></span><span>
+</span><span id="line-95"></span><span class="hs-keyword">type</span><span> </span><span id="IdleCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#IdleCallback"><span class="hs-identifier hs-var">IdleCallback</span></a></span></span><span>
+</span><span id="line-96"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104946"><span class="annot"><a href="#local-6989586621679104946"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104946"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104946"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span class="annot"><span class="hs-comment">-- | Arguments: (Width,Height) in pixels.</span></span><span>
+</span><span id="line-99"></span><span class="hs-keyword">type</span><span> </span><span id="ReshapeCallback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#ReshapeCallback"><span class="hs-identifier hs-var">ReshapeCallback</span></a></span></span><span>
+</span><span id="line-100"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">forall</span><span> </span><span id="local-6989586621679104948"><span class="annot"><a href="#local-6989586621679104948"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-operator">.</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679104948"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IORef</span></span><span> </span><span class="annot"><a href="#local-6989586621679104948"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span>
+</span><span id="line-103"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-104"></span><span class="hs-keyword">data</span><span> </span><span id="Callback"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-var">Callback</span></a></span></span><span>
+</span><span id="line-105"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="Display"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Display"><span class="hs-identifier hs-var">Display</span></a></span></span><span>  </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#DisplayCallback"><span class="hs-identifier hs-type">DisplayCallback</span></a></span><span>
+</span><span id="line-106"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyMouse"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyMouse"><span class="hs-identifier hs-var">KeyMouse</span></a></span></span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyboardMouseCallback"><span class="hs-identifier hs-type">KeyboardMouseCallback</span></a></span><span>
+</span><span id="line-107"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="Idle"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Idle"><span class="hs-identifier hs-var">Idle</span></a></span></span><span>     </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#IdleCallback"><span class="hs-identifier hs-type">IdleCallback</span></a></span><span>
+</span><span id="line-108"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="Motion"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Motion"><span class="hs-identifier hs-var">Motion</span></a></span></span><span>   </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MotionCallback"><span class="hs-identifier hs-type">MotionCallback</span></a></span><span>
+</span><span id="line-109"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="Reshape"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Reshape"><span class="hs-identifier hs-var">Reshape</span></a></span></span><span>  </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#ReshapeCallback"><span class="hs-identifier hs-type">ReshapeCallback</span></a></span><span>
+</span><span id="line-110"></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="annot"><span class="hs-comment">-- | Check if this is an `Idle` callback.</span></span><span>
+</span><span id="line-113"></span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#isIdleCallback"><span class="hs-identifier hs-type">isIdleCallback</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Callback"><span class="hs-identifier hs-type">Callback</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-114"></span><span id="isIdleCallback"><span class="annot"><span class="annottext">isIdleCallback :: Callback -&gt; Bool
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#isIdleCallback"><span class="hs-identifier hs-var hs-var">isIdleCallback</span></a></span></span><span> </span><span id="local-6989586621679104955"><span class="annot"><span class="annottext">Callback
+</span><a href="#local-6989586621679104955"><span class="hs-identifier hs-var">cc</span></a></span></span><span>
+</span><span id="line-115"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Callback
+</span><a href="#local-6989586621679104955"><span class="hs-identifier hs-var">cc</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-116"></span><span>        </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Idle"><span class="hs-identifier hs-type">Idle</span></a></span><span> </span><span class="annot"><span class="annottext">IdleCallback
+</span><span class="hs-identifier">_</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-117"></span><span>        </span><span class="annot"><span class="annottext">Callback
+</span><span class="hs-identifier">_</span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- This is Glosses view of mouse and keyboard events.</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- The actual events provided by the backends are converted to this form</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- by the backend module.</span><span>
+</span><span id="line-124"></span><span>
+</span><span id="line-125"></span><span class="hs-keyword">data</span><span> </span><span id="Key"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Key"><span class="hs-identifier hs-var">Key</span></a></span></span><span>
+</span><span id="line-126"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="Char"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Char"><span class="hs-identifier hs-var">Char</span></a></span></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span>
+</span><span id="line-127"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="SpecialKey"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#SpecialKey"><span class="hs-identifier hs-var">SpecialKey</span></a></span></span><span>  </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#SpecialKey"><span class="hs-identifier hs-type">SpecialKey</span></a></span><span>
+</span><span id="line-128"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="MouseButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MouseButton"><span class="hs-identifier hs-var">MouseButton</span></a></span></span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MouseButton"><span class="hs-identifier hs-type">MouseButton</span></a></span><span>
+</span><span id="line-129"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104960"><span id="local-6989586621679104972"><span id="local-6989586621679104976"><span class="annot"><span class="annottext">Int -&gt; Key -&gt; ShowS
+[Key] -&gt; ShowS
+Key -&gt; String
+(Int -&gt; Key -&gt; ShowS)
+-&gt; (Key -&gt; String) -&gt; ([Key] -&gt; ShowS) -&gt; Show Key
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Key -&gt; ShowS
+showsPrec :: Int -&gt; Key -&gt; ShowS
+$cshow :: Key -&gt; String
+show :: Key -&gt; String
+$cshowList :: [Key] -&gt; ShowS
+showList :: [Key] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104980"><span id="local-6989586621679104988"><span class="annot"><span class="annottext">Key -&gt; Key -&gt; Bool
+(Key -&gt; Key -&gt; Bool) -&gt; (Key -&gt; Key -&gt; Bool) -&gt; Eq Key
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Key -&gt; Key -&gt; Bool
+== :: Key -&gt; Key -&gt; Bool
+$c/= :: Key -&gt; Key -&gt; Bool
+/= :: Key -&gt; Key -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104995"><span id="local-6989586621679105003"><span id="local-6989586621679105008"><span id="local-6989586621679105012"><span id="local-6989586621679105015"><span id="local-6989586621679105018"><span id="local-6989586621679105021"><span class="annot"><span class="annottext">Eq Key
+Eq Key =&gt;
+(Key -&gt; Key -&gt; Ordering)
+-&gt; (Key -&gt; Key -&gt; Bool)
+-&gt; (Key -&gt; Key -&gt; Bool)
+-&gt; (Key -&gt; Key -&gt; Bool)
+-&gt; (Key -&gt; Key -&gt; Bool)
+-&gt; (Key -&gt; Key -&gt; Key)
+-&gt; (Key -&gt; Key -&gt; Key)
+-&gt; Ord Key
+Key -&gt; Key -&gt; Bool
+Key -&gt; Key -&gt; Ordering
+Key -&gt; Key -&gt; Key
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Key -&gt; Key -&gt; Ordering
+compare :: Key -&gt; Key -&gt; Ordering
+$c&lt; :: Key -&gt; Key -&gt; Bool
+&lt; :: Key -&gt; Key -&gt; Bool
+$c&lt;= :: Key -&gt; Key -&gt; Bool
+&lt;= :: Key -&gt; Key -&gt; Bool
+$c&gt; :: Key -&gt; Key -&gt; Bool
+&gt; :: Key -&gt; Key -&gt; Bool
+$c&gt;= :: Key -&gt; Key -&gt; Bool
+&gt;= :: Key -&gt; Key -&gt; Bool
+$cmax :: Key -&gt; Key -&gt; Key
+max :: Key -&gt; Key -&gt; Key
+$cmin :: Key -&gt; Key -&gt; Key
+min :: Key -&gt; Key -&gt; Key
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span class="hs-keyword">data</span><span> </span><span id="MouseButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MouseButton"><span class="hs-identifier hs-var">MouseButton</span></a></span></span><span>
+</span><span id="line-132"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="LeftButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#LeftButton"><span class="hs-identifier hs-var">LeftButton</span></a></span></span><span>
+</span><span id="line-133"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="MiddleButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#MiddleButton"><span class="hs-identifier hs-var">MiddleButton</span></a></span></span><span>
+</span><span id="line-134"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="RightButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#RightButton"><span class="hs-identifier hs-var">RightButton</span></a></span></span><span>
+</span><span id="line-135"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="WheelUp"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#WheelUp"><span class="hs-identifier hs-var">WheelUp</span></a></span></span><span>
+</span><span id="line-136"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="WheelDown"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#WheelDown"><span class="hs-identifier hs-var">WheelDown</span></a></span></span><span>
+</span><span id="line-137"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="AdditionalButton"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#AdditionalButton"><span class="hs-identifier hs-var">AdditionalButton</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-138"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679105031"><span id="local-6989586621679105036"><span id="local-6989586621679105039"><span class="annot"><span class="annottext">Int -&gt; MouseButton -&gt; ShowS
+[MouseButton] -&gt; ShowS
+MouseButton -&gt; String
+(Int -&gt; MouseButton -&gt; ShowS)
+-&gt; (MouseButton -&gt; String)
+-&gt; ([MouseButton] -&gt; ShowS)
+-&gt; Show MouseButton
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; MouseButton -&gt; ShowS
+showsPrec :: Int -&gt; MouseButton -&gt; ShowS
+$cshow :: MouseButton -&gt; String
+show :: MouseButton -&gt; String
+$cshowList :: [MouseButton] -&gt; ShowS
+showList :: [MouseButton] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105042"><span id="local-6989586621679105046"><span class="annot"><span class="annottext">MouseButton -&gt; MouseButton -&gt; Bool
+(MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool) -&gt; Eq MouseButton
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: MouseButton -&gt; MouseButton -&gt; Bool
+== :: MouseButton -&gt; MouseButton -&gt; Bool
+$c/= :: MouseButton -&gt; MouseButton -&gt; Bool
+/= :: MouseButton -&gt; MouseButton -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105051"><span id="local-6989586621679105054"><span id="local-6989586621679105057"><span id="local-6989586621679105060"><span id="local-6989586621679105063"><span id="local-6989586621679105066"><span id="local-6989586621679105069"><span class="annot"><span class="annottext">Eq MouseButton
+Eq MouseButton =&gt;
+(MouseButton -&gt; MouseButton -&gt; Ordering)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; MouseButton)
+-&gt; (MouseButton -&gt; MouseButton -&gt; MouseButton)
+-&gt; Ord MouseButton
+MouseButton -&gt; MouseButton -&gt; Bool
+MouseButton -&gt; MouseButton -&gt; Ordering
+MouseButton -&gt; MouseButton -&gt; MouseButton
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: MouseButton -&gt; MouseButton -&gt; Ordering
+compare :: MouseButton -&gt; MouseButton -&gt; Ordering
+$c&lt; :: MouseButton -&gt; MouseButton -&gt; Bool
+&lt; :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&lt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+&lt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&gt; :: MouseButton -&gt; MouseButton -&gt; Bool
+&gt; :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&gt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+&gt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+$cmax :: MouseButton -&gt; MouseButton -&gt; MouseButton
+max :: MouseButton -&gt; MouseButton -&gt; MouseButton
+$cmin :: MouseButton -&gt; MouseButton -&gt; MouseButton
+min :: MouseButton -&gt; MouseButton -&gt; MouseButton
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span>
+</span><span id="line-140"></span><span class="hs-keyword">data</span><span> </span><span id="KeyState"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyState"><span class="hs-identifier hs-var">KeyState</span></a></span></span><span>
+</span><span id="line-141"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="Down"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Down"><span class="hs-identifier hs-var">Down</span></a></span></span><span>
+</span><span id="line-142"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="Up"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Up"><span class="hs-identifier hs-var">Up</span></a></span></span><span>
+</span><span id="line-143"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679105074"><span id="local-6989586621679105076"><span id="local-6989586621679105080"><span class="annot"><span class="annottext">Int -&gt; KeyState -&gt; ShowS
+[KeyState] -&gt; ShowS
+KeyState -&gt; String
+(Int -&gt; KeyState -&gt; ShowS)
+-&gt; (KeyState -&gt; String) -&gt; ([KeyState] -&gt; ShowS) -&gt; Show KeyState
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; KeyState -&gt; ShowS
+showsPrec :: Int -&gt; KeyState -&gt; ShowS
+$cshow :: KeyState -&gt; String
+show :: KeyState -&gt; String
+$cshowList :: [KeyState] -&gt; ShowS
+showList :: [KeyState] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105083"><span id="local-6989586621679105085"><span class="annot"><span class="annottext">KeyState -&gt; KeyState -&gt; Bool
+(KeyState -&gt; KeyState -&gt; Bool)
+-&gt; (KeyState -&gt; KeyState -&gt; Bool) -&gt; Eq KeyState
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: KeyState -&gt; KeyState -&gt; Bool
+== :: KeyState -&gt; KeyState -&gt; Bool
+$c/= :: KeyState -&gt; KeyState -&gt; Bool
+/= :: KeyState -&gt; KeyState -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105091"><span id="local-6989586621679105093"><span id="local-6989586621679105095"><span id="local-6989586621679105099"><span id="local-6989586621679105102"><span id="local-6989586621679105105"><span id="local-6989586621679105108"><span class="annot"><span class="annottext">Eq KeyState
+Eq KeyState =&gt;
+(KeyState -&gt; KeyState -&gt; Ordering)
+-&gt; (KeyState -&gt; KeyState -&gt; Bool)
+-&gt; (KeyState -&gt; KeyState -&gt; Bool)
+-&gt; (KeyState -&gt; KeyState -&gt; Bool)
+-&gt; (KeyState -&gt; KeyState -&gt; Bool)
+-&gt; (KeyState -&gt; KeyState -&gt; KeyState)
+-&gt; (KeyState -&gt; KeyState -&gt; KeyState)
+-&gt; Ord KeyState
+KeyState -&gt; KeyState -&gt; Bool
+KeyState -&gt; KeyState -&gt; Ordering
+KeyState -&gt; KeyState -&gt; KeyState
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: KeyState -&gt; KeyState -&gt; Ordering
+compare :: KeyState -&gt; KeyState -&gt; Ordering
+$c&lt; :: KeyState -&gt; KeyState -&gt; Bool
+&lt; :: KeyState -&gt; KeyState -&gt; Bool
+$c&lt;= :: KeyState -&gt; KeyState -&gt; Bool
+&lt;= :: KeyState -&gt; KeyState -&gt; Bool
+$c&gt; :: KeyState -&gt; KeyState -&gt; Bool
+&gt; :: KeyState -&gt; KeyState -&gt; Bool
+$c&gt;= :: KeyState -&gt; KeyState -&gt; Bool
+&gt;= :: KeyState -&gt; KeyState -&gt; Bool
+$cmax :: KeyState -&gt; KeyState -&gt; KeyState
+max :: KeyState -&gt; KeyState -&gt; KeyState
+$cmin :: KeyState -&gt; KeyState -&gt; KeyState
+min :: KeyState -&gt; KeyState -&gt; KeyState
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span class="hs-keyword">data</span><span> </span><span id="SpecialKey"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#SpecialKey"><span class="hs-identifier hs-var">SpecialKey</span></a></span></span><span>
+</span><span id="line-146"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="KeyUnknown"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyUnknown"><span class="hs-identifier hs-var">KeyUnknown</span></a></span></span><span>
+</span><span id="line-147"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeySpace"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeySpace"><span class="hs-identifier hs-var">KeySpace</span></a></span></span><span>
+</span><span id="line-148"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyEsc"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyEsc"><span class="hs-identifier hs-var">KeyEsc</span></a></span></span><span>
+</span><span id="line-149"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF1"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF1"><span class="hs-identifier hs-var">KeyF1</span></a></span></span><span>
+</span><span id="line-150"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF2"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF2"><span class="hs-identifier hs-var">KeyF2</span></a></span></span><span>
+</span><span id="line-151"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF3"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF3"><span class="hs-identifier hs-var">KeyF3</span></a></span></span><span>
+</span><span id="line-152"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF4"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF4"><span class="hs-identifier hs-var">KeyF4</span></a></span></span><span>
+</span><span id="line-153"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF5"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF5"><span class="hs-identifier hs-var">KeyF5</span></a></span></span><span>
+</span><span id="line-154"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF6"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF6"><span class="hs-identifier hs-var">KeyF6</span></a></span></span><span>
+</span><span id="line-155"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF7"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF7"><span class="hs-identifier hs-var">KeyF7</span></a></span></span><span>
+</span><span id="line-156"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF8"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF8"><span class="hs-identifier hs-var">KeyF8</span></a></span></span><span>
+</span><span id="line-157"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF9"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF9"><span class="hs-identifier hs-var">KeyF9</span></a></span></span><span>
+</span><span id="line-158"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF10"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF10"><span class="hs-identifier hs-var">KeyF10</span></a></span></span><span>
+</span><span id="line-159"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF11"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF11"><span class="hs-identifier hs-var">KeyF11</span></a></span></span><span>
+</span><span id="line-160"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF12"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF12"><span class="hs-identifier hs-var">KeyF12</span></a></span></span><span>
+</span><span id="line-161"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF13"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF13"><span class="hs-identifier hs-var">KeyF13</span></a></span></span><span>
+</span><span id="line-162"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF14"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF14"><span class="hs-identifier hs-var">KeyF14</span></a></span></span><span>
+</span><span id="line-163"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF15"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF15"><span class="hs-identifier hs-var">KeyF15</span></a></span></span><span>
+</span><span id="line-164"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF16"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF16"><span class="hs-identifier hs-var">KeyF16</span></a></span></span><span>
+</span><span id="line-165"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF17"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF17"><span class="hs-identifier hs-var">KeyF17</span></a></span></span><span>
+</span><span id="line-166"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF18"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF18"><span class="hs-identifier hs-var">KeyF18</span></a></span></span><span>
+</span><span id="line-167"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF19"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF19"><span class="hs-identifier hs-var">KeyF19</span></a></span></span><span>
+</span><span id="line-168"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF20"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF20"><span class="hs-identifier hs-var">KeyF20</span></a></span></span><span>
+</span><span id="line-169"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF21"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF21"><span class="hs-identifier hs-var">KeyF21</span></a></span></span><span>
+</span><span id="line-170"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF22"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF22"><span class="hs-identifier hs-var">KeyF22</span></a></span></span><span>
+</span><span id="line-171"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF23"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF23"><span class="hs-identifier hs-var">KeyF23</span></a></span></span><span>
+</span><span id="line-172"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF24"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF24"><span class="hs-identifier hs-var">KeyF24</span></a></span></span><span>
+</span><span id="line-173"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyF25"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyF25"><span class="hs-identifier hs-var">KeyF25</span></a></span></span><span>
+</span><span id="line-174"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyUp"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyUp"><span class="hs-identifier hs-var">KeyUp</span></a></span></span><span>
+</span><span id="line-175"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyDown"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyDown"><span class="hs-identifier hs-var">KeyDown</span></a></span></span><span>
+</span><span id="line-176"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyLeft"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyLeft"><span class="hs-identifier hs-var">KeyLeft</span></a></span></span><span>
+</span><span id="line-177"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyRight"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyRight"><span class="hs-identifier hs-var">KeyRight</span></a></span></span><span>
+</span><span id="line-178"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyTab"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyTab"><span class="hs-identifier hs-var">KeyTab</span></a></span></span><span>
+</span><span id="line-179"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyEnter"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyEnter"><span class="hs-identifier hs-var">KeyEnter</span></a></span></span><span>
+</span><span id="line-180"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyBackspace"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyBackspace"><span class="hs-identifier hs-var">KeyBackspace</span></a></span></span><span>
+</span><span id="line-181"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyInsert"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyInsert"><span class="hs-identifier hs-var">KeyInsert</span></a></span></span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyNumLock"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyNumLock"><span class="hs-identifier hs-var">KeyNumLock</span></a></span></span><span>
+</span><span id="line-183"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyBegin"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyBegin"><span class="hs-identifier hs-var">KeyBegin</span></a></span></span><span>
+</span><span id="line-184"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyDelete"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyDelete"><span class="hs-identifier hs-var">KeyDelete</span></a></span></span><span>
+</span><span id="line-185"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPageUp"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPageUp"><span class="hs-identifier hs-var">KeyPageUp</span></a></span></span><span>
+</span><span id="line-186"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPageDown"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPageDown"><span class="hs-identifier hs-var">KeyPageDown</span></a></span></span><span>
+</span><span id="line-187"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyHome"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyHome"><span class="hs-identifier hs-var">KeyHome</span></a></span></span><span>
+</span><span id="line-188"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyEnd"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyEnd"><span class="hs-identifier hs-var">KeyEnd</span></a></span></span><span>
+</span><span id="line-189"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyShiftL"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyShiftL"><span class="hs-identifier hs-var">KeyShiftL</span></a></span></span><span>
+</span><span id="line-190"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyShiftR"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyShiftR"><span class="hs-identifier hs-var">KeyShiftR</span></a></span></span><span>
+</span><span id="line-191"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyCtrlL"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyCtrlL"><span class="hs-identifier hs-var">KeyCtrlL</span></a></span></span><span>
+</span><span id="line-192"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyCtrlR"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyCtrlR"><span class="hs-identifier hs-var">KeyCtrlR</span></a></span></span><span>
+</span><span id="line-193"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyAltL"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyAltL"><span class="hs-identifier hs-var">KeyAltL</span></a></span></span><span>
+</span><span id="line-194"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyAltR"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyAltR"><span class="hs-identifier hs-var">KeyAltR</span></a></span></span><span>
+</span><span id="line-195"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad0"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad0"><span class="hs-identifier hs-var">KeyPad0</span></a></span></span><span>
+</span><span id="line-196"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad1"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad1"><span class="hs-identifier hs-var">KeyPad1</span></a></span></span><span>
+</span><span id="line-197"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad2"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad2"><span class="hs-identifier hs-var">KeyPad2</span></a></span></span><span>
+</span><span id="line-198"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad3"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad3"><span class="hs-identifier hs-var">KeyPad3</span></a></span></span><span>
+</span><span id="line-199"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad4"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad4"><span class="hs-identifier hs-var">KeyPad4</span></a></span></span><span>
+</span><span id="line-200"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad5"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad5"><span class="hs-identifier hs-var">KeyPad5</span></a></span></span><span>
+</span><span id="line-201"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad6"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad6"><span class="hs-identifier hs-var">KeyPad6</span></a></span></span><span>
+</span><span id="line-202"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad7"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad7"><span class="hs-identifier hs-var">KeyPad7</span></a></span></span><span>
+</span><span id="line-203"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad8"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad8"><span class="hs-identifier hs-var">KeyPad8</span></a></span></span><span>
+</span><span id="line-204"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPad9"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPad9"><span class="hs-identifier hs-var">KeyPad9</span></a></span></span><span>
+</span><span id="line-205"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadDivide"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadDivide"><span class="hs-identifier hs-var">KeyPadDivide</span></a></span></span><span>
+</span><span id="line-206"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadMultiply"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadMultiply"><span class="hs-identifier hs-var">KeyPadMultiply</span></a></span></span><span>
+</span><span id="line-207"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadSubtract"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadSubtract"><span class="hs-identifier hs-var">KeyPadSubtract</span></a></span></span><span>
+</span><span id="line-208"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadAdd"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadAdd"><span class="hs-identifier hs-var">KeyPadAdd</span></a></span></span><span>
+</span><span id="line-209"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadDecimal"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadDecimal"><span class="hs-identifier hs-var">KeyPadDecimal</span></a></span></span><span>
+</span><span id="line-210"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadEqual"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadEqual"><span class="hs-identifier hs-var">KeyPadEqual</span></a></span></span><span>
+</span><span id="line-211"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="KeyPadEnter"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyPadEnter"><span class="hs-identifier hs-var">KeyPadEnter</span></a></span></span><span>
+</span><span id="line-212"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679105177"><span id="local-6989586621679105179"><span id="local-6989586621679105182"><span class="annot"><span class="annottext">Int -&gt; SpecialKey -&gt; ShowS
+[SpecialKey] -&gt; ShowS
+SpecialKey -&gt; String
+(Int -&gt; SpecialKey -&gt; ShowS)
+-&gt; (SpecialKey -&gt; String)
+-&gt; ([SpecialKey] -&gt; ShowS)
+-&gt; Show SpecialKey
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; SpecialKey -&gt; ShowS
+showsPrec :: Int -&gt; SpecialKey -&gt; ShowS
+$cshow :: SpecialKey -&gt; String
+show :: SpecialKey -&gt; String
+$cshowList :: [SpecialKey] -&gt; ShowS
+showList :: [SpecialKey] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105185"><span id="local-6989586621679105187"><span class="annot"><span class="annottext">SpecialKey -&gt; SpecialKey -&gt; Bool
+(SpecialKey -&gt; SpecialKey -&gt; Bool)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; Bool) -&gt; Eq SpecialKey
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: SpecialKey -&gt; SpecialKey -&gt; Bool
+== :: SpecialKey -&gt; SpecialKey -&gt; Bool
+$c/= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+/= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105192"><span id="local-6989586621679105194"><span id="local-6989586621679105196"><span id="local-6989586621679105199"><span id="local-6989586621679105202"><span id="local-6989586621679105205"><span id="local-6989586621679105208"><span class="annot"><span class="annottext">Eq SpecialKey
+Eq SpecialKey =&gt;
+(SpecialKey -&gt; SpecialKey -&gt; Ordering)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; Bool)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; Bool)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; Bool)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; Bool)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; SpecialKey)
+-&gt; (SpecialKey -&gt; SpecialKey -&gt; SpecialKey)
+-&gt; Ord SpecialKey
+SpecialKey -&gt; SpecialKey -&gt; Bool
+SpecialKey -&gt; SpecialKey -&gt; Ordering
+SpecialKey -&gt; SpecialKey -&gt; SpecialKey
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: SpecialKey -&gt; SpecialKey -&gt; Ordering
+compare :: SpecialKey -&gt; SpecialKey -&gt; Ordering
+$c&lt; :: SpecialKey -&gt; SpecialKey -&gt; Bool
+&lt; :: SpecialKey -&gt; SpecialKey -&gt; Bool
+$c&lt;= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+&lt;= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+$c&gt; :: SpecialKey -&gt; SpecialKey -&gt; Bool
+&gt; :: SpecialKey -&gt; SpecialKey -&gt; Bool
+$c&gt;= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+&gt;= :: SpecialKey -&gt; SpecialKey -&gt; Bool
+$cmax :: SpecialKey -&gt; SpecialKey -&gt; SpecialKey
+max :: SpecialKey -&gt; SpecialKey -&gt; SpecialKey
+$cmin :: SpecialKey -&gt; SpecialKey -&gt; SpecialKey
+min :: SpecialKey -&gt; SpecialKey -&gt; SpecialKey
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-213"></span><span>
+</span><span id="line-214"></span><span>
+</span><span id="line-215"></span><span class="hs-keyword">data</span><span> </span><span id="Modifiers"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Modifiers"><span class="hs-identifier hs-var">Modifiers</span></a></span></span><span>
+</span><span id="line-216"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="Modifiers"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Modifiers"><span class="hs-identifier hs-var">Modifiers</span></a></span></span><span>
+</span><span id="line-217"></span><span>        </span><span class="hs-special">{</span><span> </span><span id="shift"><span class="annot"><span class="annottext">Modifiers -&gt; KeyState
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#shift"><span class="hs-identifier hs-var hs-var">shift</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyState"><span class="hs-identifier hs-type">KeyState</span></a></span><span>
+</span><span id="line-218"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="ctrl"><span class="annot"><span class="annottext">Modifiers -&gt; KeyState
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#ctrl"><span class="hs-identifier hs-var hs-var">ctrl</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyState"><span class="hs-identifier hs-type">KeyState</span></a></span><span>
+</span><span id="line-219"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="alt"><span class="annot"><span class="annottext">Modifiers -&gt; KeyState
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#alt"><span class="hs-identifier hs-var hs-var">alt</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#KeyState"><span class="hs-identifier hs-type">KeyState</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-220"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679105215"><span id="local-6989586621679105221"><span id="local-6989586621679105225"><span class="annot"><span class="annottext">Int -&gt; Modifiers -&gt; ShowS
+[Modifiers] -&gt; ShowS
+Modifiers -&gt; String
+(Int -&gt; Modifiers -&gt; ShowS)
+-&gt; (Modifiers -&gt; String)
+-&gt; ([Modifiers] -&gt; ShowS)
+-&gt; Show Modifiers
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Modifiers -&gt; ShowS
+showsPrec :: Int -&gt; Modifiers -&gt; ShowS
+$cshow :: Modifiers -&gt; String
+show :: Modifiers -&gt; String
+$cshowList :: [Modifiers] -&gt; ShowS
+showList :: [Modifiers] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105228"><span id="local-6989586621679105233"><span class="annot"><span class="annottext">Modifiers -&gt; Modifiers -&gt; Bool
+(Modifiers -&gt; Modifiers -&gt; Bool)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Bool) -&gt; Eq Modifiers
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Modifiers -&gt; Modifiers -&gt; Bool
+== :: Modifiers -&gt; Modifiers -&gt; Bool
+$c/= :: Modifiers -&gt; Modifiers -&gt; Bool
+/= :: Modifiers -&gt; Modifiers -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679105239"><span id="local-6989586621679105244"><span id="local-6989586621679105249"><span id="local-6989586621679105253"><span id="local-6989586621679105256"><span id="local-6989586621679105259"><span id="local-6989586621679105262"><span class="annot"><span class="annottext">Eq Modifiers
+Eq Modifiers =&gt;
+(Modifiers -&gt; Modifiers -&gt; Ordering)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Bool)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Bool)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Bool)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Bool)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Modifiers)
+-&gt; (Modifiers -&gt; Modifiers -&gt; Modifiers)
+-&gt; Ord Modifiers
+Modifiers -&gt; Modifiers -&gt; Bool
+Modifiers -&gt; Modifiers -&gt; Ordering
+Modifiers -&gt; Modifiers -&gt; Modifiers
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Modifiers -&gt; Modifiers -&gt; Ordering
+compare :: Modifiers -&gt; Modifiers -&gt; Ordering
+$c&lt; :: Modifiers -&gt; Modifiers -&gt; Bool
+&lt; :: Modifiers -&gt; Modifiers -&gt; Bool
+$c&lt;= :: Modifiers -&gt; Modifiers -&gt; Bool
+&lt;= :: Modifiers -&gt; Modifiers -&gt; Bool
+$c&gt; :: Modifiers -&gt; Modifiers -&gt; Bool
+&gt; :: Modifiers -&gt; Modifiers -&gt; Bool
+$c&gt;= :: Modifiers -&gt; Modifiers -&gt; Bool
+&gt;= :: Modifiers -&gt; Modifiers -&gt; Bool
+$cmax :: Modifiers -&gt; Modifiers -&gt; Modifiers
+max :: Modifiers -&gt; Modifiers -&gt; Modifiers
+$cmin :: Modifiers -&gt; Modifiers -&gt; Modifiers
+min :: Modifiers -&gt; Modifiers -&gt; Modifiers
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-221"></span><span>
+</span><span id="line-222"></span></pre></body></html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Codec.BMP.BitmapInfoV5</span><span>
+</span><span id="line-3"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier">BitmapInfoV5</span></a></span><span>  </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#sizeOfBitmapInfoV5"><span class="hs-identifier">sizeOfBitmapInfoV5</span></a></span><span>
+</span><span id="line-5"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#checkBitmapInfoV5"><span class="hs-identifier">checkBitmapInfoV5</span></a></span><span>
+</span><span id="line-6"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#imageSizeFromBitmapInfoV5"><span class="hs-identifier">imageSizeFromBitmapInfoV5</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Codec.BMP.Error.html"><span class="hs-identifier">Codec.BMP.Error</span></a></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV4.html"><span class="hs-identifier">Codec.BMP.BitmapInfoV4</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary.Get</span></span><span>  </span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary.Put</span></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="annot"><span class="hs-comment">-- | Device Independent Bitmap (DIB) header for Windows V5 (98/2000 and newer)</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">data</span><span> </span><span id="BitmapInfoV5"><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-var">BitmapInfoV5</span></a></span></span><span>
+</span><span id="line-17"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="BitmapInfoV5"><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-var">BitmapInfoV5</span></a></span></span><span>
+</span><span id="line-18"></span><span>        </span><span class="hs-special">{</span><span> </span><span id="dib5InfoV4"><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; BitmapInfoV4
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5InfoV4"><span class="hs-identifier hs-var hs-var">dib5InfoV4</span></a></span></span><span>            </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV4.html#BitmapInfoV4"><span class="hs-identifier hs-type">BitmapInfoV4</span></a></span><span>
+</span><span id="line-19"></span><span>        </span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><span class="hs-comment">-- | Rendering intent for the bitmap.</span></span><span>
+</span><span id="line-21"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="dib5Intent"><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Intent"><span class="hs-identifier hs-var hs-var">dib5Intent</span></a></span></span><span>            </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-comment">-- | Offset (in bytes) from the beginning of the header to the start</span><span>
+</span><span id="line-24"></span><span>        </span><span class="hs-comment">--   of the profile data.</span><span>
+</span><span id="line-25"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="dib5ProfileData"><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileData"><span class="hs-identifier hs-var hs-var">dib5ProfileData</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><span class="hs-comment">-- | Size (in bytes) of embedded profile data.</span></span><span>
+</span><span id="line-28"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="dib5ProfileSize"><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileSize"><span class="hs-identifier hs-var hs-var">dib5ProfileSize</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-29"></span><span>        </span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><span class="hs-comment">-- | Reserved, should be zero.</span></span><span>
+</span><span id="line-31"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="dib5Reserved"><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Reserved"><span class="hs-identifier hs-var hs-var">dib5Reserved</span></a></span></span><span>          </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-32"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-33"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679062612"><span id="local-6989586621679062623"><span id="local-6989586621679062627"><span class="annot"><span class="annottext">Int -&gt; BitmapInfoV5 -&gt; ShowS
+[BitmapInfoV5] -&gt; ShowS
+BitmapInfoV5 -&gt; String
+(Int -&gt; BitmapInfoV5 -&gt; ShowS)
+-&gt; (BitmapInfoV5 -&gt; String)
+-&gt; ([BitmapInfoV5] -&gt; ShowS)
+-&gt; Show BitmapInfoV5
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; BitmapInfoV5 -&gt; ShowS
+showsPrec :: Int -&gt; BitmapInfoV5 -&gt; ShowS
+$cshow :: BitmapInfoV5 -&gt; String
+show :: BitmapInfoV5 -&gt; String
+$cshowList :: [BitmapInfoV5] -&gt; ShowS
+showList :: [BitmapInfoV5] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><span class="hs-comment">-- | Size of `BitmapInfoV5` header (in bytes)</span></span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#sizeOfBitmapInfoV5"><span class="hs-identifier hs-type">sizeOfBitmapInfoV5</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-37"></span><span id="sizeOfBitmapInfoV5"><span class="annot"><span class="annottext">sizeOfBitmapInfoV5 :: Int
+</span><a href="Codec.BMP.BitmapInfoV5.html#sizeOfBitmapInfoV5"><span class="hs-identifier hs-var hs-var">sizeOfBitmapInfoV5</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">124</span></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679062633"><span class="annot"><span class="hs-identifier hs-type">Binary</span></span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-type">BitmapInfoV5</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-41"></span><span> </span><span id="local-6989586621679062646"><span class="annot"><span class="annottext">get :: Get BitmapInfoV5
+</span><a href="#local-6989586621679062646"><span class="hs-identifier hs-var hs-var hs-var hs-var">get</span></a></span></span><span>
+</span><span id="line-42"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>  </span><span id="local-6989586621679062648"><span class="annot"><span class="annottext">BitmapInfoV4
+</span><a href="#local-6989586621679062648"><span class="hs-identifier hs-var">infoV4</span></a></span></span><span>  </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get BitmapInfoV4
+forall t. Binary t =&gt; Get t
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-43"></span><span>        </span><span id="local-6989586621679062649"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062649"><span class="hs-identifier hs-var">intent</span></a></span></span><span>  </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-44"></span><span>        </span><span id="local-6989586621679062651"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062651"><span class="hs-identifier hs-var">pdata</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-45"></span><span>        </span><span id="local-6989586621679062652"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062652"><span class="hs-identifier hs-var">psize</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-46"></span><span>        </span><span id="local-6989586621679062653"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062653"><span class="hs-identifier hs-var">res</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-47"></span><span>        </span><span>
+</span><span id="line-48"></span><span>        </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Get BitmapInfoV5
+forall a. a -&gt; Get a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span>  </span><span class="annot"><span class="annottext">(BitmapInfoV5 -&gt; Get BitmapInfoV5)
+-&gt; BitmapInfoV5 -&gt; Get BitmapInfoV5
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-type">BitmapInfoV5</span></a></span><span>
+</span><span id="line-49"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">dib5InfoV4 :: BitmapInfoV4
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5InfoV4"><span class="hs-identifier hs-var">dib5InfoV4</span></a></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">BitmapInfoV4
+</span><a href="#local-6989586621679062648"><span class="hs-identifier hs-var">infoV4</span></a></span><span>
+</span><span id="line-50"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">dib5Intent :: Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Intent"><span class="hs-identifier hs-var">dib5Intent</span></a></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062649"><span class="hs-identifier hs-var">intent</span></a></span><span>
+</span><span id="line-51"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">dib5ProfileData :: Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileData"><span class="hs-identifier hs-var">dib5ProfileData</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062651"><span class="hs-identifier hs-var">pdata</span></a></span><span>
+</span><span id="line-52"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">dib5ProfileSize :: Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileSize"><span class="hs-identifier hs-var">dib5ProfileSize</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062652"><span class="hs-identifier hs-var">psize</span></a></span><span>
+</span><span id="line-53"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">dib5Reserved :: Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Reserved"><span class="hs-identifier hs-var">dib5Reserved</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062653"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-54"></span><span>                </span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span> </span><span id="local-6989586621679062660"><span class="annot"><span class="annottext">put :: BitmapInfoV5 -&gt; Put
+</span><a href="#local-6989586621679062660"><span class="hs-identifier hs-var hs-var hs-var hs-var">put</span></a></span></span><span> </span><span id="local-6989586621679062662"><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span></span><span>
+</span><span id="line-57"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>  </span><span class="annot"><span class="annottext">BitmapInfoV4 -&gt; Put
+forall t. Binary t =&gt; t -&gt; Put
+</span><span class="hs-identifier hs-var">put</span></span><span>             </span><span class="annot"><span class="annottext">(BitmapInfoV4 -&gt; Put) -&gt; BitmapInfoV4 -&gt; Put
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; BitmapInfoV4
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5InfoV4"><span class="hs-identifier hs-var">dib5InfoV4</span></a></span><span>            </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span><span>
+</span><span id="line-58"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span>     </span><span class="annot"><span class="annottext">(Word32 -&gt; Put) -&gt; Word32 -&gt; Put
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Intent"><span class="hs-identifier hs-var">dib5Intent</span></a></span><span>            </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span><span>
+</span><span id="line-59"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span>     </span><span class="annot"><span class="annottext">(Word32 -&gt; Put) -&gt; Word32 -&gt; Put
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileData"><span class="hs-identifier hs-var">dib5ProfileData</span></a></span><span>       </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span>     </span><span class="annot"><span class="annottext">(Word32 -&gt; Put) -&gt; Word32 -&gt; Put
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5ProfileSize"><span class="hs-identifier hs-var">dib5ProfileSize</span></a></span><span>       </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span><span>
+</span><span id="line-61"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span>     </span><span class="annot"><span class="annottext">(Word32 -&gt; Put) -&gt; Word32 -&gt; Put
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; Word32
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5Reserved"><span class="hs-identifier hs-var">dib5Reserved</span></a></span><span>          </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062662"><span class="hs-identifier hs-var">header</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span>        </span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- | Check headers for problems and unsupported features.        </span><span>
+</span><span id="line-65"></span><span class="hs-comment">--      The V5 header doesn't give us any more useful info than the V4 one.</span><span>
+</span><span id="line-66"></span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#checkBitmapInfoV5"><span class="hs-identifier hs-type">checkBitmapInfoV5</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-type">BitmapInfoV5</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Codec.BMP.Error.html#Error"><span class="hs-identifier hs-type">Error</span></a></span><span>
+</span><span id="line-67"></span><span id="checkBitmapInfoV5"><span class="annot"><span class="annottext">checkBitmapInfoV5 :: BitmapInfoV5 -&gt; Word32 -&gt; Maybe Error
+</span><a href="Codec.BMP.BitmapInfoV5.html#checkBitmapInfoV5"><span class="hs-identifier hs-var hs-var">checkBitmapInfoV5</span></a></span></span><span> </span><span id="local-6989586621679062664"><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062664"><span class="hs-identifier hs-var">header</span></a></span></span><span> </span><span id="local-6989586621679062665"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062665"><span class="hs-identifier hs-var">expectedImageSize</span></a></span></span><span>
+</span><span id="line-68"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">BitmapInfoV4 -&gt; Word32 -&gt; Maybe Error
+</span><a href="Codec.BMP.BitmapInfoV4.html#checkBitmapInfoV4"><span class="hs-identifier hs-var">checkBitmapInfoV4</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; BitmapInfoV4
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5InfoV4"><span class="hs-identifier hs-var">dib5InfoV4</span></a></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5
+</span><a href="#local-6989586621679062664"><span class="hs-identifier hs-var">header</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679062665"><span class="hs-identifier hs-var">expectedImageSize</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="annot"><span class="hs-comment">-- | Compute the size of the image data from the header.</span></span><span>
+</span><span id="line-72"></span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#imageSizeFromBitmapInfoV5"><span class="hs-identifier hs-type">imageSizeFromBitmapInfoV5</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Codec.BMP.BitmapInfoV5.html#BitmapInfoV5"><span class="hs-identifier hs-type">BitmapInfoV5</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-73"></span><span id="imageSizeFromBitmapInfoV5"><span class="annot"><span class="annottext">imageSizeFromBitmapInfoV5 :: BitmapInfoV5 -&gt; Maybe Int
+</span><a href="Codec.BMP.BitmapInfoV5.html#imageSizeFromBitmapInfoV5"><span class="hs-identifier hs-var hs-var">imageSizeFromBitmapInfoV5</span></a></span></span><span> </span><span>
+</span><span id="line-74"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">BitmapInfoV4 -&gt; Maybe Int
+</span><a href="Codec.BMP.BitmapInfoV4.html#imageSizeFromBitmapInfoV4"><span class="hs-identifier hs-var">imageSizeFromBitmapInfoV4</span></a></span><span> </span><span class="annot"><span class="annottext">(BitmapInfoV4 -&gt; Maybe Int)
+-&gt; (BitmapInfoV5 -&gt; BitmapInfoV4) -&gt; BitmapInfoV5 -&gt; Maybe Int
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">BitmapInfoV5 -&gt; BitmapInfoV4
+</span><a href="Codec.BMP.BitmapInfoV5.html#dib5InfoV4"><span class="hs-identifier hs-var">dib5InfoV4</span></a></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span></pre></body></html>

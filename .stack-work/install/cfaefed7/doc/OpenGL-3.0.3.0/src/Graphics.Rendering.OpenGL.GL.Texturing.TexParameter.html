@@ -1,0 +1,386 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Texturing.TexParameter</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- This is a purely internal module for getting\/setting texture parameters.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TexParameter</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier">TexParameter</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParami"><span class="hs-identifier">texParami</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamf"><span class="hs-identifier">texParamf</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamC4f"><span class="hs-identifier">texParamC4f</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameteri"><span class="hs-identifier">getTexParameteri</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Alloc</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Utils</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Storable</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PeekPoke</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget</span></a></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexSpec.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.VertexSpec</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">data</span><span> </span><span id="TexParameter"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-var">TexParameter</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-33"></span><span>     </span><span id="TextureMinFilter"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMinFilter"><span class="hs-identifier hs-var">TextureMinFilter</span></a></span></span><span>
+</span><span id="line-34"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureMagFilter"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMagFilter"><span class="hs-identifier hs-var">TextureMagFilter</span></a></span></span><span>
+</span><span id="line-35"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureWrapS"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapS"><span class="hs-identifier hs-var">TextureWrapS</span></a></span></span><span>
+</span><span id="line-36"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureWrapT"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapT"><span class="hs-identifier hs-var">TextureWrapT</span></a></span></span><span>
+</span><span id="line-37"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureWrapR"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapR"><span class="hs-identifier hs-var">TextureWrapR</span></a></span></span><span>
+</span><span id="line-38"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureBorderColor"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureBorderColor"><span class="hs-identifier hs-var">TextureBorderColor</span></a></span></span><span>
+</span><span id="line-39"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureMinLOD"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMinLOD"><span class="hs-identifier hs-var">TextureMinLOD</span></a></span></span><span>
+</span><span id="line-40"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureMaxLOD"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxLOD"><span class="hs-identifier hs-var">TextureMaxLOD</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureBaseLevel"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureBaseLevel"><span class="hs-identifier hs-var">TextureBaseLevel</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureMaxLevel"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxLevel"><span class="hs-identifier hs-var">TextureMaxLevel</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TexturePriority"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexturePriority"><span class="hs-identifier hs-var">TexturePriority</span></a></span></span><span>
+</span><span id="line-44"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureMaxAnisotropy"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxAnisotropy"><span class="hs-identifier hs-var">TextureMaxAnisotropy</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompare"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompare"><span class="hs-identifier hs-var">TextureCompare</span></a></span></span><span>
+</span><span id="line-46"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompareOperator"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareOperator"><span class="hs-identifier hs-var">TextureCompareOperator</span></a></span></span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompareFailValue"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareFailValue"><span class="hs-identifier hs-var">TextureCompareFailValue</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GenerateMipmap"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#GenerateMipmap"><span class="hs-identifier hs-var">GenerateMipmap</span></a></span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompareMode"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareMode"><span class="hs-identifier hs-var">TextureCompareMode</span></a></span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureCompareFunc"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareFunc"><span class="hs-identifier hs-var">TextureCompareFunc</span></a></span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthTextureMode"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#DepthTextureMode"><span class="hs-identifier hs-var">DepthTextureMode</span></a></span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureLODBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureLODBias"><span class="hs-identifier hs-var">TextureLODBias</span></a></span></span><span>
+</span><span id="line-53"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureResident"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureResident"><span class="hs-identifier hs-var">TextureResident</span></a></span></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#marshalTexParameter"><span class="hs-identifier hs-type">marshalTexParameter</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-56"></span><span id="marshalTexParameter"><span class="annot"><span class="annottext">marshalTexParameter :: TexParameter -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#marshalTexParameter"><span class="hs-identifier hs-var hs-var">marshalTexParameter</span></a></span></span><span> </span><span id="local-6989586621679294643"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294643"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294643"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-57"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMinFilter"><span class="hs-identifier hs-var">TextureMinFilter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MIN_FILTER</span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMagFilter"><span class="hs-identifier hs-var">TextureMagFilter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MAG_FILTER</span></span><span>
+</span><span id="line-59"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapS"><span class="hs-identifier hs-var">TextureWrapS</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_WRAP_S</span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapT"><span class="hs-identifier hs-var">TextureWrapT</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_WRAP_T</span></span><span>
+</span><span id="line-61"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureWrapR"><span class="hs-identifier hs-var">TextureWrapR</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_WRAP_R</span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureBorderColor"><span class="hs-identifier hs-var">TextureBorderColor</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BORDER_COLOR</span></span><span>
+</span><span id="line-63"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMinLOD"><span class="hs-identifier hs-var">TextureMinLOD</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MIN_LOD</span></span><span>
+</span><span id="line-64"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxLOD"><span class="hs-identifier hs-var">TextureMaxLOD</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MAX_LOD</span></span><span>
+</span><span id="line-65"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureBaseLevel"><span class="hs-identifier hs-var">TextureBaseLevel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BASE_LEVEL</span></span><span>
+</span><span id="line-66"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxLevel"><span class="hs-identifier hs-var">TextureMaxLevel</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MAX_LEVEL</span></span><span>
+</span><span id="line-67"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexturePriority"><span class="hs-identifier hs-var">TexturePriority</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_PRIORITY</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureMaxAnisotropy"><span class="hs-identifier hs-var">TextureMaxAnisotropy</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_MAX_ANISOTROPY_EXT</span></span><span>
+</span><span id="line-69"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompare"><span class="hs-identifier hs-var">TextureCompare</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPARE_SGIX</span></span><span>
+</span><span id="line-70"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareOperator"><span class="hs-identifier hs-var">TextureCompareOperator</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPARE_OPERATOR_SGIX</span></span><span>
+</span><span id="line-71"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareFailValue"><span class="hs-identifier hs-var">TextureCompareFailValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPARE_FAIL_VALUE_ARB</span></span><span>
+</span><span id="line-72"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#GenerateMipmap"><span class="hs-identifier hs-var">GenerateMipmap</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_GENERATE_MIPMAP</span></span><span>
+</span><span id="line-73"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareMode"><span class="hs-identifier hs-var">TextureCompareMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPARE_MODE</span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureCompareFunc"><span class="hs-identifier hs-var">TextureCompareFunc</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_COMPARE_FUNC</span></span><span>
+</span><span id="line-75"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#DepthTextureMode"><span class="hs-identifier hs-var">DepthTextureMode</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_DEPTH_TEXTURE_MODE</span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureLODBias"><span class="hs-identifier hs-var">TextureLODBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_LOD_BIAS</span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureResident"><span class="hs-identifier hs-var">TextureResident</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_RESIDENT</span></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span id="local-6989586621679294558"><span id="local-6989586621679294560"><span id="local-6989586621679294561"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParameter"><span class="hs-identifier hs-type">texParameter</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294558"><span class="hs-identifier hs-type">t</span></a></span><span>
+</span><span id="line-82"></span><span>             </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294560"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>             </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294561"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294560"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>             </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294558"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294561"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span></span><span>
+</span><span id="line-85"></span><span id="texParameter"><span class="annot"><span class="annottext">texParameter :: forall t b a.
+ParameterizedTextureTarget t =&gt;
+(GLenum -&gt; GLenum -&gt; b -&gt; IO ())
+-&gt; (a -&gt; (b -&gt; IO ()) -&gt; IO ()) -&gt; t -&gt; TexParameter -&gt; a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParameter"><span class="hs-identifier hs-var hs-var">texParameter</span></a></span></span><span> </span><span id="local-6989586621679294668"><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; b -&gt; IO ()
+</span><a href="#local-6989586621679294668"><span class="hs-identifier hs-var">glTexParameter</span></a></span></span><span> </span><span id="local-6989586621679294669"><span class="annot"><span class="annottext">a -&gt; (b -&gt; IO ()) -&gt; IO ()
+</span><a href="#local-6989586621679294669"><span class="hs-identifier hs-var">marshalAct</span></a></span></span><span> </span><span id="local-6989586621679294670"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294670"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679294671"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294671"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679294672"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679294672"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-86"></span><span>   </span><span class="annot"><span class="annottext">a -&gt; (b -&gt; IO ()) -&gt; IO ()
+</span><a href="#local-6989586621679294669"><span class="hs-identifier hs-var">marshalAct</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679294672"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">((b -&gt; IO ()) -&gt; IO ()) -&gt; (b -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-87"></span><span>      </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; b -&gt; IO ()
+</span><a href="#local-6989586621679294668"><span class="hs-identifier hs-var">glTexParameter</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLenum
+forall t. ParameterizedTextureTarget t =&gt; t -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalParameterizedTextureTarget"><span class="hs-identifier hs-var">marshalParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294670"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TexParameter -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#marshalTexParameter"><span class="hs-identifier hs-var">marshalTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294671"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span id="local-6989586621679294570"><span id="local-6989586621679294572"><span id="local-6989586621679294573"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-type">getTexParameter</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Storable</span></span><span> </span><span class="annot"><a href="#local-6989586621679294570"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294572"><span class="hs-identifier hs-type">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span>                </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679294570"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294570"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294573"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294572"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679294573"><span class="hs-identifier hs-type">a</span></a></span></span></span></span><span>
+</span><span id="line-95"></span><span id="getTexParameter"><span class="annot"><span class="annottext">getTexParameter :: forall b t a.
+(Storable b, ParameterizedTextureTarget t) =&gt;
+(GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ())
+-&gt; (b -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-var hs-var">getTexParameter</span></a></span></span><span> </span><span id="local-6989586621679294682"><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ()
+</span><a href="#local-6989586621679294682"><span class="hs-identifier hs-var">glGetTexParameter</span></a></span></span><span> </span><span id="local-6989586621679294683"><span class="annot"><span class="annottext">b -&gt; a
+</span><a href="#local-6989586621679294683"><span class="hs-identifier hs-var">unmarshal</span></a></span></span><span> </span><span id="local-6989586621679294684"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294684"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679294685"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294685"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-96"></span><span>   </span><span class="annot"><span class="annottext">(Ptr b -&gt; IO a) -&gt; IO a
+forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr b -&gt; IO a) -&gt; IO a) -&gt; (Ptr b -&gt; IO a) -&gt; IO a
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679294687"><span class="annot"><span class="annottext">Ptr b
+</span><a href="#local-6989586621679294687"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-97"></span><span>     </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ()
+</span><a href="#local-6989586621679294682"><span class="hs-identifier hs-var">glGetTexParameter</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLenum
+forall t. ParameterizedTextureTarget t =&gt; t -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalParameterizedTextureTarget"><span class="hs-identifier hs-var">marshalParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294684"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TexParameter -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#marshalTexParameter"><span class="hs-identifier hs-var">marshalTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294685"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr b
+</span><a href="#local-6989586621679294687"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-98"></span><span>     </span><span class="annot"><span class="annottext">(b -&gt; a) -&gt; Ptr b -&gt; IO a
+forall a b. Storable a =&gt; (a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek1"><span class="hs-identifier hs-var">peek1</span></a></span><span> </span><span class="annot"><span class="annottext">b -&gt; a
+</span><a href="#local-6989586621679294683"><span class="hs-identifier hs-var">unmarshal</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr b
+</span><a href="#local-6989586621679294687"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span id="local-6989586621679294581"><span id="local-6989586621679294582"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#m2a"><span class="hs-identifier hs-type">m2a</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294581"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294582"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294581"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294582"><span class="hs-identifier hs-type">b</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span></span><span>
+</span><span id="line-103"></span><span id="m2a"><span class="annot"><span class="annottext">m2a :: forall a b. (a -&gt; b) -&gt; a -&gt; (b -&gt; IO ()) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#m2a"><span class="hs-identifier hs-var hs-var">m2a</span></a></span></span><span> </span><span id="local-6989586621679294690"><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679294690"><span class="hs-identifier hs-var">marshal</span></a></span></span><span> </span><span id="local-6989586621679294691"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679294691"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679294692"><span class="annot"><span class="annottext">b -&gt; IO ()
+</span><a href="#local-6989586621679294692"><span class="hs-identifier hs-var">act</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">b -&gt; IO ()
+</span><a href="#local-6989586621679294692"><span class="hs-identifier hs-var">act</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; b
+</span><a href="#local-6989586621679294690"><span class="hs-identifier hs-var">marshal</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679294691"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span id="local-6989586621679294585"><span id="local-6989586621679294587"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParami"><span class="hs-identifier hs-type">texParami</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294585"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-106"></span><span>   </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294587"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294587"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294585"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="#local-6989586621679294587"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-107"></span><span id="texParami"><span class="annot"><span class="annottext">texParami :: forall t a.
+ParameterizedTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; (a -&gt; GLint) -&gt; TexParameter -&gt; t -&gt; StateVar a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParami"><span class="hs-identifier hs-var hs-var">texParami</span></a></span></span><span> </span><span id="local-6989586621679294700"><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679294700"><span class="hs-identifier hs-var">unmarshal</span></a></span></span><span> </span><span id="local-6989586621679294701"><span class="annot"><span class="annottext">a -&gt; GLint
+</span><a href="#local-6989586621679294701"><span class="hs-identifier hs-var">marshal</span></a></span></span><span> </span><span id="local-6989586621679294702"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294702"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679294703"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294703"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-108"></span><span>   </span><span class="annot"><span class="annottext">IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-109"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; IO ())
+-&gt; (GLint -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+forall b t a.
+(Storable b, ParameterizedTextureTarget t) =&gt;
+(GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ())
+-&gt; (b -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-var">getTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexParameteriv</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; a
+</span><a href="#local-6989586621679294700"><span class="hs-identifier hs-var">unmarshal</span></a></span><span>     </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294703"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294702"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; GLint -&gt; IO ())
+-&gt; (a -&gt; (GLint -&gt; IO ()) -&gt; IO ())
+-&gt; t
+-&gt; TexParameter
+-&gt; a
+-&gt; IO ()
+forall t b a.
+ParameterizedTextureTarget t =&gt;
+(GLenum -&gt; GLenum -&gt; b -&gt; IO ())
+-&gt; (a -&gt; (b -&gt; IO ()) -&gt; IO ()) -&gt; t -&gt; TexParameter -&gt; a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParameter"><span class="hs-identifier hs-var">texParameter</span></a></span><span>    </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glTexParameteri</span></span><span>     </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(a -&gt; GLint) -&gt; a -&gt; (GLint -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; (b -&gt; IO ()) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#m2a"><span class="hs-identifier hs-var">m2a</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; GLint
+</span><a href="#local-6989586621679294701"><span class="hs-identifier hs-var">marshal</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294703"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294702"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span id="local-6989586621679294594"><span id="local-6989586621679294596"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamf"><span class="hs-identifier hs-type">texParamf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294594"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-113"></span><span>   </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294596"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679294596"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294594"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="#local-6989586621679294596"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-114"></span><span id="texParamf"><span class="annot"><span class="annottext">texParamf :: forall t a.
+ParameterizedTextureTarget t =&gt;
+(GLfloat -&gt; a) -&gt; (a -&gt; GLfloat) -&gt; TexParameter -&gt; t -&gt; StateVar a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamf"><span class="hs-identifier hs-var hs-var">texParamf</span></a></span></span><span> </span><span id="local-6989586621679294714"><span class="annot"><span class="annottext">GLfloat -&gt; a
+</span><a href="#local-6989586621679294714"><span class="hs-identifier hs-var">unmarshal</span></a></span></span><span> </span><span id="local-6989586621679294715"><span class="annot"><span class="annottext">a -&gt; GLfloat
+</span><a href="#local-6989586621679294715"><span class="hs-identifier hs-var">marshal</span></a></span></span><span> </span><span id="local-6989586621679294716"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294716"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679294717"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294717"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-115"></span><span>   </span><span class="annot"><span class="annottext">IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-116"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; IO ())
+-&gt; (GLfloat -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+forall b t a.
+(Storable b, ParameterizedTextureTarget t) =&gt;
+(GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ())
+-&gt; (b -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-var">getTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexParameterfv</span></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; a
+</span><a href="#local-6989586621679294714"><span class="hs-identifier hs-var">unmarshal</span></a></span><span>     </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294717"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294716"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-117"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; GLfloat -&gt; IO ())
+-&gt; (a -&gt; (GLfloat -&gt; IO ()) -&gt; IO ())
+-&gt; t
+-&gt; TexParameter
+-&gt; a
+-&gt; IO ()
+forall t b a.
+ParameterizedTextureTarget t =&gt;
+(GLenum -&gt; GLenum -&gt; b -&gt; IO ())
+-&gt; (a -&gt; (b -&gt; IO ()) -&gt; IO ()) -&gt; t -&gt; TexParameter -&gt; a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParameter"><span class="hs-identifier hs-var">texParameter</span></a></span><span>    </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glTexParameterf</span></span><span>     </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(a -&gt; GLfloat) -&gt; a -&gt; (GLfloat -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; (b -&gt; IO ()) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#m2a"><span class="hs-identifier hs-var">m2a</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; GLfloat
+</span><a href="#local-6989586621679294715"><span class="hs-identifier hs-var">marshal</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294717"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294716"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span id="local-6989586621679294601"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamC4f"><span class="hs-identifier hs-type">texParamC4f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294601"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294601"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-120"></span><span id="texParamC4f"><span class="annot"><span class="annottext">texParamC4f :: forall t.
+ParameterizedTextureTarget t =&gt;
+TexParameter -&gt; t -&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamC4f"><span class="hs-identifier hs-var hs-var">texParamC4f</span></a></span></span><span> </span><span id="local-6989586621679294727"><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294727"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679294728"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294728"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-121"></span><span>   </span><span class="annot"><span class="annottext">IO (Color4 GLfloat)
+-&gt; (Color4 GLfloat -&gt; IO ()) -&gt; StateVar (Color4 GLfloat)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-122"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ())
+-&gt; (Color4 GLfloat -&gt; Color4 GLfloat)
+-&gt; t
+-&gt; TexParameter
+-&gt; IO (Color4 GLfloat)
+forall b t a.
+(Storable b, ParameterizedTextureTarget t) =&gt;
+(GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ())
+-&gt; (b -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-var">getTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glGetTexParameterC4f"><span class="hs-identifier hs-var">glGetTexParameterC4f</span></a></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; Color4 GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>   </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294728"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294727"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ())
+-&gt; (Color4 GLfloat -&gt; (Ptr (Color4 GLfloat) -&gt; IO ()) -&gt; IO ())
+-&gt; t
+-&gt; TexParameter
+-&gt; Color4 GLfloat
+-&gt; IO ()
+forall t b a.
+ParameterizedTextureTarget t =&gt;
+(GLenum -&gt; GLenum -&gt; b -&gt; IO ())
+-&gt; (a -&gt; (b -&gt; IO ()) -&gt; IO ()) -&gt; t -&gt; TexParameter -&gt; a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParameter"><span class="hs-identifier hs-var">texParameter</span></a></span><span>    </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glTexParameterC4f"><span class="hs-identifier hs-var">glTexParameterC4f</span></a></span><span>    </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; (Ptr (Color4 GLfloat) -&gt; IO ()) -&gt; IO ()
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294728"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="#local-6989586621679294727"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-124"></span><span>
+</span><span id="line-125"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glTexParameterC4f"><span class="hs-identifier hs-type">glTexParameterC4f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-126"></span><span id="glTexParameterC4f"><span class="annot"><span class="annottext">glTexParameterC4f :: GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glTexParameterC4f"><span class="hs-identifier hs-var hs-var">glTexParameterC4f</span></a></span></span><span> </span><span id="local-6989586621679294733"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294733"><span class="hs-identifier hs-var">target</span></a></span></span><span> </span><span id="local-6989586621679294734"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294734"><span class="hs-identifier hs-var">pname</span></a></span></span><span> </span><span id="local-6989586621679294735"><span class="annot"><span class="annottext">Ptr (Color4 GLfloat)
+</span><a href="#local-6989586621679294735"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glTexParameterfv</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294733"><span class="hs-identifier hs-var">target</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294734"><span class="hs-identifier hs-var">pname</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ptr (Color4 GLfloat) -&gt; Ptr GLfloat
+forall a b. Ptr a -&gt; Ptr b
+</span><span class="hs-identifier hs-var">castPtr</span></span><span> </span><span class="annot"><span class="annottext">Ptr (Color4 GLfloat)
+</span><a href="#local-6989586621679294735"><span class="hs-identifier hs-var">ptr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span>
+</span><span id="line-128"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glGetTexParameterC4f"><span class="hs-identifier hs-type">glGetTexParameterC4f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-129"></span><span id="glGetTexParameterC4f"><span class="annot"><span class="annottext">glGetTexParameterC4f :: GLenum -&gt; GLenum -&gt; Ptr (Color4 GLfloat) -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#glGetTexParameterC4f"><span class="hs-identifier hs-var hs-var">glGetTexParameterC4f</span></a></span></span><span> </span><span id="local-6989586621679294738"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294738"><span class="hs-identifier hs-var">target</span></a></span></span><span> </span><span id="local-6989586621679294739"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294739"><span class="hs-identifier hs-var">pname</span></a></span></span><span> </span><span id="local-6989586621679294740"><span class="annot"><span class="annottext">Ptr (Color4 GLfloat)
+</span><a href="#local-6989586621679294740"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexParameterfv</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294738"><span class="hs-identifier hs-var">target</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679294739"><span class="hs-identifier hs-var">pname</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ptr (Color4 GLfloat) -&gt; Ptr GLfloat
+forall a b. Ptr a -&gt; Ptr b
+</span><span class="hs-identifier hs-var">castPtr</span></span><span> </span><span class="annot"><span class="annottext">Ptr (Color4 GLfloat)
+</span><a href="#local-6989586621679294740"><span class="hs-identifier hs-var">ptr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span id="local-6989586621679294610"><span id="local-6989586621679294611"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameteri"><span class="hs-identifier hs-type">getTexParameteri</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294610"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294611"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294610"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexParameter"><span class="hs-identifier hs-type">TexParameter</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679294611"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-132"></span><span id="getTexParameteri"><span class="annot"><span class="annottext">getTexParameteri :: forall t a.
+ParameterizedTextureTarget t =&gt;
+(GLint -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameteri"><span class="hs-identifier hs-var hs-var">getTexParameteri</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; IO ())
+-&gt; (GLint -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+forall b t a.
+(Storable b, ParameterizedTextureTarget t) =&gt;
+(GLenum -&gt; GLenum -&gt; Ptr b -&gt; IO ())
+-&gt; (b -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameter"><span class="hs-identifier hs-var">getTexParameter</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLenum -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexParameteriv</span></span><span>
+</span><span id="line-133"></span></pre></body></html>

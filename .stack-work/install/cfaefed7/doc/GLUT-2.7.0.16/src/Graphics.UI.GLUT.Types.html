@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Module      :  Graphics.UI.GLUT.Types</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2018</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- This is a purely internal module with miscellaneous types which don\'t really</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- have a good place elsewhere.</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.UI.GLUT.Types</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Window"><span class="hs-identifier">Window</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>                               </span><span class="hs-comment">-- constructor used only internally</span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Relation"><span class="hs-identifier">Relation</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier">relationToString</span></a></span><span class="hs-special">,</span><span>                         </span><span class="hs-comment">-- used only internally</span><span>
+</span><span id="line-21"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#MouseButton"><span class="hs-identifier">MouseButton</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#marshalMouseButton"><span class="hs-identifier">marshalMouseButton</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#unmarshalMouseButton"><span class="hs-identifier">unmarshalMouseButton</span></a></span><span>  </span><span class="hs-comment">-- used only internally</span><span>
+</span><span id="line-23"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.C.Types</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Raw.html"><span class="hs-identifier">Graphics.UI.GLUT.Raw</span></a></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="annot"><span class="hs-comment">-- | An opaque identifier for a top-level window or a subwindow.</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">newtype</span><span> </span><span id="Window"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Window"><span class="hs-identifier hs-var">Window</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Window"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Window"><span class="hs-identifier hs-var">Window</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span>
+</span><span id="line-33"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679140150"><span id="local-6989586621679140154"><span class="annot"><span class="annottext">Window -&gt; Window -&gt; Bool
+(Window -&gt; Window -&gt; Bool)
+-&gt; (Window -&gt; Window -&gt; Bool) -&gt; Eq Window
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Window -&gt; Window -&gt; Bool
+== :: Window -&gt; Window -&gt; Bool
+$c/= :: Window -&gt; Window -&gt; Bool
+/= :: Window -&gt; Window -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140162"><span id="local-6989586621679140167"><span id="local-6989586621679140171"><span id="local-6989586621679140175"><span id="local-6989586621679140179"><span id="local-6989586621679140183"><span id="local-6989586621679140187"><span class="annot"><span class="annottext">Eq Window
+Eq Window =&gt;
+(Window -&gt; Window -&gt; Ordering)
+-&gt; (Window -&gt; Window -&gt; Bool)
+-&gt; (Window -&gt; Window -&gt; Bool)
+-&gt; (Window -&gt; Window -&gt; Bool)
+-&gt; (Window -&gt; Window -&gt; Bool)
+-&gt; (Window -&gt; Window -&gt; Window)
+-&gt; (Window -&gt; Window -&gt; Window)
+-&gt; Ord Window
+Window -&gt; Window -&gt; Bool
+Window -&gt; Window -&gt; Ordering
+Window -&gt; Window -&gt; Window
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Window -&gt; Window -&gt; Ordering
+compare :: Window -&gt; Window -&gt; Ordering
+$c&lt; :: Window -&gt; Window -&gt; Bool
+&lt; :: Window -&gt; Window -&gt; Bool
+$c&lt;= :: Window -&gt; Window -&gt; Bool
+&lt;= :: Window -&gt; Window -&gt; Bool
+$c&gt; :: Window -&gt; Window -&gt; Bool
+&gt; :: Window -&gt; Window -&gt; Bool
+$c&gt;= :: Window -&gt; Window -&gt; Bool
+&gt;= :: Window -&gt; Window -&gt; Bool
+$cmax :: Window -&gt; Window -&gt; Window
+max :: Window -&gt; Window -&gt; Window
+$cmin :: Window -&gt; Window -&gt; Window
+min :: Window -&gt; Window -&gt; Window
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140193"><span id="local-6989586621679140199"><span id="local-6989586621679140203"><span class="annot"><span class="annottext">Int -&gt; Window -&gt; ShowS
+[Window] -&gt; ShowS
+Window -&gt; String
+(Int -&gt; Window -&gt; ShowS)
+-&gt; (Window -&gt; String) -&gt; ([Window] -&gt; ShowS) -&gt; Show Window
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Window -&gt; ShowS
+showsPrec :: Int -&gt; Window -&gt; ShowS
+$cshow :: Window -&gt; String
+show :: Window -&gt; String
+$cshowList :: [Window] -&gt; ShowS
+showList :: [Window] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- | A relation between a 'Graphics.UI.GLUT.Initialization.DisplayCapability'</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- and a numeric value.</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">data</span><span> </span><span id="Relation"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Relation"><span class="hs-identifier hs-var">Relation</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span id="IsEqualTo"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Equal.</span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsNotEqualTo"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsNotEqualTo"><span class="hs-identifier hs-var">IsNotEqualTo</span></a></span></span><span>     </span><span class="annot"><span class="hs-comment">-- ^ Not equal.</span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsLessThan"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsLessThan"><span class="hs-identifier hs-var">IsLessThan</span></a></span></span><span>       </span><span class="hs-comment">-- ^ Less than and preferring larger difference (the least</span><span>
+</span><span id="line-44"></span><span>                      </span><span class="hs-comment">--   is best).</span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsNotGreaterThan"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsNotGreaterThan"><span class="hs-identifier hs-var">IsNotGreaterThan</span></a></span></span><span> </span><span class="hs-comment">-- ^ Less than or equal and preferring larger difference</span><span>
+</span><span id="line-46"></span><span>                      </span><span class="hs-comment">--   (the least is best).</span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsGreaterThan"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsGreaterThan"><span class="hs-identifier hs-var">IsGreaterThan</span></a></span></span><span>    </span><span class="hs-comment">-- ^ Greater than and preferring larger differences (the</span><span>
+</span><span id="line-48"></span><span>                      </span><span class="hs-comment">--   most is best).</span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsAtLeast"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsAtLeast"><span class="hs-identifier hs-var">IsAtLeast</span></a></span></span><span>        </span><span class="hs-comment">-- ^ Greater than or equal and preferring more instead of</span><span>
+</span><span id="line-50"></span><span>                      </span><span class="hs-comment">--   less. This relation is useful for allocating</span><span>
+</span><span id="line-51"></span><span>                      </span><span class="hs-comment">--   resources like color precision or depth buffer</span><span>
+</span><span id="line-52"></span><span>                      </span><span class="hs-comment">--   precision where the maximum precision is generally</span><span>
+</span><span id="line-53"></span><span>                      </span><span class="hs-comment">--   preferred. Contrast with 'IsNotLessThan' relation.</span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IsNotLessThan"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#IsNotLessThan"><span class="hs-identifier hs-var">IsNotLessThan</span></a></span></span><span>    </span><span class="hs-comment">-- ^ Greater than or equal but preferring less instead of</span><span>
+</span><span id="line-55"></span><span>                      </span><span class="hs-comment">--   more. This relation is useful for allocating</span><span>
+</span><span id="line-56"></span><span>                      </span><span class="hs-comment">--   resources such as stencil bits or auxillary color</span><span>
+</span><span id="line-57"></span><span>                      </span><span class="hs-comment">--   buffers where you would rather not over-allocate.</span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679140214"><span id="local-6989586621679140216"><span class="annot"><span class="annottext">Relation -&gt; Relation -&gt; Bool
+(Relation -&gt; Relation -&gt; Bool)
+-&gt; (Relation -&gt; Relation -&gt; Bool) -&gt; Eq Relation
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Relation -&gt; Relation -&gt; Bool
+== :: Relation -&gt; Relation -&gt; Bool
+$c/= :: Relation -&gt; Relation -&gt; Bool
+/= :: Relation -&gt; Relation -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140222"><span id="local-6989586621679140224"><span id="local-6989586621679140226"><span id="local-6989586621679140230"><span id="local-6989586621679140233"><span id="local-6989586621679140236"><span id="local-6989586621679140239"><span class="annot"><span class="annottext">Eq Relation
+Eq Relation =&gt;
+(Relation -&gt; Relation -&gt; Ordering)
+-&gt; (Relation -&gt; Relation -&gt; Bool)
+-&gt; (Relation -&gt; Relation -&gt; Bool)
+-&gt; (Relation -&gt; Relation -&gt; Bool)
+-&gt; (Relation -&gt; Relation -&gt; Bool)
+-&gt; (Relation -&gt; Relation -&gt; Relation)
+-&gt; (Relation -&gt; Relation -&gt; Relation)
+-&gt; Ord Relation
+Relation -&gt; Relation -&gt; Bool
+Relation -&gt; Relation -&gt; Ordering
+Relation -&gt; Relation -&gt; Relation
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Relation -&gt; Relation -&gt; Ordering
+compare :: Relation -&gt; Relation -&gt; Ordering
+$c&lt; :: Relation -&gt; Relation -&gt; Bool
+&lt; :: Relation -&gt; Relation -&gt; Bool
+$c&lt;= :: Relation -&gt; Relation -&gt; Bool
+&lt;= :: Relation -&gt; Relation -&gt; Bool
+$c&gt; :: Relation -&gt; Relation -&gt; Bool
+&gt; :: Relation -&gt; Relation -&gt; Bool
+$c&gt;= :: Relation -&gt; Relation -&gt; Bool
+&gt;= :: Relation -&gt; Relation -&gt; Bool
+$cmax :: Relation -&gt; Relation -&gt; Relation
+max :: Relation -&gt; Relation -&gt; Relation
+$cmin :: Relation -&gt; Relation -&gt; Relation
+min :: Relation -&gt; Relation -&gt; Relation
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140242"><span id="local-6989586621679140244"><span id="local-6989586621679140248"><span class="annot"><span class="annottext">Int -&gt; Relation -&gt; ShowS
+[Relation] -&gt; ShowS
+Relation -&gt; String
+(Int -&gt; Relation -&gt; ShowS)
+-&gt; (Relation -&gt; String) -&gt; ([Relation] -&gt; ShowS) -&gt; Show Relation
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Relation -&gt; ShowS
+showsPrec :: Int -&gt; Relation -&gt; ShowS
+$cshow :: Relation -&gt; String
+show :: Relation -&gt; String
+$cshowList :: [Relation] -&gt; ShowS
+showList :: [Relation] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-type">relationToString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Relation"><span class="hs-identifier hs-type">Relation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-61"></span><span id="relationToString"><span class="annot"><span class="annottext">relationToString :: Relation -&gt; String
+</span><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var hs-var">relationToString</span></a></span></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;=&quot;</span></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsNotEqualTo"><span class="hs-identifier hs-var">IsNotEqualTo</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;!=&quot;</span></span><span>
+</span><span id="line-63"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsLessThan"><span class="hs-identifier hs-var">IsLessThan</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;&quot;</span></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsNotGreaterThan"><span class="hs-identifier hs-var">IsNotGreaterThan</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&lt;=&quot;</span></span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsGreaterThan"><span class="hs-identifier hs-var">IsGreaterThan</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;&quot;</span></span><span>
+</span><span id="line-66"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsAtLeast"><span class="hs-identifier hs-var">IsAtLeast</span></a></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;=&quot;</span></span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsNotLessThan"><span class="hs-identifier hs-var">IsNotLessThan</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;~&quot;</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="annot"><span class="hs-comment">-- | Mouse buttons, including a wheel</span></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-keyword">data</span><span> </span><span id="MouseButton"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#MouseButton"><span class="hs-identifier hs-var">MouseButton</span></a></span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span id="LeftButton"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#LeftButton"><span class="hs-identifier hs-var">LeftButton</span></a></span></span><span>
+</span><span id="line-75"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="MiddleButton"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#MiddleButton"><span class="hs-identifier hs-var">MiddleButton</span></a></span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="RightButton"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#RightButton"><span class="hs-identifier hs-var">RightButton</span></a></span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="WheelUp"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#WheelUp"><span class="hs-identifier hs-var">WheelUp</span></a></span></span><span>
+</span><span id="line-78"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="WheelDown"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#WheelDown"><span class="hs-identifier hs-var">WheelDown</span></a></span></span><span>
+</span><span id="line-79"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AdditionalButton"><span class="annot"><a href="Graphics.UI.GLUT.Types.html#AdditionalButton"><span class="hs-identifier hs-var">AdditionalButton</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-80"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679140257"><span id="local-6989586621679140261"><span class="annot"><span class="annottext">MouseButton -&gt; MouseButton -&gt; Bool
+(MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool) -&gt; Eq MouseButton
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: MouseButton -&gt; MouseButton -&gt; Bool
+== :: MouseButton -&gt; MouseButton -&gt; Bool
+$c/= :: MouseButton -&gt; MouseButton -&gt; Bool
+/= :: MouseButton -&gt; MouseButton -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140267"><span id="local-6989586621679140270"><span id="local-6989586621679140274"><span id="local-6989586621679140277"><span id="local-6989586621679140280"><span id="local-6989586621679140283"><span id="local-6989586621679140286"><span class="annot"><span class="annottext">Eq MouseButton
+Eq MouseButton =&gt;
+(MouseButton -&gt; MouseButton -&gt; Ordering)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; Bool)
+-&gt; (MouseButton -&gt; MouseButton -&gt; MouseButton)
+-&gt; (MouseButton -&gt; MouseButton -&gt; MouseButton)
+-&gt; Ord MouseButton
+MouseButton -&gt; MouseButton -&gt; Bool
+MouseButton -&gt; MouseButton -&gt; Ordering
+MouseButton -&gt; MouseButton -&gt; MouseButton
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: MouseButton -&gt; MouseButton -&gt; Ordering
+compare :: MouseButton -&gt; MouseButton -&gt; Ordering
+$c&lt; :: MouseButton -&gt; MouseButton -&gt; Bool
+&lt; :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&lt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+&lt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&gt; :: MouseButton -&gt; MouseButton -&gt; Bool
+&gt; :: MouseButton -&gt; MouseButton -&gt; Bool
+$c&gt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+&gt;= :: MouseButton -&gt; MouseButton -&gt; Bool
+$cmax :: MouseButton -&gt; MouseButton -&gt; MouseButton
+max :: MouseButton -&gt; MouseButton -&gt; MouseButton
+$cmin :: MouseButton -&gt; MouseButton -&gt; MouseButton
+min :: MouseButton -&gt; MouseButton -&gt; MouseButton
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679140289"><span id="local-6989586621679140294"><span id="local-6989586621679140298"><span class="annot"><span class="annottext">Int -&gt; MouseButton -&gt; ShowS
+[MouseButton] -&gt; ShowS
+MouseButton -&gt; String
+(Int -&gt; MouseButton -&gt; ShowS)
+-&gt; (MouseButton -&gt; String)
+-&gt; ([MouseButton] -&gt; ShowS)
+-&gt; Show MouseButton
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; MouseButton -&gt; ShowS
+showsPrec :: Int -&gt; MouseButton -&gt; ShowS
+$cshow :: MouseButton -&gt; String
+show :: MouseButton -&gt; String
+$cshowList :: [MouseButton] -&gt; ShowS
+showList :: [MouseButton] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#marshalMouseButton"><span class="hs-identifier hs-type">marshalMouseButton</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#MouseButton"><span class="hs-identifier hs-type">MouseButton</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span>
+</span><span id="line-83"></span><span id="marshalMouseButton"><span class="annot"><span class="annottext">marshalMouseButton :: MouseButton -&gt; CInt
+</span><a href="Graphics.UI.GLUT.Types.html#marshalMouseButton"><span class="hs-identifier hs-var hs-var">marshalMouseButton</span></a></span></span><span> </span><span id="local-6989586621679140300"><span class="annot"><span class="annottext">MouseButton
+</span><a href="#local-6989586621679140300"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="#local-6989586621679140300"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-84"></span><span>   </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#LeftButton"><span class="hs-identifier hs-var">LeftButton</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_LEFT_BUTTON"><span class="hs-identifier hs-var">glut_LEFT_BUTTON</span></a></span><span>
+</span><span id="line-85"></span><span>   </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#MiddleButton"><span class="hs-identifier hs-var">MiddleButton</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_MIDDLE_BUTTON"><span class="hs-identifier hs-var">glut_MIDDLE_BUTTON</span></a></span><span>
+</span><span id="line-86"></span><span>   </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#RightButton"><span class="hs-identifier hs-var">RightButton</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_RIGHT_BUTTON"><span class="hs-identifier hs-var">glut_RIGHT_BUTTON</span></a></span><span>
+</span><span id="line-87"></span><span>   </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#WheelUp"><span class="hs-identifier hs-var">WheelUp</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_UP"><span class="hs-identifier hs-var">glut_WHEEL_UP</span></a></span><span>
+</span><span id="line-88"></span><span>   </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#WheelDown"><span class="hs-identifier hs-var">WheelDown</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_DOWN"><span class="hs-identifier hs-var">glut_WHEEL_DOWN</span></a></span><span>
+</span><span id="line-89"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#AdditionalButton"><span class="hs-identifier hs-type">AdditionalButton</span></a></span><span> </span><span id="local-6989586621679140306"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679140306"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; CInt
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679140306"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#unmarshalMouseButton"><span class="hs-identifier hs-type">unmarshalMouseButton</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#MouseButton"><span class="hs-identifier hs-type">MouseButton</span></a></span><span>
+</span><span id="line-92"></span><span id="unmarshalMouseButton"><span class="annot"><span class="annottext">unmarshalMouseButton :: CInt -&gt; MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#unmarshalMouseButton"><span class="hs-identifier hs-var hs-var">unmarshalMouseButton</span></a></span></span><span> </span><span id="local-6989586621679140307"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span></span><span>
+</span><span id="line-93"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_LEFT_BUTTON"><span class="hs-identifier hs-var">glut_LEFT_BUTTON</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#LeftButton"><span class="hs-identifier hs-var">LeftButton</span></a></span><span>
+</span><span id="line-94"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_MIDDLE_BUTTON"><span class="hs-identifier hs-var">glut_MIDDLE_BUTTON</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#MiddleButton"><span class="hs-identifier hs-var">MiddleButton</span></a></span><span>
+</span><span id="line-95"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_RIGHT_BUTTON"><span class="hs-identifier hs-var">glut_RIGHT_BUTTON</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#RightButton"><span class="hs-identifier hs-var">RightButton</span></a></span><span>
+</span><span id="line-96"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_UP"><span class="hs-identifier hs-var">glut_WHEEL_UP</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#WheelUp"><span class="hs-identifier hs-var">WheelUp</span></a></span><span>
+</span><span id="line-97"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_DOWN"><span class="hs-identifier hs-var">glut_WHEEL_DOWN</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#WheelDown"><span class="hs-identifier hs-var">WheelDown</span></a></span><span>
+</span><span id="line-98"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; MouseButton
+</span><a href="Graphics.UI.GLUT.Types.html#AdditionalButton"><span class="hs-identifier hs-var">AdditionalButton</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679140307"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_UP"><span class="hs-identifier hs-type">glut_WHEEL_UP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span>
+</span><span id="line-101"></span><span id="glut_WHEEL_UP"><span class="annot"><span class="annottext">glut_WHEEL_UP :: CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_UP"><span class="hs-identifier hs-var hs-var">glut_WHEEL_UP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-102"></span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_DOWN"><span class="hs-identifier hs-type">glut_WHEEL_DOWN</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span>
+</span><span id="line-104"></span><span id="glut_WHEEL_DOWN"><span class="annot"><span class="annottext">glut_WHEEL_DOWN :: CInt
+</span><a href="Graphics.UI.GLUT.Types.html#glut_WHEEL_DOWN"><span class="hs-identifier hs-var hs-var">glut_WHEEL_DOWN</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CInt
+</span><span class="hs-number">4</span></span><span>
+</span><span id="line-105"></span></pre></body></html>

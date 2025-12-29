@@ -1,0 +1,349 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Selection</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 5.2 (Selection) of the OpenGL 2.1 specs.</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Selection</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-16"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier">HitRecord</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#getHitRecords"><span class="hs-identifier">getHitRecords</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier">Name</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#withName"><span class="hs-identifier">withName</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#loadName"><span class="hs-identifier">loadName</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#maxNameStackDepth"><span class="hs-identifier">maxNameStackDepth</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#nameStackDepth"><span class="hs-identifier">nameStackDepth</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.RenderMode.html#RenderMode"><span class="hs-identifier">RenderMode</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.RenderMode.html#renderMode"><span class="hs-identifier">renderMode</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Array</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Exception.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Exception</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.IOState</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.RenderMode.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.RenderMode</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">data</span><span> </span><span id="HitRecord"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-var">HitRecord</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="HitRecord"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-var">HitRecord</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-33"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679281606"><span id="local-6989586621679281614"><span class="annot"><span class="annottext">HitRecord -&gt; HitRecord -&gt; Bool
+(HitRecord -&gt; HitRecord -&gt; Bool)
+-&gt; (HitRecord -&gt; HitRecord -&gt; Bool) -&gt; Eq HitRecord
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: HitRecord -&gt; HitRecord -&gt; Bool
+== :: HitRecord -&gt; HitRecord -&gt; Bool
+$c/= :: HitRecord -&gt; HitRecord -&gt; Bool
+/= :: HitRecord -&gt; HitRecord -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679281622"><span id="local-6989586621679281630"><span id="local-6989586621679281636"><span id="local-6989586621679281640"><span id="local-6989586621679281643"><span id="local-6989586621679281646"><span id="local-6989586621679281649"><span class="annot"><span class="annottext">Eq HitRecord
+Eq HitRecord =&gt;
+(HitRecord -&gt; HitRecord -&gt; Ordering)
+-&gt; (HitRecord -&gt; HitRecord -&gt; Bool)
+-&gt; (HitRecord -&gt; HitRecord -&gt; Bool)
+-&gt; (HitRecord -&gt; HitRecord -&gt; Bool)
+-&gt; (HitRecord -&gt; HitRecord -&gt; Bool)
+-&gt; (HitRecord -&gt; HitRecord -&gt; HitRecord)
+-&gt; (HitRecord -&gt; HitRecord -&gt; HitRecord)
+-&gt; Ord HitRecord
+HitRecord -&gt; HitRecord -&gt; Bool
+HitRecord -&gt; HitRecord -&gt; Ordering
+HitRecord -&gt; HitRecord -&gt; HitRecord
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: HitRecord -&gt; HitRecord -&gt; Ordering
+compare :: HitRecord -&gt; HitRecord -&gt; Ordering
+$c&lt; :: HitRecord -&gt; HitRecord -&gt; Bool
+&lt; :: HitRecord -&gt; HitRecord -&gt; Bool
+$c&lt;= :: HitRecord -&gt; HitRecord -&gt; Bool
+&lt;= :: HitRecord -&gt; HitRecord -&gt; Bool
+$c&gt; :: HitRecord -&gt; HitRecord -&gt; Bool
+&gt; :: HitRecord -&gt; HitRecord -&gt; Bool
+$c&gt;= :: HitRecord -&gt; HitRecord -&gt; Bool
+&gt;= :: HitRecord -&gt; HitRecord -&gt; Bool
+$cmax :: HitRecord -&gt; HitRecord -&gt; HitRecord
+max :: HitRecord -&gt; HitRecord -&gt; HitRecord
+$cmin :: HitRecord -&gt; HitRecord -&gt; HitRecord
+min :: HitRecord -&gt; HitRecord -&gt; HitRecord
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679281654"><span id="local-6989586621679281664"><span id="local-6989586621679281668"><span class="annot"><span class="annottext">Int -&gt; HitRecord -&gt; ShowS
+[HitRecord] -&gt; ShowS
+HitRecord -&gt; String
+(Int -&gt; HitRecord -&gt; ShowS)
+-&gt; (HitRecord -&gt; String)
+-&gt; ([HitRecord] -&gt; ShowS)
+-&gt; Show HitRecord
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; HitRecord -&gt; ShowS
+showsPrec :: Int -&gt; HitRecord -&gt; ShowS
+$cshow :: HitRecord -&gt; String
+show :: HitRecord -&gt; String
+$cshowList :: [HitRecord] -&gt; ShowS
+showList :: [HitRecord] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span id="local-6989586621679281523"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#getHitRecords"><span class="hs-identifier hs-type">getHitRecords</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679281523"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679281523"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-type">HitRecord</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span></span><span>
+</span><span id="line-38"></span><span id="getHitRecords"><span class="annot"><span class="annottext">getHitRecords :: forall a. GLint -&gt; IO a -&gt; IO (a, Maybe [HitRecord])
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#getHitRecords"><span class="hs-identifier hs-var hs-var">getHitRecords</span></a></span></span><span> </span><span id="local-6989586621679281684"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281684"><span class="hs-identifier hs-var">bufSize</span></a></span></span><span> </span><span id="local-6989586621679281685"><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679281685"><span class="hs-identifier hs-var">action</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-39"></span><span>   </span><span class="annot"><span class="annottext">Int
+-&gt; (Ptr GLuint -&gt; IO (a, Maybe [HitRecord]))
+-&gt; IO (a, Maybe [HitRecord])
+forall a b. Storable a =&gt; Int -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">allocaArray</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLint -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281684"><span class="hs-identifier hs-var">bufSize</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Ptr GLuint -&gt; IO (a, Maybe [HitRecord]))
+ -&gt; IO (a, Maybe [HitRecord]))
+-&gt; (Ptr GLuint -&gt; IO (a, Maybe [HitRecord]))
+-&gt; IO (a, Maybe [HitRecord])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679281687"><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679281687"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-40"></span><span>      </span><span class="annot"><span class="annottext">GLint -&gt; Ptr GLuint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLint -&gt; Ptr GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glSelectBuffer</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281684"><span class="hs-identifier hs-var">bufSize</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679281687"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-special">(</span><span id="local-6989586621679281689"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679281689"><span class="hs-identifier hs-var">value</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679281690"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281690"><span class="hs-identifier hs-var">numHits</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">RenderMode -&gt; IO a -&gt; IO (a, GLint)
+forall a. RenderMode -&gt; IO a -&gt; IO (a, GLint)
+</span><a href="Graphics.Rendering.OpenGL.GL.RenderMode.html#withRenderMode"><span class="hs-identifier hs-var">withRenderMode</span></a></span><span> </span><span class="annot"><span class="annottext">RenderMode
+</span><a href="Graphics.Rendering.OpenGL.GL.RenderMode.html#Select"><span class="hs-identifier hs-var">Select</span></a></span><span> </span><span class="annot"><span class="annottext">(IO a -&gt; IO (a, GLint)) -&gt; IO a -&gt; IO (a, GLint)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-42"></span><span>         </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glInitNames</span></span><span>
+</span><span id="line-43"></span><span>         </span><span class="annot"><span class="annottext">IO a
+</span><a href="#local-6989586621679281685"><span class="hs-identifier hs-var">action</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span id="local-6989586621679281694"><span class="annot"><span class="annottext">Maybe [HitRecord]
+</span><a href="#local-6989586621679281694"><span class="hs-identifier hs-var">hits</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLint -&gt; Ptr GLuint -&gt; IO (Maybe [HitRecord])
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionBuffer"><span class="hs-identifier hs-var">parseSelectionBuffer</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281690"><span class="hs-identifier hs-var">numHits</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679281687"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-45"></span><span>      </span><span class="annot"><span class="annottext">(a, Maybe [HitRecord]) -&gt; IO (a, Maybe [HitRecord])
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679281689"><span class="hs-identifier hs-var">value</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Maybe [HitRecord]
+</span><a href="#local-6989586621679281694"><span class="hs-identifier hs-var">hits</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionBuffer"><span class="hs-identifier hs-type">parseSelectionBuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-type">HitRecord</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span id="parseSelectionBuffer"><span class="annot"><span class="annottext">parseSelectionBuffer :: GLint -&gt; Ptr GLuint -&gt; IO (Maybe [HitRecord])
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionBuffer"><span class="hs-identifier hs-var hs-var">parseSelectionBuffer</span></a></span></span><span> </span><span id="local-6989586621679281696"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281696"><span class="hs-identifier hs-var">numHits</span></a></span></span><span> </span><span id="local-6989586621679281697"><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679281697"><span class="hs-identifier hs-var">buf</span></a></span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281696"><span class="hs-identifier hs-var">numHits</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe [HitRecord] -&gt; IO (Maybe [HitRecord])
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Maybe [HitRecord]
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([HitRecord] -&gt; Maybe [HitRecord])
+-&gt; IO [HitRecord] -&gt; IO (Maybe [HitRecord])
+forall a b. (a -&gt; b) -&gt; IO a -&gt; IO b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">[HitRecord] -&gt; Maybe [HitRecord]
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(IO [HitRecord] -&gt; IO (Maybe [HitRecord]))
+-&gt; IO [HitRecord] -&gt; IO (Maybe [HitRecord])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IOState GLuint [HitRecord] -&gt; Ptr GLuint -&gt; IO [HitRecord]
+forall s a. IOState s a -&gt; Ptr s -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#evalIOState"><span class="hs-identifier hs-var">evalIOState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLint -&gt; IOState GLuint HitRecord -&gt; IOState GLuint [HitRecord]
+forall a b c. Integral a =&gt; a -&gt; IOState b c -&gt; IOState b [c]
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#nTimes"><span class="hs-identifier hs-var">nTimes</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679281696"><span class="hs-identifier hs-var">numHits</span></a></span><span> </span><span class="annot"><span class="annottext">IOState GLuint HitRecord
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionHit"><span class="hs-identifier hs-var">parseSelectionHit</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679281697"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-keyword">type</span><span> </span><span id="Parser"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Parser"><span class="hs-identifier hs-var">Parser</span></a></span></span><span> </span><span id="local-6989586621679281702"><span class="annot"><a href="#local-6989586621679281702"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.IOState.html#IOState"><span class="hs-identifier hs-type">IOState</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="annot"><a href="#local-6989586621679281702"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionHit"><span class="hs-identifier hs-type">parseSelectionHit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-type">HitRecord</span></a></span><span>
+</span><span id="line-57"></span><span id="parseSelectionHit"><span class="annot"><span class="annottext">parseSelectionHit :: IOState GLuint HitRecord
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseSelectionHit"><span class="hs-identifier hs-var hs-var">parseSelectionHit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-58"></span><span>   </span><span id="local-6989586621679281703"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281703"><span class="hs-identifier hs-var">numNames</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLuint"><span class="hs-identifier hs-var">parseGLuint</span></a></span><span>
+</span><span id="line-59"></span><span>   </span><span id="local-6989586621679281705"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679281705"><span class="hs-identifier hs-var">minZ</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLfloat"><span class="hs-identifier hs-var">parseGLfloat</span></a></span><span>
+</span><span id="line-60"></span><span>   </span><span id="local-6989586621679281707"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679281707"><span class="hs-identifier hs-var">maxZ</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Parser GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLfloat"><span class="hs-identifier hs-var">parseGLfloat</span></a></span><span>
+</span><span id="line-61"></span><span>   </span><span id="local-6989586621679281708"><span class="annot"><span class="annottext">[Name]
+</span><a href="#local-6989586621679281708"><span class="hs-identifier hs-var">nameStack</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; IOState GLuint Name -&gt; IOState GLuint [Name]
+forall a b c. Integral a =&gt; a -&gt; IOState b c -&gt; IOState b [c]
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#nTimes"><span class="hs-identifier hs-var">nTimes</span></a></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281703"><span class="hs-identifier hs-var">numNames</span></a></span><span> </span><span class="annot"><span class="annottext">IOState GLuint Name
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseName"><span class="hs-identifier hs-var">parseName</span></a></span><span>
+</span><span id="line-62"></span><span>   </span><span class="annot"><span class="annottext">HitRecord -&gt; IOState GLuint HitRecord
+forall a. a -&gt; IOState GLuint a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(HitRecord -&gt; IOState GLuint HitRecord)
+-&gt; HitRecord -&gt; IOState GLuint HitRecord
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; [Name] -&gt; HitRecord
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#HitRecord"><span class="hs-identifier hs-var">HitRecord</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679281705"><span class="hs-identifier hs-var">minZ</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679281707"><span class="hs-identifier hs-var">maxZ</span></a></span><span> </span><span class="annot"><span class="annottext">[Name]
+</span><a href="#local-6989586621679281708"><span class="hs-identifier hs-var">nameStack</span></a></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLuint"><span class="hs-identifier hs-type">parseGLuint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span>
+</span><span id="line-65"></span><span id="parseGLuint"><span class="annot"><span class="annottext">parseGLuint :: Parser GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLuint"><span class="hs-identifier hs-var hs-var">parseGLuint</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser GLuint
+forall a. Storable a =&gt; IOState a a
+</span><a href="Graphics.Rendering.OpenGL.GL.IOState.html#peekIOState"><span class="hs-identifier hs-var">peekIOState</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLfloat"><span class="hs-identifier hs-type">parseGLfloat</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-68"></span><span id="parseGLfloat"><span class="annot"><span class="annottext">parseGLfloat :: Parser GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLfloat"><span class="hs-identifier hs-var hs-var">parseGLfloat</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; GLfloat) -&gt; Parser GLuint -&gt; Parser GLfloat
+forall a b. (a -&gt; b) -&gt; IOState GLuint a -&gt; IOState GLuint b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679281711"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281711"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; GLfloat
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281711"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><span class="hs-number">0xffffffff</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Parser GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLuint"><span class="hs-identifier hs-var">parseGLuint</span></a></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseName"><span class="hs-identifier hs-type">parseName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span>
+</span><span id="line-71"></span><span id="parseName"><span class="annot"><span class="annottext">parseName :: IOState GLuint Name
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseName"><span class="hs-identifier hs-var hs-var">parseName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; Name) -&gt; Parser GLuint -&gt; IOState GLuint Name
+forall a b. (a -&gt; b) -&gt; IOState GLuint a -&gt; IOState GLuint b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; Name
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-var">Name</span></a></span><span> </span><span class="annot"><span class="annottext">Parser GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#parseGLuint"><span class="hs-identifier hs-var">parseGLuint</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-keyword">newtype</span><span> </span><span id="Name"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-var">Name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Name"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-var">Name</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679281715"><span id="local-6989586621679281720"><span class="annot"><span class="annottext">Name -&gt; Name -&gt; Bool
+(Name -&gt; Name -&gt; Bool) -&gt; (Name -&gt; Name -&gt; Bool) -&gt; Eq Name
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Name -&gt; Name -&gt; Bool
+== :: Name -&gt; Name -&gt; Bool
+$c/= :: Name -&gt; Name -&gt; Bool
+/= :: Name -&gt; Name -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679281726"><span id="local-6989586621679281731"><span id="local-6989586621679281735"><span id="local-6989586621679281739"><span id="local-6989586621679281743"><span id="local-6989586621679281747"><span id="local-6989586621679281751"><span class="annot"><span class="annottext">Eq Name
+Eq Name =&gt;
+(Name -&gt; Name -&gt; Ordering)
+-&gt; (Name -&gt; Name -&gt; Bool)
+-&gt; (Name -&gt; Name -&gt; Bool)
+-&gt; (Name -&gt; Name -&gt; Bool)
+-&gt; (Name -&gt; Name -&gt; Bool)
+-&gt; (Name -&gt; Name -&gt; Name)
+-&gt; (Name -&gt; Name -&gt; Name)
+-&gt; Ord Name
+Name -&gt; Name -&gt; Bool
+Name -&gt; Name -&gt; Ordering
+Name -&gt; Name -&gt; Name
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Name -&gt; Name -&gt; Ordering
+compare :: Name -&gt; Name -&gt; Ordering
+$c&lt; :: Name -&gt; Name -&gt; Bool
+&lt; :: Name -&gt; Name -&gt; Bool
+$c&lt;= :: Name -&gt; Name -&gt; Bool
+&lt;= :: Name -&gt; Name -&gt; Bool
+$c&gt; :: Name -&gt; Name -&gt; Bool
+&gt; :: Name -&gt; Name -&gt; Bool
+$c&gt;= :: Name -&gt; Name -&gt; Bool
+&gt;= :: Name -&gt; Name -&gt; Bool
+$cmax :: Name -&gt; Name -&gt; Name
+max :: Name -&gt; Name -&gt; Name
+$cmin :: Name -&gt; Name -&gt; Name
+min :: Name -&gt; Name -&gt; Name
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679281755"><span id="local-6989586621679281760"><span id="local-6989586621679281763"><span class="annot"><span class="annottext">Int -&gt; Name -&gt; ShowS
+[Name] -&gt; ShowS
+Name -&gt; String
+(Int -&gt; Name -&gt; ShowS)
+-&gt; (Name -&gt; String) -&gt; ([Name] -&gt; ShowS) -&gt; Show Name
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Name -&gt; ShowS
+showsPrec :: Int -&gt; Name -&gt; ShowS
+$cshow :: Name -&gt; String
+show :: Name -&gt; String
+$cshowList :: [Name] -&gt; ShowS
+showList :: [Name] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span id="local-6989586621679281553"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#withName"><span class="hs-identifier hs-type">withName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679281553"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679281553"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-79"></span><span id="withName"><span class="annot"><span class="annottext">withName :: forall a. Name -&gt; IO a -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#withName"><span class="hs-identifier hs-var hs-var">withName</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span> </span><span id="local-6989586621679281767"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281767"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO a -&gt; IO a
+forall a b c. IO a -&gt; IO b -&gt; IO c -&gt; IO c
+</span><span class="hs-identifier hs-var">bracket_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLuint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glPushName</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281767"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glPopName</span></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#loadName"><span class="hs-identifier hs-type">loadName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span id="loadName"><span class="annot"><span class="annottext">loadName :: Name -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#loadName"><span class="hs-identifier hs-var hs-var">loadName</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#Name"><span class="hs-identifier hs-type">Name</span></a></span><span> </span><span id="local-6989586621679281771"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281771"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glLoadName</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679281771"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#maxNameStackDepth"><span class="hs-identifier hs-type">maxNameStackDepth</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-85"></span><span id="maxNameStackDepth"><span class="annot"><span class="annottext">maxNameStackDepth :: GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#maxNameStackDepth"><span class="hs-identifier hs-var hs-var">maxNameStackDepth</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLint -&gt; GettableStateVar GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; PName1I -&gt; GettableStateVar GLint
+forall p a. GetPName1I p =&gt; (GLint -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLint -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getSizei1"><span class="hs-identifier hs-var">getSizei1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMaxNameStackDepth"><span class="hs-identifier hs-var">GetMaxNameStackDepth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Selection.html#nameStackDepth"><span class="hs-identifier hs-type">nameStackDepth</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span>
+</span><span id="line-88"></span><span id="nameStackDepth"><span class="annot"><span class="annottext">nameStackDepth :: GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Selection.html#nameStackDepth"><span class="hs-identifier hs-var hs-var">nameStackDepth</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLint -&gt; GettableStateVar GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; PName1I -&gt; GettableStateVar GLint
+forall p a. GetPName1I p =&gt; (GLint -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLint -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getSizei1"><span class="hs-identifier hs-var">getSizei1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetNameStackDepth"><span class="hs-identifier hs-var">GetNameStackDepth</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span></pre></body></html>

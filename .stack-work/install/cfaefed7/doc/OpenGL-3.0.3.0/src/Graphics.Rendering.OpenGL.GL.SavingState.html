@@ -1,0 +1,354 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.SavingState</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 6.1.14 (Saving and Restoring State) of the</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- OpenGL 2.1 specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.SavingState</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ServerAttributeGroup"><span class="hs-identifier">ServerAttributeGroup</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingAttrib"><span class="hs-identifier">preservingAttrib</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ClientAttributeGroup"><span class="hs-identifier">ClientAttributeGroup</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingClientAttrib"><span class="hs-identifier">preservingClientAttrib</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Exception.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Exception</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">bracket_</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">data</span><span> </span><span id="ServerAttributeGroup"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ServerAttributeGroup"><span class="hs-identifier hs-var">ServerAttributeGroup</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-27"></span><span>     </span><span id="CurrentAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#CurrentAttributes"><span class="hs-identifier hs-var">CurrentAttributes</span></a></span></span><span>
+</span><span id="line-28"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PointAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PointAttributes"><span class="hs-identifier hs-var">PointAttributes</span></a></span></span><span>
+</span><span id="line-29"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="LineAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#LineAttributes"><span class="hs-identifier hs-var">LineAttributes</span></a></span></span><span>
+</span><span id="line-30"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PolygonAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PolygonAttributes"><span class="hs-identifier hs-var">PolygonAttributes</span></a></span></span><span>
+</span><span id="line-31"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PolygonStippleAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PolygonStippleAttributes"><span class="hs-identifier hs-var">PolygonStippleAttributes</span></a></span></span><span>
+</span><span id="line-32"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PixelModeAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PixelModeAttributes"><span class="hs-identifier hs-var">PixelModeAttributes</span></a></span></span><span>
+</span><span id="line-33"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="LightingAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#LightingAttributes"><span class="hs-identifier hs-var">LightingAttributes</span></a></span></span><span>
+</span><span id="line-34"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="FogAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#FogAttributes"><span class="hs-identifier hs-var">FogAttributes</span></a></span></span><span>
+</span><span id="line-35"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthBufferAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#DepthBufferAttributes"><span class="hs-identifier hs-var">DepthBufferAttributes</span></a></span></span><span>
+</span><span id="line-36"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AccumBufferAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AccumBufferAttributes"><span class="hs-identifier hs-var">AccumBufferAttributes</span></a></span></span><span>
+</span><span id="line-37"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="StencilBufferAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#StencilBufferAttributes"><span class="hs-identifier hs-var">StencilBufferAttributes</span></a></span></span><span>
+</span><span id="line-38"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="ViewportAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ViewportAttributes"><span class="hs-identifier hs-var">ViewportAttributes</span></a></span></span><span>
+</span><span id="line-39"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TransformAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#TransformAttributes"><span class="hs-identifier hs-var">TransformAttributes</span></a></span></span><span>
+</span><span id="line-40"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="EnableAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#EnableAttributes"><span class="hs-identifier hs-var">EnableAttributes</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="ColorBufferAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ColorBufferAttributes"><span class="hs-identifier hs-var">ColorBufferAttributes</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="HintAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#HintAttributes"><span class="hs-identifier hs-var">HintAttributes</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="EvalAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#EvalAttributes"><span class="hs-identifier hs-var">EvalAttributes</span></a></span></span><span>
+</span><span id="line-44"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="ListAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ListAttributes"><span class="hs-identifier hs-var">ListAttributes</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="TextureAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#TextureAttributes"><span class="hs-identifier hs-var">TextureAttributes</span></a></span></span><span>
+</span><span id="line-46"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="ScissorAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ScissorAttributes"><span class="hs-identifier hs-var">ScissorAttributes</span></a></span></span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="MultisampleAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#MultisampleAttributes"><span class="hs-identifier hs-var">MultisampleAttributes</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AllServerAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AllServerAttributes"><span class="hs-identifier hs-var">AllServerAttributes</span></a></span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679268525"><span id="local-6989586621679268527"><span class="annot"><span class="annottext">ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+(ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; (ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; Eq ServerAttributeGroup
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+== :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+$c/= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+/= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268534"><span id="local-6989586621679268536"><span id="local-6989586621679268538"><span id="local-6989586621679268542"><span id="local-6989586621679268545"><span id="local-6989586621679268548"><span id="local-6989586621679268551"><span class="annot"><span class="annottext">Eq ServerAttributeGroup
+Eq ServerAttributeGroup =&gt;
+(ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Ordering)
+-&gt; (ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; (ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; (ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; (ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool)
+-&gt; (ServerAttributeGroup
+    -&gt; ServerAttributeGroup -&gt; ServerAttributeGroup)
+-&gt; (ServerAttributeGroup
+    -&gt; ServerAttributeGroup -&gt; ServerAttributeGroup)
+-&gt; Ord ServerAttributeGroup
+ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Ordering
+ServerAttributeGroup
+-&gt; ServerAttributeGroup -&gt; ServerAttributeGroup
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Ordering
+compare :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Ordering
+$c&lt; :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+&lt; :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+$c&lt;= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+&lt;= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+$c&gt; :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+&gt; :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+$c&gt;= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+&gt;= :: ServerAttributeGroup -&gt; ServerAttributeGroup -&gt; Bool
+$cmax :: ServerAttributeGroup
+-&gt; ServerAttributeGroup -&gt; ServerAttributeGroup
+max :: ServerAttributeGroup
+-&gt; ServerAttributeGroup -&gt; ServerAttributeGroup
+$cmin :: ServerAttributeGroup
+-&gt; ServerAttributeGroup -&gt; ServerAttributeGroup
+min :: ServerAttributeGroup
+-&gt; ServerAttributeGroup -&gt; ServerAttributeGroup
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268555"><span id="local-6989586621679268557"><span id="local-6989586621679268561"><span class="annot"><span class="annottext">Int -&gt; ServerAttributeGroup -&gt; ShowS
+[ServerAttributeGroup] -&gt; ShowS
+ServerAttributeGroup -&gt; String
+(Int -&gt; ServerAttributeGroup -&gt; ShowS)
+-&gt; (ServerAttributeGroup -&gt; String)
+-&gt; ([ServerAttributeGroup] -&gt; ShowS)
+-&gt; Show ServerAttributeGroup
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ServerAttributeGroup -&gt; ShowS
+showsPrec :: Int -&gt; ServerAttributeGroup -&gt; ShowS
+$cshow :: ServerAttributeGroup -&gt; String
+show :: ServerAttributeGroup -&gt; String
+$cshowList :: [ServerAttributeGroup] -&gt; ShowS
+showList :: [ServerAttributeGroup] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalServerAttributeGroup"><span class="hs-identifier hs-type">marshalServerAttributeGroup</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ServerAttributeGroup"><span class="hs-identifier hs-type">ServerAttributeGroup</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLbitfield</span></span><span>
+</span><span id="line-52"></span><span id="marshalServerAttributeGroup"><span class="annot"><span class="annottext">marshalServerAttributeGroup :: ServerAttributeGroup -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalServerAttributeGroup"><span class="hs-identifier hs-var hs-var">marshalServerAttributeGroup</span></a></span></span><span> </span><span id="local-6989586621679268565"><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="#local-6989586621679268565"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="#local-6989586621679268565"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-53"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#CurrentAttributes"><span class="hs-identifier hs-var">CurrentAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_CURRENT_BIT</span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PointAttributes"><span class="hs-identifier hs-var">PointAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_POINT_BIT</span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#LineAttributes"><span class="hs-identifier hs-var">LineAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_LINE_BIT</span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PolygonAttributes"><span class="hs-identifier hs-var">PolygonAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_POLYGON_BIT</span></span><span>
+</span><span id="line-57"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PolygonStippleAttributes"><span class="hs-identifier hs-var">PolygonStippleAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_POLYGON_STIPPLE_BIT</span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PixelModeAttributes"><span class="hs-identifier hs-var">PixelModeAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_PIXEL_MODE_BIT</span></span><span>
+</span><span id="line-59"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#LightingAttributes"><span class="hs-identifier hs-var">LightingAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_LIGHTING_BIT</span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#FogAttributes"><span class="hs-identifier hs-var">FogAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_FOG_BIT</span></span><span>
+</span><span id="line-61"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#DepthBufferAttributes"><span class="hs-identifier hs-var">DepthBufferAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_DEPTH_BUFFER_BIT</span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AccumBufferAttributes"><span class="hs-identifier hs-var">AccumBufferAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_ACCUM_BUFFER_BIT</span></span><span>
+</span><span id="line-63"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#StencilBufferAttributes"><span class="hs-identifier hs-var">StencilBufferAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_STENCIL_BUFFER_BIT</span></span><span>
+</span><span id="line-64"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ViewportAttributes"><span class="hs-identifier hs-var">ViewportAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_VIEWPORT_BIT</span></span><span>
+</span><span id="line-65"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#TransformAttributes"><span class="hs-identifier hs-var">TransformAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_TRANSFORM_BIT</span></span><span>
+</span><span id="line-66"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#EnableAttributes"><span class="hs-identifier hs-var">EnableAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_ENABLE_BIT</span></span><span>
+</span><span id="line-67"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ColorBufferAttributes"><span class="hs-identifier hs-var">ColorBufferAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_COLOR_BUFFER_BIT</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#HintAttributes"><span class="hs-identifier hs-var">HintAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_HINT_BIT</span></span><span>
+</span><span id="line-69"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#EvalAttributes"><span class="hs-identifier hs-var">EvalAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_EVAL_BIT</span></span><span>
+</span><span id="line-70"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ListAttributes"><span class="hs-identifier hs-var">ListAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_LIST_BIT</span></span><span>
+</span><span id="line-71"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#TextureAttributes"><span class="hs-identifier hs-var">TextureAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BIT</span></span><span>
+</span><span id="line-72"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ScissorAttributes"><span class="hs-identifier hs-var">ScissorAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_SCISSOR_BIT</span></span><span>
+</span><span id="line-73"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#MultisampleAttributes"><span class="hs-identifier hs-var">MultisampleAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_MULTISAMPLE_BIT</span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="annot"><span class="annottext">ServerAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AllServerAttributes"><span class="hs-identifier hs-var">AllServerAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_ALL_ATTRIB_BITS</span></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span id="local-6989586621679268473"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingAttrib"><span class="hs-identifier hs-type">preservingAttrib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ServerAttributeGroup"><span class="hs-identifier hs-type">ServerAttributeGroup</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268473"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268473"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-79"></span><span id="preservingAttrib"><span class="annot"><span class="annottext">preservingAttrib :: forall a. [ServerAttributeGroup] -&gt; IO a -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingAttrib"><span class="hs-identifier hs-var hs-var">preservingAttrib</span></a></span></span><span> </span><span id="local-6989586621679268589"><span class="annot"><span class="annottext">[ServerAttributeGroup]
+</span><a href="#local-6989586621679268589"><span class="hs-identifier hs-var">groups</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO a -&gt; IO a
+forall a b c. IO a -&gt; IO b -&gt; IO c -&gt; IO c
+</span><span class="hs-identifier hs-var">bracket_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ServerAttributeGroup] -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushAttrib"><span class="hs-identifier hs-var">pushAttrib</span></a></span><span> </span><span class="annot"><span class="annottext">[ServerAttributeGroup]
+</span><a href="#local-6989586621679268589"><span class="hs-identifier hs-var">groups</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glPopAttrib</span></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushAttrib"><span class="hs-identifier hs-type">pushAttrib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ServerAttributeGroup"><span class="hs-identifier hs-type">ServerAttributeGroup</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span id="pushAttrib"><span class="annot"><span class="annottext">pushAttrib :: [ServerAttributeGroup] -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushAttrib"><span class="hs-identifier hs-var hs-var">pushAttrib</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLbitfield -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLbitfield -&gt; m ()
+</span><span class="hs-identifier hs-var">glPushAttrib</span></span><span> </span><span class="annot"><span class="annottext">(GLbitfield -&gt; IO ())
+-&gt; ([ServerAttributeGroup] -&gt; GLbitfield)
+-&gt; [ServerAttributeGroup]
+-&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[GLbitfield] -&gt; GLbitfield
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span> </span><span class="annot"><span class="annottext">([GLbitfield] -&gt; GLbitfield)
+-&gt; ([ServerAttributeGroup] -&gt; [GLbitfield])
+-&gt; [ServerAttributeGroup]
+-&gt; GLbitfield
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(ServerAttributeGroup -&gt; GLbitfield)
+-&gt; [ServerAttributeGroup] -&gt; [GLbitfield]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">ServerAttributeGroup -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalServerAttributeGroup"><span class="hs-identifier hs-var">marshalServerAttributeGroup</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">data</span><span> </span><span id="ClientAttributeGroup"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ClientAttributeGroup"><span class="hs-identifier hs-var">ClientAttributeGroup</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-87"></span><span>     </span><span id="PixelStoreAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PixelStoreAttributes"><span class="hs-identifier hs-var">PixelStoreAttributes</span></a></span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="VertexArrayAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#VertexArrayAttributes"><span class="hs-identifier hs-var">VertexArrayAttributes</span></a></span></span><span>
+</span><span id="line-89"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AllClientAttributes"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AllClientAttributes"><span class="hs-identifier hs-var">AllClientAttributes</span></a></span></span><span>
+</span><span id="line-90"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679268599"><span id="local-6989586621679268601"><span class="annot"><span class="annottext">ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+(ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; (ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; Eq ClientAttributeGroup
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+== :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+$c/= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+/= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268607"><span id="local-6989586621679268609"><span id="local-6989586621679268611"><span id="local-6989586621679268615"><span id="local-6989586621679268618"><span id="local-6989586621679268621"><span id="local-6989586621679268624"><span class="annot"><span class="annottext">Eq ClientAttributeGroup
+Eq ClientAttributeGroup =&gt;
+(ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Ordering)
+-&gt; (ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; (ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; (ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; (ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool)
+-&gt; (ClientAttributeGroup
+    -&gt; ClientAttributeGroup -&gt; ClientAttributeGroup)
+-&gt; (ClientAttributeGroup
+    -&gt; ClientAttributeGroup -&gt; ClientAttributeGroup)
+-&gt; Ord ClientAttributeGroup
+ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Ordering
+ClientAttributeGroup
+-&gt; ClientAttributeGroup -&gt; ClientAttributeGroup
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Ordering
+compare :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Ordering
+$c&lt; :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+&lt; :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+$c&lt;= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+&lt;= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+$c&gt; :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+&gt; :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+$c&gt;= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+&gt;= :: ClientAttributeGroup -&gt; ClientAttributeGroup -&gt; Bool
+$cmax :: ClientAttributeGroup
+-&gt; ClientAttributeGroup -&gt; ClientAttributeGroup
+max :: ClientAttributeGroup
+-&gt; ClientAttributeGroup -&gt; ClientAttributeGroup
+$cmin :: ClientAttributeGroup
+-&gt; ClientAttributeGroup -&gt; ClientAttributeGroup
+min :: ClientAttributeGroup
+-&gt; ClientAttributeGroup -&gt; ClientAttributeGroup
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268627"><span id="local-6989586621679268629"><span id="local-6989586621679268633"><span class="annot"><span class="annottext">Int -&gt; ClientAttributeGroup -&gt; ShowS
+[ClientAttributeGroup] -&gt; ShowS
+ClientAttributeGroup -&gt; String
+(Int -&gt; ClientAttributeGroup -&gt; ShowS)
+-&gt; (ClientAttributeGroup -&gt; String)
+-&gt; ([ClientAttributeGroup] -&gt; ShowS)
+-&gt; Show ClientAttributeGroup
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ClientAttributeGroup -&gt; ShowS
+showsPrec :: Int -&gt; ClientAttributeGroup -&gt; ShowS
+$cshow :: ClientAttributeGroup -&gt; String
+show :: ClientAttributeGroup -&gt; String
+$cshowList :: [ClientAttributeGroup] -&gt; ShowS
+showList :: [ClientAttributeGroup] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalClientAttributeGroup"><span class="hs-identifier hs-type">marshalClientAttributeGroup</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ClientAttributeGroup"><span class="hs-identifier hs-type">ClientAttributeGroup</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLbitfield</span></span><span>
+</span><span id="line-93"></span><span id="marshalClientAttributeGroup"><span class="annot"><span class="annottext">marshalClientAttributeGroup :: ClientAttributeGroup -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalClientAttributeGroup"><span class="hs-identifier hs-var hs-var">marshalClientAttributeGroup</span></a></span></span><span> </span><span id="local-6989586621679268636"><span class="annot"><span class="annottext">ClientAttributeGroup
+</span><a href="#local-6989586621679268636"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ClientAttributeGroup
+</span><a href="#local-6989586621679268636"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-94"></span><span>   </span><span class="annot"><span class="annottext">ClientAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#PixelStoreAttributes"><span class="hs-identifier hs-var">PixelStoreAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_CLIENT_PIXEL_STORE_BIT</span></span><span>
+</span><span id="line-95"></span><span>   </span><span class="annot"><span class="annottext">ClientAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#VertexArrayAttributes"><span class="hs-identifier hs-var">VertexArrayAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_CLIENT_VERTEX_ARRAY_BIT</span></span><span>
+</span><span id="line-96"></span><span>   </span><span class="annot"><span class="annottext">ClientAttributeGroup
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#AllClientAttributes"><span class="hs-identifier hs-var">AllClientAttributes</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_CLIENT_ALL_ATTRIB_BITS</span></span><span>
+</span><span id="line-97"></span><span>
+</span><span id="line-98"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-99"></span><span>
+</span><span id="line-100"></span><span id="local-6989586621679268488"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingClientAttrib"><span class="hs-identifier hs-type">preservingClientAttrib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ClientAttributeGroup"><span class="hs-identifier hs-type">ClientAttributeGroup</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268488"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268488"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-101"></span><span id="preservingClientAttrib"><span class="annot"><span class="annottext">preservingClientAttrib :: forall a. [ClientAttributeGroup] -&gt; IO a -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#preservingClientAttrib"><span class="hs-identifier hs-var hs-var">preservingClientAttrib</span></a></span></span><span> </span><span id="local-6989586621679268641"><span class="annot"><span class="annottext">[ClientAttributeGroup]
+</span><a href="#local-6989586621679268641"><span class="hs-identifier hs-var">groups</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-102"></span><span>   </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO a -&gt; IO a
+forall a b c. IO a -&gt; IO b -&gt; IO c -&gt; IO c
+</span><span class="hs-identifier hs-var">bracket_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ClientAttributeGroup] -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushClientAttrib"><span class="hs-identifier hs-var">pushClientAttrib</span></a></span><span> </span><span class="annot"><span class="annottext">[ClientAttributeGroup]
+</span><a href="#local-6989586621679268641"><span class="hs-identifier hs-var">groups</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><span class="hs-identifier hs-var">glPopClientAttrib</span></span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushClientAttrib"><span class="hs-identifier hs-type">pushClientAttrib</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#ClientAttributeGroup"><span class="hs-identifier hs-type">ClientAttributeGroup</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span id="pushClientAttrib"><span class="annot"><span class="annottext">pushClientAttrib :: [ClientAttributeGroup] -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#pushClientAttrib"><span class="hs-identifier hs-var hs-var">pushClientAttrib</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLbitfield -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLbitfield -&gt; m ()
+</span><span class="hs-identifier hs-var">glPushClientAttrib</span></span><span> </span><span class="annot"><span class="annottext">(GLbitfield -&gt; IO ())
+-&gt; ([ClientAttributeGroup] -&gt; GLbitfield)
+-&gt; [ClientAttributeGroup]
+-&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">[GLbitfield] -&gt; GLbitfield
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span> </span><span class="annot"><span class="annottext">([GLbitfield] -&gt; GLbitfield)
+-&gt; ([ClientAttributeGroup] -&gt; [GLbitfield])
+-&gt; [ClientAttributeGroup]
+-&gt; GLbitfield
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(ClientAttributeGroup -&gt; GLbitfield)
+-&gt; [ClientAttributeGroup] -&gt; [GLbitfield]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">ClientAttributeGroup -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.SavingState.html#marshalClientAttributeGroup"><span class="hs-identifier hs-var">marshalClientAttributeGroup</span></a></span><span>
+</span><span id="line-106"></span></pre></body></html>

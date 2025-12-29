@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TypeSynonymInstances #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-3"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.CoordTrans</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-8"></span><span class="hs-comment">--</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- This is a purely internal module for handling matrix components.</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.MatrixComponent</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Storable</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Tensor</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">class</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Storable</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="MatrixComponent"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#MatrixComponent"><span class="hs-identifier hs-var">MatrixComponent</span></a></span></span><span> </span><span id="local-6989586621679283104"><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span>   </span><span id="getMatrix"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getMatrix"><span class="hs-identifier hs-type">getMatrix</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span id="local-6989586621679283112"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPNameMatrix"><span class="hs-identifier hs-type">GetPNameMatrix</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679283112"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679283112"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-29"></span><span>   </span><span id="loadMatrix"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadMatrix"><span class="hs-identifier hs-type">loadMatrix</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>   </span><span id="loadTransposeMatrix"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadTransposeMatrix"><span class="hs-identifier hs-type">loadTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>   </span><span id="multMatrix_"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multMatrix_"><span class="hs-identifier hs-type">multMatrix_</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>   </span><span id="multTransposeMatrix"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multTransposeMatrix"><span class="hs-identifier hs-type">multTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>   </span><span id="getUniformv"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getUniformv"><span class="hs-identifier hs-type">getUniformv</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span>   </span><span id="uniformMatrix4v"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#uniformMatrix4v"><span class="hs-identifier hs-type">uniformMatrix4v</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLsizei</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLboolean</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>   </span><span id="rotate"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#rotate"><span class="hs-identifier hs-type">rotate</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>   </span><span id="translate"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#translate"><span class="hs-identifier hs-type">translate</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>   </span><span id="scale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#scale"><span class="hs-identifier hs-type">scale</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679283104"><span class="hs-identifier hs-type">c</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#MatrixComponent"><span class="hs-identifier hs-type">MatrixComponent</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-40"></span><span>   </span><span id="local-6989586621679283157"><span class="annot"><span class="annottext">getMatrix :: forall p. GetPNameMatrix p =&gt; p -&gt; Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">getMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">p -&gt; Ptr GLfloat -&gt; IO ()
+forall p. GetPNameMatrix p =&gt; p -&gt; Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getMatrixf"><span class="hs-identifier hs-var">getMatrixf</span></a></span><span>
+</span><span id="line-41"></span><span>   </span><span id="local-6989586621679283161"><span class="annot"><span class="annottext">loadMatrix :: Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">loadMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glLoadMatrixf</span></span><span>
+</span><span id="line-42"></span><span>   </span><span id="local-6989586621679283164"><span class="annot"><span class="annottext">loadTransposeMatrix :: Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadTransposeMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">loadTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glLoadTransposeMatrixf</span></span><span>
+</span><span id="line-43"></span><span>   </span><span id="local-6989586621679283167"><span class="annot"><span class="annottext">multMatrix_ :: Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multMatrix_"><span class="hs-identifier hs-var hs-var hs-var hs-var">multMatrix_</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glMultMatrixf</span></span><span>
+</span><span id="line-44"></span><span>   </span><span id="local-6989586621679283170"><span class="annot"><span class="annottext">multTransposeMatrix :: Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multTransposeMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">multTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glMultTransposeMatrixf</span></span><span>
+</span><span id="line-45"></span><span>   </span><span id="local-6989586621679283173"><span class="annot"><span class="annottext">getUniformv :: GLuint -&gt; GLint -&gt; Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getUniformv"><span class="hs-identifier hs-var hs-var hs-var hs-var">getUniformv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; GLint -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLint -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetUniformfv</span></span><span>
+</span><span id="line-46"></span><span>   </span><span id="local-6989586621679283176"><span class="annot"><span class="annottext">uniformMatrix4v :: GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#uniformMatrix4v"><span class="hs-identifier hs-var hs-var hs-var hs-var">uniformMatrix4v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glUniformMatrix4fv</span></span><span>
+</span><span id="line-47"></span><span>   </span><span id="local-6989586621679283179"><span class="annot"><span class="annottext">rotate :: GLfloat -&gt; Vector3 GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#rotate"><span class="hs-identifier hs-var hs-var hs-var hs-var">rotate</span></a></span></span><span> </span><span id="local-6989586621679283180"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283180"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span id="local-6989586621679283182"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283182"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679283183"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283183"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679283184"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283184"><span class="hs-identifier hs-var">z</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glRotatef</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283180"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283182"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283183"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283184"><span class="hs-identifier hs-var">z</span></a></span><span>
+</span><span id="line-48"></span><span>   </span><span id="local-6989586621679283187"><span class="annot"><span class="annottext">translate :: Vector3 GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#translate"><span class="hs-identifier hs-var hs-var hs-var hs-var">translate</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span id="local-6989586621679283188"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283188"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679283189"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283189"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679283190"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283190"><span class="hs-identifier hs-var">z</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glTranslatef</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283188"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283189"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679283190"><span class="hs-identifier hs-var">z</span></a></span><span>
+</span><span id="line-49"></span><span>   </span><span id="local-6989586621679283193"><span class="annot"><span class="annottext">scale :: GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#scale"><span class="hs-identifier hs-var hs-var hs-var hs-var">scale</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glScalef</span></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#MatrixComponent"><span class="hs-identifier hs-type">MatrixComponent</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLdouble</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-52"></span><span>   </span><span id="local-6989586621679283211"><span class="annot"><span class="annottext">getMatrix :: forall p. GetPNameMatrix p =&gt; p -&gt; Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">getMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">p -&gt; Ptr GLdouble -&gt; IO ()
+forall p. GetPNameMatrix p =&gt; p -&gt; Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getMatrixd"><span class="hs-identifier hs-var">getMatrixd</span></a></span><span>
+</span><span id="line-53"></span><span>   </span><span id="local-6989586621679283214"><span class="annot"><span class="annottext">loadMatrix :: Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">loadMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glLoadMatrixd</span></span><span>
+</span><span id="line-54"></span><span>   </span><span id="local-6989586621679283217"><span class="annot"><span class="annottext">loadTransposeMatrix :: Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#loadTransposeMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">loadTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glLoadTransposeMatrixd</span></span><span>
+</span><span id="line-55"></span><span>   </span><span id="local-6989586621679283220"><span class="annot"><span class="annottext">multMatrix_ :: Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multMatrix_"><span class="hs-identifier hs-var hs-var hs-var hs-var">multMatrix_</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glMultMatrixd</span></span><span>
+</span><span id="line-56"></span><span>   </span><span id="local-6989586621679283223"><span class="annot"><span class="annottext">multTransposeMatrix :: Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#multTransposeMatrix"><span class="hs-identifier hs-var hs-var hs-var hs-var">multTransposeMatrix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glMultTransposeMatrixd</span></span><span>
+</span><span id="line-57"></span><span>   </span><span id="local-6989586621679283226"><span class="annot"><span class="annottext">getUniformv :: GLuint -&gt; GLint -&gt; Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#getUniformv"><span class="hs-identifier hs-var hs-var hs-var hs-var">getUniformv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; GLint -&gt; Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLint -&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetUniformdv</span></span><span>
+</span><span id="line-58"></span><span>   </span><span id="local-6989586621679283229"><span class="annot"><span class="annottext">uniformMatrix4v :: GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#uniformMatrix4v"><span class="hs-identifier hs-var hs-var hs-var hs-var">uniformMatrix4v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLdouble -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLint -&gt; GLint -&gt; GLboolean -&gt; Ptr GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glUniformMatrix4dv</span></span><span>
+</span><span id="line-59"></span><span>   </span><span id="local-6989586621679283232"><span class="annot"><span class="annottext">rotate :: GLdouble -&gt; Vector3 GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#rotate"><span class="hs-identifier hs-var hs-var hs-var hs-var">rotate</span></a></span></span><span> </span><span id="local-6989586621679283233"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283233"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span id="local-6989586621679283234"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283234"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679283235"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283235"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679283236"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283236"><span class="hs-identifier hs-var">z</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glRotated</span></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283233"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283234"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283235"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283236"><span class="hs-identifier hs-var">z</span></a></span><span>
+</span><span id="line-60"></span><span>   </span><span id="local-6989586621679283239"><span class="annot"><span class="annottext">translate :: Vector3 GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#translate"><span class="hs-identifier hs-var hs-var hs-var hs-var">translate</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Tensor.html#Vector3"><span class="hs-identifier hs-type">Vector3</span></a></span><span> </span><span id="local-6989586621679283240"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283240"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679283241"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283241"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span id="local-6989586621679283242"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283242"><span class="hs-identifier hs-var">z</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glTranslated</span></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283240"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283241"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679283242"><span class="hs-identifier hs-var">z</span></a></span><span>
+</span><span id="line-61"></span><span>   </span><span id="local-6989586621679283245"><span class="annot"><span class="annottext">scale :: GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.MatrixComponent.html#scale"><span class="hs-identifier hs-var hs-var hs-var hs-var">scale</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLdouble -&gt; GLdouble -&gt; GLdouble -&gt; m ()
+</span><span class="hs-identifier hs-var">glScaled</span></span><span>
+</span><span id="line-62"></span></pre></body></html>

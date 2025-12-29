@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Codec.BMP.CIEXYZ</span><span>
+</span><span id="line-3"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier">CIEXYZ</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Word</span></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary</span></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary.Get</span></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Binary.Put</span></span><span> </span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- | Contains the XYZ coordinates of a specific color in a specified color</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--   space.</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">data</span><span> </span><span id="CIEXYZ"><span class="annot"><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier hs-var">CIEXYZ</span></a></span></span><span> </span><span>
+</span><span id="line-14"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span id="CIEXYZ"><span class="annot"><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier hs-var">CIEXYZ</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-15"></span><span>        </span><span class="hs-keyword">deriving</span><span> </span><span id="local-6989586621679061903"><span id="local-6989586621679061911"><span id="local-6989586621679061915"><span class="annot"><span class="annottext">Int -&gt; CIEXYZ -&gt; ShowS
+[CIEXYZ] -&gt; ShowS
+CIEXYZ -&gt; String
+(Int -&gt; CIEXYZ -&gt; ShowS)
+-&gt; (CIEXYZ -&gt; String) -&gt; ([CIEXYZ] -&gt; ShowS) -&gt; Show CIEXYZ
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CIEXYZ -&gt; ShowS
+showsPrec :: Int -&gt; CIEXYZ -&gt; ShowS
+$cshow :: CIEXYZ -&gt; String
+show :: CIEXYZ -&gt; String
+$cshowList :: [CIEXYZ] -&gt; ShowS
+showList :: [CIEXYZ] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679061921"><span class="annot"><span class="hs-identifier hs-type">Binary</span></span><span> </span><span class="annot"><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier hs-type">CIEXYZ</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span> </span><span id="local-6989586621679061930"><span class="annot"><span class="annottext">get :: Get CIEXYZ
+</span><a href="#local-6989586621679061930"><span class="hs-identifier hs-var hs-var hs-var hs-var">get</span></a></span></span><span> </span><span>
+</span><span id="line-20"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>  </span><span id="local-6989586621679061932"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061932"><span class="hs-identifier hs-var">r</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-21"></span><span>        </span><span id="local-6989586621679061934"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061934"><span class="hs-identifier hs-var">g</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-22"></span><span>        </span><span id="local-6989586621679061935"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061935"><span class="hs-identifier hs-var">b</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Get Word32
+</span><span class="hs-identifier hs-var">getWord32le</span></span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><span class="annottext">CIEXYZ -&gt; Get CIEXYZ
+forall a. a -&gt; Get a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span>  </span><span class="annot"><span class="annottext">(CIEXYZ -&gt; Get CIEXYZ) -&gt; CIEXYZ -&gt; Get CIEXYZ
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Word32 -&gt; Word32 -&gt; CIEXYZ
+</span><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier hs-var">CIEXYZ</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061932"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061934"><span class="hs-identifier hs-var">g</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061935"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-24"></span><span>        </span><span>
+</span><span id="line-25"></span><span> </span><span id="local-6989586621679061939"><span class="annot"><span class="annottext">put :: CIEXYZ -&gt; Put
+</span><a href="#local-6989586621679061939"><span class="hs-identifier hs-var hs-var hs-var hs-var">put</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Codec.BMP.CIEXYZ.html#CIEXYZ"><span class="hs-identifier hs-type">CIEXYZ</span></a></span><span> </span><span id="local-6989586621679061941"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061941"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679061942"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061942"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span id="local-6989586621679061943"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061943"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>  </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061941"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061942"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><span class="annottext">Word32 -&gt; Put
+</span><span class="hs-identifier hs-var">putWord32le</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679061943"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span></pre></body></html>

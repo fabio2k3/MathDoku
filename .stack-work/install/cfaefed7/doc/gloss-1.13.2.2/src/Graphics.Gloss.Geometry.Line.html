@@ -1,0 +1,855 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE PatternGuards #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Geometric functions concerning lines and segments.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--   A @Line@ is taken to be infinite in length, while a @Seg@ is finite length</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--   line segment represented by its two endpoints.</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Geometry.Line</span><span>
+</span><span id="line-8"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#segClearsBox"><span class="hs-identifier">segClearsBox</span></a></span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span>        </span><span class="annot"><span class="hs-comment">-- * Closest points</span></span><span>
+</span><span id="line-11"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLine"><span class="hs-identifier">closestPointOnLine</span></a></span><span>
+</span><span id="line-12"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier">closestPointOnLineParam</span></a></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>        </span><span class="annot"><span class="hs-comment">-- * Line-Line intersection</span></span><span>
+</span><span id="line-15"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectLineLine"><span class="hs-identifier">intersectLineLine</span></a></span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span>        </span><span class="annot"><span class="hs-comment">-- * Seg-Line intersection</span></span><span>
+</span><span id="line-18"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegLine"><span class="hs-identifier">intersectSegLine</span></a></span><span>
+</span><span id="line-19"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzLine"><span class="hs-identifier">intersectSegHorzLine</span></a></span><span>
+</span><span id="line-20"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertLine"><span class="hs-identifier">intersectSegVertLine</span></a></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span>        </span><span class="annot"><span class="hs-comment">-- * Seg-Seg intersection</span></span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegSeg"><span class="hs-identifier">intersectSegSeg</span></a></span><span>
+</span><span id="line-24"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzSeg"><span class="hs-identifier">intersectSegHorzSeg</span></a></span><span>
+</span><span id="line-25"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertSeg"><span class="hs-identifier">intersectSegVertSeg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Point.html"><span class="hs-identifier">Graphics.Gloss.Data.Point</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Vector.html"><span class="hs-identifier">Graphics.Gloss.Data.Vector</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Point.Arithmetic.html"><span class="hs-identifier">Graphics.Gloss.Data.Point.Arithmetic</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Pt</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Check if line segment (P1-P2) clears a box (P3-P4) by being well outside it.</span></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#segClearsBox"><span class="hs-identifier hs-type">segClearsBox</span></a></span><span>
+</span><span id="line-34"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P1 First point of segment.</span></span><span>
+</span><span id="line-35"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P2 Second point of segment.</span></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P3 Lower left point of box.</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P4 Upper right point of box.</span></span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span id="segClearsBox"><span class="annot"><span class="annottext">segClearsBox :: Point -&gt; Point -&gt; Point -&gt; Point -&gt; Bool
+</span><a href="Graphics.Gloss.Geometry.Line.html#segClearsBox"><span class="hs-identifier hs-var hs-var">segClearsBox</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104748"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104748"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104749"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104749"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104750"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104750"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104751"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104751"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104752"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104752"><span class="hs-identifier hs-var">xa</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104753"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104753"><span class="hs-identifier hs-var">ya</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104754"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104754"><span class="hs-identifier hs-var">xb</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104755"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104755"><span class="hs-identifier hs-var">yb</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104748"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104752"><span class="hs-identifier hs-var">xa</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104750"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104752"><span class="hs-identifier hs-var">xa</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-42"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104748"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104754"><span class="hs-identifier hs-var">xb</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104750"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104754"><span class="hs-identifier hs-var">xb</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-43"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104749"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104753"><span class="hs-identifier hs-var">ya</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104751"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104753"><span class="hs-identifier hs-var">ya</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104749"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104755"><span class="hs-identifier hs-var">yb</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104751"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104755"><span class="hs-identifier hs-var">yb</span></a></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Given an infinite line which intersects `P1` and `P1`,</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--      return the point on that line that is closest to `P3`</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLine"><span class="hs-identifier hs-type">closestPointOnLine</span></a></span><span>
+</span><span id="line-51"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P1`</span></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P2`</span></span><span>
+</span><span id="line-53"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P3`</span></span><span>
+</span><span id="line-54"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ the point on the line P1-P2 that is closest to `P3`</span></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLine"><span class="hs-pragma hs-type">closestPointOnLine</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span id="closestPointOnLine"><span class="annot"><span class="annottext">closestPointOnLine :: Point -&gt; Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLine"><span class="hs-identifier hs-var hs-var">closestPointOnLine</span></a></span></span><span> </span><span id="local-6989586621679104758"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104758"><span class="hs-identifier hs-var">p1</span></a></span></span><span> </span><span id="local-6989586621679104759"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104759"><span class="hs-identifier hs-var">p2</span></a></span></span><span> </span><span id="local-6989586621679104760"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104760"><span class="hs-identifier hs-var">p3</span></a></span></span><span>
+</span><span id="line-59"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104758"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#%2B"><span class="hs-operator hs-var">Pt.+</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104762"><span class="hs-identifier hs-var">u</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Vector.html#mulSV"><span class="hs-operator hs-var">`mulSV`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104759"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#-"><span class="hs-operator hs-var">Pt.-</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104758"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-60"></span><span>        </span><span class="hs-keyword">where</span><span>   </span><span id="local-6989586621679104762"><span class="annot"><span class="annottext">u :: Float
+</span><a href="#local-6989586621679104762"><span class="hs-identifier hs-var hs-var">u</span></a></span></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-var">closestPointOnLineParam</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104758"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104759"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104760"><span class="hs-identifier hs-var">p3</span></a></span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- | Given an infinite line which intersects P1 and P2,</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--      let P4 be the point on the line that is closest to P3.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--      Return an indication of where on the line P4 is relative to P1 and P2.</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-69"></span><span class="hs-comment">--      if P4 == P1 then 0</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--      if P4 == P2 then 1</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--      if P4 is halfway between P1 and P2 then 0.5</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--        |</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--       P1</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--        |</span><span>
+</span><span id="line-78"></span><span class="hs-comment">--     P4 +---- P3</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--        |</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--       P2</span><span>
+</span><span id="line-81"></span><span class="hs-comment">--        |</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-83"></span><span class="hs-comment">--</span><span>
+</span><span id="line-84"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-pragma hs-type">closestPointOnLineParam</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-type">closestPointOnLineParam</span></a></span><span>
+</span><span id="line-86"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P1`</span></span><span>
+</span><span id="line-87"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P2`</span></span><span>
+</span><span id="line-88"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P3`</span></span><span>
+</span><span id="line-89"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span id="closestPointOnLineParam"><span class="annot"><span class="annottext">closestPointOnLineParam :: Point -&gt; Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-var hs-var">closestPointOnLineParam</span></a></span></span><span> </span><span id="local-6989586621679104765"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104765"><span class="hs-identifier hs-var">p1</span></a></span></span><span> </span><span id="local-6989586621679104766"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104766"><span class="hs-identifier hs-var">p2</span></a></span></span><span> </span><span id="local-6989586621679104767"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104767"><span class="hs-identifier hs-var">p3</span></a></span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104767"><span class="hs-identifier hs-var">p3</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#-"><span class="hs-operator hs-var">Pt.-</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104765"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Data.Vector.html#dotV"><span class="hs-operator hs-var">`dotV`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104766"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#-"><span class="hs-operator hs-var">Pt.-</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104765"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>        </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104766"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#-"><span class="hs-operator hs-var">Pt.-</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104765"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Data.Vector.html#dotV"><span class="hs-operator hs-var">`dotV`</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104766"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point
+</span><a href="Graphics.Gloss.Data.Point.Arithmetic.html#-"><span class="hs-operator hs-var">Pt.-</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104765"><span class="hs-identifier hs-var">p1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- Line-Line intersection -----------------------------------------------------</span><span>
+</span><span id="line-98"></span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- | Given four points specifying two lines, get the point where the two lines</span><span>
+</span><span id="line-100"></span><span class="hs-comment">--   cross, if any. Note that the lines extend off to infinity, so the</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--   intersection point might not line between either of the two pairs of points.</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-104"></span><span class="hs-comment">--     \\      /</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--      P1  P4</span><span>
+</span><span id="line-106"></span><span class="hs-comment">--       \\ /</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--        +</span><span>
+</span><span id="line-108"></span><span class="hs-comment">--       / \\</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--      P3  P2</span><span>
+</span><span id="line-110"></span><span class="hs-comment">--     /     \\</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectLineLine"><span class="hs-identifier hs-type">intersectLineLine</span></a></span><span>
+</span><span id="line-114"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P1`</span></span><span>
+</span><span id="line-115"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P2`</span></span><span>
+</span><span id="line-116"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P3`</span></span><span>
+</span><span id="line-117"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P4`</span></span><span>
+</span><span id="line-118"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span id="intersectLineLine"><span class="annot"><span class="annottext">intersectLineLine :: Point -&gt; Point -&gt; Point -&gt; Point -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectLineLine"><span class="hs-identifier hs-var hs-var">intersectLineLine</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104770"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104770"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104771"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104771"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104772"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104772"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104773"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104773"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104774"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104774"><span class="hs-identifier hs-var">x3</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104775"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104775"><span class="hs-identifier hs-var">y3</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104776"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104776"><span class="hs-identifier hs-var">x4</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104777"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104777"><span class="hs-identifier hs-var">y4</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-121"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>  </span><span id="local-6989586621679104779"><span class="annot"><span class="annottext">dx12 :: Float
+</span><a href="#local-6989586621679104779"><span class="hs-identifier hs-var hs-var">dx12</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104770"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104772"><span class="hs-identifier hs-var">x2</span></a></span><span>
+</span><span id="line-122"></span><span>        </span><span id="local-6989586621679104781"><span class="annot"><span class="annottext">dx34 :: Float
+</span><a href="#local-6989586621679104781"><span class="hs-identifier hs-var hs-var">dx34</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104774"><span class="hs-identifier hs-var">x3</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104776"><span class="hs-identifier hs-var">x4</span></a></span><span>
+</span><span id="line-123"></span><span>
+</span><span id="line-124"></span><span>        </span><span id="local-6989586621679104783"><span class="annot"><span class="annottext">dy12 :: Float
+</span><a href="#local-6989586621679104783"><span class="hs-identifier hs-var hs-var">dy12</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104771"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104773"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-125"></span><span>        </span><span id="local-6989586621679104785"><span class="annot"><span class="annottext">dy34 :: Float
+</span><a href="#local-6989586621679104785"><span class="hs-identifier hs-var hs-var">dy34</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104775"><span class="hs-identifier hs-var">y3</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104777"><span class="hs-identifier hs-var">y4</span></a></span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span>        </span><span id="local-6989586621679104789"><span class="annot"><span class="annottext">den :: Float
+</span><a href="#local-6989586621679104789"><span class="hs-identifier hs-var hs-var">den</span></a></span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104779"><span class="hs-identifier hs-var">dx12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104785"><span class="hs-identifier hs-var">dy34</span></a></span><span>  </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104783"><span class="hs-identifier hs-var">dy12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104781"><span class="hs-identifier hs-var">dx34</span></a></span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104789"><span class="hs-identifier hs-var">den</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-130"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-131"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">let</span><span>
+</span><span id="line-132"></span><span>                </span><span id="local-6989586621679104794"><span class="annot"><span class="annottext">det12 :: Float
+</span><a href="#local-6989586621679104794"><span class="hs-identifier hs-var hs-var">det12</span></a></span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104770"><span class="hs-identifier hs-var">x1</span></a></span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104773"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104771"><span class="hs-identifier hs-var">y1</span></a></span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104772"><span class="hs-identifier hs-var">x2</span></a></span><span>
+</span><span id="line-133"></span><span>                </span><span id="local-6989586621679104798"><span class="annot"><span class="annottext">det34 :: Float
+</span><a href="#local-6989586621679104798"><span class="hs-identifier hs-var hs-var">det34</span></a></span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104774"><span class="hs-identifier hs-var">x3</span></a></span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104777"><span class="hs-identifier hs-var">y4</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104775"><span class="hs-identifier hs-var">y3</span></a></span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104776"><span class="hs-identifier hs-var">x4</span></a></span><span>
+</span><span id="line-134"></span><span>
+</span><span id="line-135"></span><span>                </span><span id="local-6989586621679104802"><span class="annot"><span class="annottext">numx :: Float
+</span><a href="#local-6989586621679104802"><span class="hs-identifier hs-var hs-var">numx</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104794"><span class="hs-identifier hs-var">det12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104781"><span class="hs-identifier hs-var">dx34</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104779"><span class="hs-identifier hs-var">dx12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104798"><span class="hs-identifier hs-var">det34</span></a></span><span>
+</span><span id="line-136"></span><span>                </span><span id="local-6989586621679104806"><span class="annot"><span class="annottext">numy :: Float
+</span><a href="#local-6989586621679104806"><span class="hs-identifier hs-var hs-var">numy</span></a></span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104794"><span class="hs-identifier hs-var">det12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104785"><span class="hs-identifier hs-var">dy34</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104783"><span class="hs-identifier hs-var">dy12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104798"><span class="hs-identifier hs-var">det34</span></a></span><span>
+</span><span id="line-137"></span><span>             </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104802"><span class="hs-identifier hs-var">numx</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104789"><span class="hs-identifier hs-var">den</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104806"><span class="hs-identifier hs-var">numy</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104789"><span class="hs-identifier hs-var">den</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span>
+</span><span id="line-140"></span><span class="hs-comment">-- Segment-Line intersection --------------------------------------------------</span><span>
+</span><span id="line-141"></span><span class="hs-comment">-- | Get the point where a segment @P1-P2@ crosses an infinite line @P3-P4@,</span><span>
+</span><span id="line-142"></span><span class="hs-comment">--   if any.</span><span>
+</span><span id="line-143"></span><span class="hs-comment">--</span><span>
+</span><span id="line-144"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegLine"><span class="hs-identifier hs-type">intersectSegLine</span></a></span><span>
+</span><span id="line-145"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P1`</span></span><span>
+</span><span id="line-146"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P2`</span></span><span>
+</span><span id="line-147"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P3`</span></span><span>
+</span><span id="line-148"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P4`</span></span><span>
+</span><span id="line-149"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-150"></span><span>
+</span><span id="line-151"></span><span id="intersectSegLine"><span class="annot"><span class="annottext">intersectSegLine :: Point -&gt; Point -&gt; Point -&gt; Point -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegLine"><span class="hs-identifier hs-var hs-var">intersectSegLine</span></a></span></span><span> </span><span id="local-6989586621679104807"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104807"><span class="hs-identifier hs-var">p1</span></a></span></span><span> </span><span id="local-6989586621679104808"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104808"><span class="hs-identifier hs-var">p2</span></a></span></span><span> </span><span id="local-6989586621679104809"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104809"><span class="hs-identifier hs-var">p3</span></a></span></span><span> </span><span id="local-6989586621679104810"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104810"><span class="hs-identifier hs-var">p4</span></a></span></span><span>
+</span><span id="line-152"></span><span>        </span><span class="hs-comment">-- TODO: merge closest point check with intersection, reuse subterms.</span><span>
+</span><span id="line-153"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679104811"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104811"><span class="hs-identifier hs-var">p0</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Point -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectLineLine"><span class="hs-identifier hs-var">intersectLineLine</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104807"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104808"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104809"><span class="hs-identifier hs-var">p3</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104810"><span class="hs-identifier hs-var">p4</span></a></span><span>
+</span><span id="line-154"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104812"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104812"><span class="hs-identifier hs-var">t12</span></a></span></span><span>           </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-var">closestPointOnLineParam</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104807"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104808"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104811"><span class="hs-identifier hs-var">p0</span></a></span><span>
+</span><span id="line-155"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104812"><span class="hs-identifier hs-var">t12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104812"><span class="hs-identifier hs-var">t12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-156"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104811"><span class="hs-identifier hs-var">p0</span></a></span><span>
+</span><span id="line-157"></span><span>
+</span><span id="line-158"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-159"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-160"></span><span>
+</span><span id="line-161"></span><span>
+</span><span id="line-162"></span><span class="hs-comment">-- | Get the point where a segment crosses a horizontal line, if any.</span><span>
+</span><span id="line-163"></span><span class="hs-comment">--</span><span>
+</span><span id="line-164"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-165"></span><span class="hs-comment">--                + P1</span><span>
+</span><span id="line-166"></span><span class="hs-comment">--               /</span><span>
+</span><span id="line-167"></span><span class="hs-comment">--       -------+---------</span><span>
+</span><span id="line-168"></span><span class="hs-comment">--             /        y0</span><span>
+</span><span id="line-169"></span><span class="hs-comment">--         P2 +</span><span>
+</span><span id="line-170"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-171"></span><span class="hs-comment">--</span><span>
+</span><span id="line-172"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzLine"><span class="hs-identifier hs-type">intersectSegHorzLine</span></a></span><span>
+</span><span id="line-173"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P1 First point of segment.</span></span><span>
+</span><span id="line-174"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P2 Second point of segment.</span></span><span>
+</span><span id="line-175"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ y value of line.</span></span><span>
+</span><span id="line-176"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-177"></span><span id="intersectSegHorzLine"><span class="annot"><span class="annottext">intersectSegHorzLine :: Point -&gt; Point -&gt; Float -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzLine"><span class="hs-identifier hs-var hs-var">intersectSegHorzLine</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104815"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104815"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104816"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104817"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104817"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104818"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104819"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span></span><span>
+</span><span id="line-178"></span><span>
+</span><span id="line-179"></span><span>        </span><span class="hs-comment">-- seg is on line</span><span>
+</span><span id="line-180"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-181"></span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-comment">-- seg is above line</span><span>
+</span><span id="line-183"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">,</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-184"></span><span>
+</span><span id="line-185"></span><span>        </span><span class="hs-comment">-- seg is below line</span><span>
+</span><span id="line-186"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">,</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span>        </span><span class="hs-comment">-- seg is a single point on the line.</span><span>
+</span><span id="line-189"></span><span>        </span><span class="hs-comment">-- this should be caught by the first case,</span><span>
+</span><span id="line-190"></span><span>        </span><span class="hs-comment">-- but we'll test for it anyway.</span><span>
+</span><span id="line-191"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-192"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104815"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-195"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104817"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104815"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104818"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104816"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104815"><span class="hs-identifier hs-var">x1</span></a></span><span>
+</span><span id="line-196"></span><span>               </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104819"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-197"></span><span>
+</span><span id="line-198"></span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span class="hs-comment">-- | Get the point where a segment crosses a vertical line, if any.</span><span>
+</span><span id="line-201"></span><span class="hs-comment">--</span><span>
+</span><span id="line-202"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-203"></span><span class="hs-comment">--              |</span><span>
+</span><span id="line-204"></span><span class="hs-comment">--              |   + P1</span><span>
+</span><span id="line-205"></span><span class="hs-comment">--              | /</span><span>
+</span><span id="line-206"></span><span class="hs-comment">--              +</span><span>
+</span><span id="line-207"></span><span class="hs-comment">--            / |</span><span>
+</span><span id="line-208"></span><span class="hs-comment">--       P2 +   |</span><span>
+</span><span id="line-209"></span><span class="hs-comment">--              | x0</span><span>
+</span><span id="line-210"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-211"></span><span class="hs-comment">--</span><span>
+</span><span id="line-212"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertLine"><span class="hs-identifier hs-type">intersectSegVertLine</span></a></span><span>
+</span><span id="line-213"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P1 First point of segment.</span></span><span>
+</span><span id="line-214"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P2 Second point of segment.</span></span><span>
+</span><span id="line-215"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ x value of line.</span></span><span>
+</span><span id="line-216"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-217"></span><span>
+</span><span id="line-218"></span><span id="intersectSegVertLine"><span class="annot"><span class="annottext">intersectSegVertLine :: Point -&gt; Point -&gt; Float -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertLine"><span class="hs-identifier hs-var hs-var">intersectSegVertLine</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104821"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104822"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104822"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104823"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104824"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104824"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104825"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span></span><span>
+</span><span id="line-219"></span><span>
+</span><span id="line-220"></span><span>        </span><span class="hs-comment">-- seg is on line</span><span>
+</span><span id="line-221"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-222"></span><span>
+</span><span id="line-223"></span><span>        </span><span class="hs-comment">-- seg is to right of line</span><span>
+</span><span id="line-224"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-225"></span><span>
+</span><span id="line-226"></span><span>        </span><span class="hs-comment">-- seg is to left of line</span><span>
+</span><span id="line-227"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-228"></span><span>
+</span><span id="line-229"></span><span>        </span><span class="hs-comment">-- seg is a single point on the line.</span><span>
+</span><span id="line-230"></span><span>        </span><span class="hs-comment">-- this should be caught by the first case,</span><span>
+</span><span id="line-231"></span><span>        </span><span class="hs-comment">-- but we'll test for it anyway.</span><span>
+</span><span id="line-232"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-233"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104822"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-234"></span><span>
+</span><span id="line-235"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-236"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span>
+</span><span id="line-237"></span><span>               </span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104825"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104824"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104822"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104823"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104821"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104822"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-238"></span><span>
+</span><span id="line-239"></span><span>
+</span><span id="line-240"></span><span class="hs-comment">-- Segment-Segment intersection -----------------------------------------------</span><span>
+</span><span id="line-241"></span><span>
+</span><span id="line-242"></span><span class="hs-comment">-- | Get the point where a segment @P1-P2@ crosses another segement @P3-P4@,</span><span>
+</span><span id="line-243"></span><span class="hs-comment">--   if any.</span><span>
+</span><span id="line-244"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegSeg"><span class="hs-identifier hs-type">intersectSegSeg</span></a></span><span>
+</span><span id="line-245"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P1`</span></span><span>
+</span><span id="line-246"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P2`</span></span><span>
+</span><span id="line-247"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P3`</span></span><span>
+</span><span id="line-248"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ `P4`</span></span><span>
+</span><span id="line-249"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-250"></span><span>
+</span><span id="line-251"></span><span id="intersectSegSeg"><span class="annot"><span class="annottext">intersectSegSeg :: Point -&gt; Point -&gt; Point -&gt; Point -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegSeg"><span class="hs-identifier hs-var hs-var">intersectSegSeg</span></a></span></span><span> </span><span id="local-6989586621679104826"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104826"><span class="hs-identifier hs-var">p1</span></a></span></span><span> </span><span id="local-6989586621679104827"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104827"><span class="hs-identifier hs-var">p2</span></a></span></span><span> </span><span id="local-6989586621679104828"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104828"><span class="hs-identifier hs-var">p3</span></a></span></span><span> </span><span id="local-6989586621679104829"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104829"><span class="hs-identifier hs-var">p4</span></a></span></span><span>
+</span><span id="line-252"></span><span>        </span><span class="hs-comment">-- TODO: merge closest point checks with intersection, reuse subterms.</span><span>
+</span><span id="line-253"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679104830"><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104830"><span class="hs-identifier hs-var">p0</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Point -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectLineLine"><span class="hs-identifier hs-var">intersectLineLine</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104826"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104827"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104828"><span class="hs-identifier hs-var">p3</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104829"><span class="hs-identifier hs-var">p4</span></a></span><span>
+</span><span id="line-254"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104831"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104831"><span class="hs-identifier hs-var">t12</span></a></span></span><span>           </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-var">closestPointOnLineParam</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104826"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104827"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104830"><span class="hs-identifier hs-var">p0</span></a></span><span>
+</span><span id="line-255"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104832"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104832"><span class="hs-identifier hs-var">t23</span></a></span></span><span>           </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Float
+</span><a href="Graphics.Gloss.Geometry.Line.html#closestPointOnLineParam"><span class="hs-identifier hs-var">closestPointOnLineParam</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104828"><span class="hs-identifier hs-var">p3</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104829"><span class="hs-identifier hs-var">p4</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104830"><span class="hs-identifier hs-var">p0</span></a></span><span>
+</span><span id="line-256"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104831"><span class="hs-identifier hs-var">t12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104831"><span class="hs-identifier hs-var">t12</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-257"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104832"><span class="hs-identifier hs-var">t23</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104832"><span class="hs-identifier hs-var">t23</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-258"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104830"><span class="hs-identifier hs-var">p0</span></a></span><span>
+</span><span id="line-259"></span><span>
+</span><span id="line-260"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-261"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-262"></span><span>
+</span><span id="line-263"></span><span>
+</span><span id="line-264"></span><span class="hs-comment">-- | Check if an arbitrary segment intersects a horizontal segment.</span><span>
+</span><span id="line-265"></span><span class="hs-comment">--</span><span>
+</span><span id="line-266"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-267"></span><span class="hs-comment">--                 + P2</span><span>
+</span><span id="line-268"></span><span class="hs-comment">--                /</span><span>
+</span><span id="line-269"></span><span class="hs-comment">-- (xa, y3)  +---+----+ (xb, y3)</span><span>
+</span><span id="line-270"></span><span class="hs-comment">--              /</span><span>
+</span><span id="line-271"></span><span class="hs-comment">--          P1 +</span><span>
+</span><span id="line-272"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-273"></span><span>
+</span><span id="line-274"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzSeg"><span class="hs-identifier hs-type">intersectSegHorzSeg</span></a></span><span>
+</span><span id="line-275"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P1 First point of segment.</span></span><span>
+</span><span id="line-276"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P2 Second point of segment.</span></span><span>
+</span><span id="line-277"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (y3) y value of horizontal segment.</span></span><span>
+</span><span id="line-278"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (xa) Leftmost x value of horizontal segment.</span></span><span>
+</span><span id="line-279"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (xb) Rightmost x value of horizontal segment.</span></span><span>
+</span><span id="line-280"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ (x3, y3) Intersection point, if any.</span></span><span>
+</span><span id="line-281"></span><span>
+</span><span id="line-282"></span><span id="intersectSegHorzSeg"><span class="annot"><span class="annottext">intersectSegHorzSeg :: Point -&gt; Point -&gt; Float -&gt; Float -&gt; Float -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegHorzSeg"><span class="hs-identifier hs-var hs-var">intersectSegHorzSeg</span></a></span></span><span> </span><span id="local-6989586621679104833"><span class="annot"><span class="annottext">p1 :: Point
+</span><a href="#local-6989586621679104833"><span class="hs-identifier hs-var">p1</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679104834"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104834"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104835"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104835"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104836"><span class="annot"><span class="annottext">p2 :: Point
+</span><a href="#local-6989586621679104836"><span class="hs-identifier hs-var">p2</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679104837"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104837"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104838"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104838"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104839"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104839"><span class="hs-identifier hs-var">y0</span></a></span></span><span> </span><span id="local-6989586621679104840"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104840"><span class="hs-identifier hs-var">xa</span></a></span></span><span> </span><span id="local-6989586621679104841"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104841"><span class="hs-identifier hs-var">xb</span></a></span></span><span>
+</span><span id="line-283"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Point -&gt; Bool
+</span><a href="Graphics.Gloss.Geometry.Line.html#segClearsBox"><span class="hs-identifier hs-var">segClearsBox</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104833"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104836"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104840"><span class="hs-identifier hs-var">xa</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104839"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104841"><span class="hs-identifier hs-var">xb</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104839"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-284"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-285"></span><span>
+</span><span id="line-286"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104842"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104840"><span class="hs-identifier hs-var">xa</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-287"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104842"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104841"><span class="hs-identifier hs-var">xb</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-288"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104842"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104839"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-289"></span><span>
+</span><span id="line-290"></span><span>        </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679104842"><span class="annot"><span class="annottext">x0 :: Float
+</span><a href="#local-6989586621679104842"><span class="hs-identifier hs-var hs-var">x0</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104838"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104835"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104834"><span class="hs-identifier hs-var">x1</span></a></span><span>
+</span><span id="line-291"></span><span>                 </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104839"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104835"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104837"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104834"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104838"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104835"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104834"><span class="hs-identifier hs-var">x1</span></a></span><span>
+</span><span id="line-292"></span><span>
+</span><span id="line-293"></span><span>
+</span><span id="line-294"></span><span class="hs-comment">-- | Check if an arbitrary segment intersects a vertical segment.</span><span>
+</span><span id="line-295"></span><span class="hs-comment">--</span><span>
+</span><span id="line-296"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-297"></span><span class="hs-comment">--      (x3, yb) +</span><span>
+</span><span id="line-298"></span><span class="hs-comment">--               |   + P1</span><span>
+</span><span id="line-299"></span><span class="hs-comment">--               | /</span><span>
+</span><span id="line-300"></span><span class="hs-comment">--               +</span><span>
+</span><span id="line-301"></span><span class="hs-comment">--             / |</span><span>
+</span><span id="line-302"></span><span class="hs-comment">--        P2 +   |</span><span>
+</span><span id="line-303"></span><span class="hs-comment">--               + (x3, ya)</span><span>
+</span><span id="line-304"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-305"></span><span>
+</span><span id="line-306"></span><span class="annot"><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertSeg"><span class="hs-identifier hs-type">intersectSegVertSeg</span></a></span><span>
+</span><span id="line-307"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P1 First point of segment.</span></span><span>
+</span><span id="line-308"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ P2 Second point of segment.</span></span><span>
+</span><span id="line-309"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (x3) x value of vertical segment</span></span><span>
+</span><span id="line-310"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (ya) Lowest y value of vertical segment.</span></span><span>
+</span><span id="line-311"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ (yb) Highest y value of vertical segment.</span></span><span>
+</span><span id="line-312"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ (x3, y3) Intersection point, if any.</span></span><span>
+</span><span id="line-313"></span><span>
+</span><span id="line-314"></span><span id="intersectSegVertSeg"><span class="annot"><span class="annottext">intersectSegVertSeg :: Point -&gt; Point -&gt; Float -&gt; Float -&gt; Float -&gt; Maybe Point
+</span><a href="Graphics.Gloss.Geometry.Line.html#intersectSegVertSeg"><span class="hs-identifier hs-var hs-var">intersectSegVertSeg</span></a></span></span><span> </span><span id="local-6989586621679104852"><span class="annot"><span class="annottext">p1 :: Point
+</span><a href="#local-6989586621679104852"><span class="hs-identifier hs-var">p1</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679104853"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104853"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104854"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104854"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104855"><span class="annot"><span class="annottext">p2 :: Point
+</span><a href="#local-6989586621679104855"><span class="hs-identifier hs-var">p2</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span id="local-6989586621679104856"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104856"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104857"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104857"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679104858"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104858"><span class="hs-identifier hs-var">x0</span></a></span></span><span> </span><span id="local-6989586621679104859"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104859"><span class="hs-identifier hs-var">ya</span></a></span></span><span> </span><span id="local-6989586621679104860"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104860"><span class="hs-identifier hs-var">yb</span></a></span></span><span>
+</span><span id="line-315"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Point -&gt; Point -&gt; Point -&gt; Bool
+</span><a href="Graphics.Gloss.Geometry.Line.html#segClearsBox"><span class="hs-identifier hs-var">segClearsBox</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104852"><span class="hs-identifier hs-var">p1</span></a></span><span> </span><span class="annot"><span class="annottext">Point
+</span><a href="#local-6989586621679104855"><span class="hs-identifier hs-var">p2</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104858"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104859"><span class="hs-identifier hs-var">ya</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104858"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104860"><span class="hs-identifier hs-var">yb</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-316"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-317"></span><span>
+</span><span id="line-318"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104861"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104859"><span class="hs-identifier hs-var">ya</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-319"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104861"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104860"><span class="hs-identifier hs-var">yb</span></a></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Point
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-320"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Point -&gt; Maybe Point
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104858"><span class="hs-identifier hs-var">x0</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104861"><span class="hs-identifier hs-var">y0</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-321"></span><span>
+</span><span id="line-322"></span><span>        </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679104861"><span class="annot"><span class="annottext">y0 :: Float
+</span><a href="#local-6989586621679104861"><span class="hs-identifier hs-var hs-var">y0</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104856"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104853"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104854"><span class="hs-identifier hs-var">y1</span></a></span><span>
+</span><span id="line-323"></span><span>                 </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104858"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104853"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104857"><span class="hs-identifier hs-var">y2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104854"><span class="hs-identifier hs-var">y1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104856"><span class="hs-identifier hs-var">x2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104853"><span class="hs-identifier hs-var">x1</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104854"><span class="hs-identifier hs-var">y1</span></a></span><span>
+</span><span id="line-324"></span><span>
+</span><span id="line-325"></span><span>
+</span><span id="line-326"></span></pre></body></html>

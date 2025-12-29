@@ -1,0 +1,693 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.UI.GLUT.GameMode</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2018</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- In addition to the functionality offered by</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Window.fullScreen', GLUT offers an sub-API to change the</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- screen resolution, color depth, and refresh rate of the display for a single</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- full screen window. This mode of operation is called /game mode/, and is</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- restricted in various ways: No pop-up menus are allowed for this full screen</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- window, no other (sub-)windows can be created, and all other applications are</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- hidden.</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--</span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- /X Implementation Notes:/ Note that game mode is not fully supported in the</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- original GLUT for X, it is essentially the same as using</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Window.fullScreen'. The GLUT clone freeglut</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- (see &lt;http://freeglut.sourceforge.net/&gt;) does not have this restriction.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.UI.GLUT.GameMode</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-27"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapability"><span class="hs-identifier">GameModeCapability</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier">GameModeCapabilityDescription</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilities"><span class="hs-identifier">gameModeCapabilities</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#enterGameMode"><span class="hs-identifier">enterGameMode</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#leaveGameMode"><span class="hs-identifier">leaveGameMode</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#BitsPerPlane"><span class="hs-identifier">BitsPerPlane</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#RefreshRate"><span class="hs-identifier">RefreshRate</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeInfo"><span class="hs-identifier">GameModeInfo</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeInfo"><span class="hs-identifier">gameModeInfo</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeActive"><span class="hs-identifier">gameModeActive</span></a></span><span>
+</span><span id="line-31"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">intersperse</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">GettableStateVar</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">makeGettableStateVar</span></span><span>
+</span><span id="line-36"></span><span>                     </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">SettableStateVar</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">makeSettableStateVar</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.C.String</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">withCString</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Size</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">GLenum</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Raw.html"><span class="hs-identifier">Graphics.UI.GLUT.Raw</span></a></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html"><span class="hs-identifier">Graphics.UI.GLUT.Types</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><span class="hs-comment">-- | Capabilities for 'gameModeCapabilities'</span></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">data</span><span> </span><span id="GameModeCapability"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapability"><span class="hs-identifier hs-var">GameModeCapability</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span id="GameModeWidth"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeWidth"><span class="hs-identifier hs-var">GameModeWidth</span></a></span></span><span>         </span><span class="annot"><span class="hs-comment">-- ^ Width of the screen resolution in pixels</span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GameModeHeight"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeHeight"><span class="hs-identifier hs-var">GameModeHeight</span></a></span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Height of the screen resolution in pixels</span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GameModeBitsPerPlane"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeBitsPerPlane"><span class="hs-identifier hs-var">GameModeBitsPerPlane</span></a></span></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ Color depth of the screen in bits</span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GameModeRefreshRate"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeRefreshRate"><span class="hs-identifier hs-var">GameModeRefreshRate</span></a></span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ Refresh rate in Hertz</span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GameModeNum"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeNum"><span class="hs-identifier hs-var">GameModeNum</span></a></span></span><span>           </span><span class="hs-comment">-- ^ Match the Nth frame buffer configuration</span><span>
+</span><span id="line-53"></span><span>                           </span><span class="hs-comment">--   compatible with the given capabilities</span><span>
+</span><span id="line-54"></span><span>                           </span><span class="hs-comment">--   (numbering starts at 1)</span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679141401"><span id="local-6989586621679141403"><span class="annot"><span class="annottext">GameModeCapability -&gt; GameModeCapability -&gt; Bool
+(GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; Eq GameModeCapability
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+== :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+$c/= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+/= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141410"><span id="local-6989586621679141412"><span id="local-6989586621679141414"><span id="local-6989586621679141418"><span id="local-6989586621679141421"><span id="local-6989586621679141424"><span id="local-6989586621679141427"><span class="annot"><span class="annottext">Eq GameModeCapability
+Eq GameModeCapability =&gt;
+(GameModeCapability -&gt; GameModeCapability -&gt; Ordering)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; Bool)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability)
+-&gt; (GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability)
+-&gt; Ord GameModeCapability
+GameModeCapability -&gt; GameModeCapability -&gt; Bool
+GameModeCapability -&gt; GameModeCapability -&gt; Ordering
+GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: GameModeCapability -&gt; GameModeCapability -&gt; Ordering
+compare :: GameModeCapability -&gt; GameModeCapability -&gt; Ordering
+$c&lt; :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+&lt; :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+$c&lt;= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+&lt;= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+$c&gt; :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+&gt; :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+$c&gt;= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+&gt;= :: GameModeCapability -&gt; GameModeCapability -&gt; Bool
+$cmax :: GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability
+max :: GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability
+$cmin :: GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability
+min :: GameModeCapability -&gt; GameModeCapability -&gt; GameModeCapability
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141431"><span id="local-6989586621679141433"><span id="local-6989586621679141437"><span class="annot"><span class="annottext">BitsPerPlane -&gt; GameModeCapability -&gt; ShowS
+[GameModeCapability] -&gt; ShowS
+GameModeCapability -&gt; String
+(BitsPerPlane -&gt; GameModeCapability -&gt; ShowS)
+-&gt; (GameModeCapability -&gt; String)
+-&gt; ([GameModeCapability] -&gt; ShowS)
+-&gt; Show GameModeCapability
+forall a.
+(BitsPerPlane -&gt; a -&gt; ShowS)
+-&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: BitsPerPlane -&gt; GameModeCapability -&gt; ShowS
+showsPrec :: BitsPerPlane -&gt; GameModeCapability -&gt; ShowS
+$cshow :: GameModeCapability -&gt; String
+show :: GameModeCapability -&gt; String
+$cshowList :: [GameModeCapability] -&gt; ShowS
+showList :: [GameModeCapability] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityToString"><span class="hs-identifier hs-type">gameModeCapabilityToString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapability"><span class="hs-identifier hs-type">GameModeCapability</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-58"></span><span id="gameModeCapabilityToString"><span class="annot"><span class="annottext">gameModeCapabilityToString :: GameModeCapability -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityToString"><span class="hs-identifier hs-var hs-var">gameModeCapabilityToString</span></a></span></span><span> </span><span id="local-6989586621679141441"><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="#local-6989586621679141441"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="#local-6989586621679141441"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-59"></span><span>   </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeWidth"><span class="hs-identifier hs-var">GameModeWidth</span></a></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;width&quot;</span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeHeight"><span class="hs-identifier hs-var">GameModeHeight</span></a></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;height&quot;</span></span><span>
+</span><span id="line-61"></span><span>   </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeBitsPerPlane"><span class="hs-identifier hs-var">GameModeBitsPerPlane</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;bpp&quot;</span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeRefreshRate"><span class="hs-identifier hs-var">GameModeRefreshRate</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;hertz&quot;</span></span><span>
+</span><span id="line-63"></span><span>   </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeNum"><span class="hs-identifier hs-var">GameModeNum</span></a></span><span>          </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;num&quot;</span></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="annot"><span class="hs-comment">-- | A single capability description for 'gameModeCapabilities'.</span></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-keyword">data</span><span> </span><span id="GameModeCapabilityDescription"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier hs-var">GameModeCapabilityDescription</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Where%27"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-var">Where'</span></a></span></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapability"><span class="hs-identifier hs-type">GameModeCapability</span></a></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Relation"><span class="hs-identifier hs-type">Relation</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679141444"><span id="local-6989586621679141451"><span class="annot"><span class="annottext">GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+(GameModeCapabilityDescription
+ -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; Eq GameModeCapabilityDescription
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+== :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+$c/= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+/= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141457"><span id="local-6989586621679141464"><span id="local-6989586621679141469"><span id="local-6989586621679141473"><span id="local-6989586621679141476"><span id="local-6989586621679141479"><span id="local-6989586621679141482"><span class="annot"><span class="annottext">Eq GameModeCapabilityDescription
+Eq GameModeCapabilityDescription =&gt;
+(GameModeCapabilityDescription
+ -&gt; GameModeCapabilityDescription -&gt; Ordering)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; Bool)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription)
+-&gt; (GameModeCapabilityDescription
+    -&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription)
+-&gt; Ord GameModeCapabilityDescription
+GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Ordering
+GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Ordering
+compare :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Ordering
+$c&lt; :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+&lt; :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+$c&lt;= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+&lt;= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+$c&gt; :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+&gt; :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+$c&gt;= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+&gt;= :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; Bool
+$cmax :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription
+max :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription
+$cmin :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription
+min :: GameModeCapabilityDescription
+-&gt; GameModeCapabilityDescription -&gt; GameModeCapabilityDescription
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141485"><span id="local-6989586621679141492"><span id="local-6989586621679141496"><span class="annot"><span class="annottext">BitsPerPlane -&gt; GameModeCapabilityDescription -&gt; ShowS
+[GameModeCapabilityDescription] -&gt; ShowS
+GameModeCapabilityDescription -&gt; String
+(BitsPerPlane -&gt; GameModeCapabilityDescription -&gt; ShowS)
+-&gt; (GameModeCapabilityDescription -&gt; String)
+-&gt; ([GameModeCapabilityDescription] -&gt; ShowS)
+-&gt; Show GameModeCapabilityDescription
+forall a.
+(BitsPerPlane -&gt; a -&gt; ShowS)
+-&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: BitsPerPlane -&gt; GameModeCapabilityDescription -&gt; ShowS
+showsPrec :: BitsPerPlane -&gt; GameModeCapabilityDescription -&gt; ShowS
+$cshow :: GameModeCapabilityDescription -&gt; String
+show :: GameModeCapabilityDescription -&gt; String
+$cshowList :: [GameModeCapabilityDescription] -&gt; ShowS
+showList :: [GameModeCapabilityDescription] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityDescriptionToString"><span class="hs-identifier hs-type">gameModeCapabilityDescriptionToString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier hs-type">GameModeCapabilityDescription</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-71"></span><span id="gameModeCapabilityDescriptionToString"><span class="annot"><span class="annottext">gameModeCapabilityDescriptionToString :: GameModeCapabilityDescription -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityDescriptionToString"><span class="hs-identifier hs-var hs-var">gameModeCapabilityDescriptionToString</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-type">Where'</span></a></span><span> </span><span id="local-6989586621679141499"><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="#local-6989586621679141499"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span id="local-6989586621679141500"><span class="annot"><span class="annottext">Relation
+</span><a href="#local-6989586621679141500"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679141501"><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141501"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-72"></span><span>      </span><span class="annot"><span class="annottext">GameModeCapability -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityToString"><span class="hs-identifier hs-var">gameModeCapabilityToString</span></a></span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="#local-6989586621679141499"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Relation -&gt; String
+</span><a href="Graphics.UI.GLUT.Types.html#relationToString"><span class="hs-identifier hs-var">relationToString</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="#local-6989586621679141500"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">BitsPerPlane -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141501"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- | Controls the /game mode/ to be used when 'enterGameMode' is called. It is</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- described by a list of zero or more capability descriptions, which are</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- translated into a set of criteria used to select the appropriate screen</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- configuration. The criteria are matched in strict left to right order of</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- precdence. That is, the first specified criterion (leftmost) takes precedence</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- over the later criteria for non-exact criteria</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- ('Graphics.UI.GLUT.Initialization.IsGreaterThan',</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Initialization.IsLessThan', etc.). Exact criteria</span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- ('Graphics.UI.GLUT.Initialization.IsEqualTo',</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Initialization.IsNotEqualTo') must match exactly so</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- precedence is not relevant.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- To determine which configuration will actually be tried by 'enterGameMode'</span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- (if any), use 'gameModeInfo'.</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- Note that even for game mode the current values of</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Initialization.initialDisplayMode'or</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.Initialization.initialDisplayCapabilities' will</span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- determine which buffers are available, if double buffering is used or not,</span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- etc.</span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilities"><span class="hs-identifier hs-type">gameModeCapabilities</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">SettableStateVar</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier hs-type">GameModeCapabilityDescription</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-98"></span><span id="gameModeCapabilities"><span class="annot"><span class="annottext">gameModeCapabilities :: SettableStateVar [GameModeCapabilityDescription]
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilities"><span class="hs-identifier hs-var hs-var">gameModeCapabilities</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([GameModeCapabilityDescription] -&gt; IO ())
+-&gt; SettableStateVar [GameModeCapabilityDescription]
+forall a. (a -&gt; IO ()) -&gt; SettableStateVar a
+</span><span class="hs-identifier hs-var">makeSettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(([GameModeCapabilityDescription] -&gt; IO ())
+ -&gt; SettableStateVar [GameModeCapabilityDescription])
+-&gt; ([GameModeCapabilityDescription] -&gt; IO ())
+-&gt; SettableStateVar [GameModeCapabilityDescription]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679141504"><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141504"><span class="hs-identifier hs-var">ds</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-99"></span><span>   </span><span class="annot"><span class="annottext">String -&gt; (CString -&gt; IO ()) -&gt; IO ()
+forall a. String -&gt; (CString -&gt; IO a) -&gt; IO a
+</span><span class="hs-identifier hs-var">withCString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[GameModeCapabilityDescription] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#descriptionsToString"><span class="hs-identifier hs-var">descriptionsToString</span></a></span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141504"><span class="hs-identifier hs-var">ds</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">CString -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; CString -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeString"><span class="hs-identifier hs-var">glutGameModeString</span></a></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- freeglut currently handles only simple game mode descriptions like &quot;WxH:B@R&quot;,</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- so we try hard to use this format instead of the more general format allowed</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- by the &quot;real&quot; GLUT.</span><span>
+</span><span id="line-104"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#descriptionsToString"><span class="hs-identifier hs-type">descriptionsToString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier hs-type">GameModeCapabilityDescription</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-105"></span><span id="descriptionsToString"><span class="annot"><span class="annottext">descriptionsToString :: [GameModeCapabilityDescription] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#descriptionsToString"><span class="hs-identifier hs-var hs-var">descriptionsToString</span></a></span></span><span> </span><span id="local-6989586621679141507"><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-106"></span><span>   </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679141508"><span class="annot"><span class="annottext">ws :: [BitsPerPlane]
+</span><a href="#local-6989586621679141508"><span class="hs-identifier hs-var hs-var">ws</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141509"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-type">Where'</span></a></span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeWidth"><span class="hs-identifier hs-var">GameModeWidth</span></a></span><span>        </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span><span> </span><span id="local-6989586621679141509"><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141509"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-107"></span><span>       </span><span id="local-6989586621679141511"><span class="annot"><span class="annottext">hs :: [BitsPerPlane]
+</span><a href="#local-6989586621679141511"><span class="hs-identifier hs-var hs-var">hs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141512"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-type">Where'</span></a></span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeHeight"><span class="hs-identifier hs-var">GameModeHeight</span></a></span><span>       </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span><span> </span><span id="local-6989586621679141512"><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141512"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-108"></span><span>       </span><span id="local-6989586621679141513"><span class="annot"><span class="annottext">bs :: [BitsPerPlane]
+</span><a href="#local-6989586621679141513"><span class="hs-identifier hs-var hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141514"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-type">Where'</span></a></span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeBitsPerPlane"><span class="hs-identifier hs-var">GameModeBitsPerPlane</span></a></span><span> </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span><span> </span><span id="local-6989586621679141514"><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141514"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-109"></span><span>       </span><span id="local-6989586621679141515"><span class="annot"><span class="annottext">rs :: [BitsPerPlane]
+</span><a href="#local-6989586621679141515"><span class="hs-identifier hs-var hs-var">rs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141516"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#Where%27"><span class="hs-identifier hs-type">Where'</span></a></span><span> </span><span class="annot"><span class="annottext">GameModeCapability
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeRefreshRate"><span class="hs-identifier hs-var">GameModeRefreshRate</span></a></span><span>  </span><span class="annot"><span class="annottext">Relation
+</span><a href="Graphics.UI.GLUT.Types.html#IsEqualTo"><span class="hs-identifier hs-var">IsEqualTo</span></a></span><span> </span><span id="local-6989586621679141516"><span class="annot"><span class="annottext">BitsPerPlane
+</span><a href="#local-6989586621679141516"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-110"></span><span>       </span><span id="local-6989586621679141526"><span class="annot"><span class="annottext">allSimple :: Bool
+</span><a href="#local-6989586621679141526"><span class="hs-identifier hs-var hs-var">allSimple</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; BitsPerPlane
+forall a. [a] -&gt; BitsPerPlane
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; BitsPerPlane
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141508"><span class="hs-identifier hs-var">ws</span></a></span><span> </span><span class="annot"><span class="annottext">BitsPerPlane -&gt; BitsPerPlane -&gt; BitsPerPlane
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; BitsPerPlane
+forall a. [a] -&gt; BitsPerPlane
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; BitsPerPlane
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141511"><span class="hs-identifier hs-var">hs</span></a></span><span> </span><span class="annot"><span class="annottext">BitsPerPlane -&gt; BitsPerPlane -&gt; BitsPerPlane
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; BitsPerPlane
+forall a. [a] -&gt; BitsPerPlane
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; BitsPerPlane
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141513"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">BitsPerPlane -&gt; BitsPerPlane -&gt; BitsPerPlane
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; BitsPerPlane
+forall a. [a] -&gt; BitsPerPlane
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; BitsPerPlane
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141515"><span class="hs-identifier hs-var">rs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">BitsPerPlane -&gt; BitsPerPlane -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[GameModeCapabilityDescription] -&gt; BitsPerPlane
+forall a. [a] -&gt; BitsPerPlane
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; BitsPerPlane
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>       </span><span id="local-6989586621679141533"><span class="annot"><span class="annottext">dimensionsOK :: Bool
+</span><a href="#local-6989586621679141533"><span class="hs-identifier hs-var hs-var">dimensionsOK</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141508"><span class="hs-identifier hs-var">ws</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[BitsPerPlane] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141511"><span class="hs-identifier hs-var">hs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>   </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141526"><span class="hs-identifier hs-var">allSimple</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141533"><span class="hs-identifier hs-var">dimensionsOK</span></a></span><span>
+</span><span id="line-113"></span><span>         </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+-&gt; [BitsPerPlane] -&gt; [BitsPerPlane] -&gt; [BitsPerPlane] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#simpleCapStr"><span class="hs-identifier hs-var">simpleCapStr</span></a></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141508"><span class="hs-identifier hs-var">ws</span></a></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141511"><span class="hs-identifier hs-var">hs</span></a></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141513"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141515"><span class="hs-identifier hs-var">rs</span></a></span><span>
+</span><span id="line-114"></span><span>         </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#generalCapStr"><span class="hs-identifier hs-var">generalCapStr</span></a></span><span> </span><span class="annot"><span class="annottext">[GameModeCapabilityDescription]
+</span><a href="#local-6989586621679141507"><span class="hs-identifier hs-var">ds</span></a></span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#simpleCapStr"><span class="hs-identifier hs-type">simpleCapStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-117"></span><span id="simpleCapStr"><span class="annot"><span class="annottext">simpleCapStr :: [BitsPerPlane]
+-&gt; [BitsPerPlane] -&gt; [BitsPerPlane] -&gt; [BitsPerPlane] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#simpleCapStr"><span class="hs-identifier hs-var hs-var">simpleCapStr</span></a></span></span><span> </span><span id="local-6989586621679141538"><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141538"><span class="hs-identifier hs-var">ws</span></a></span></span><span> </span><span id="local-6989586621679141539"><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141539"><span class="hs-identifier hs-var">hs</span></a></span></span><span> </span><span id="local-6989586621679141540"><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141540"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span id="local-6989586621679141541"><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141541"><span class="hs-identifier hs-var">rs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-118"></span><span>   </span><span class="annot"><span class="annottext">String -&gt; [BitsPerPlane] -&gt; String
+forall {a}. Show a =&gt; String -&gt; [a] -&gt; String
+</span><a href="#local-6989586621679141542"><span class="hs-identifier hs-var">showCap</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141538"><span class="hs-identifier hs-var">ws</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [BitsPerPlane] -&gt; String
+forall {a}. Show a =&gt; String -&gt; [a] -&gt; String
+</span><a href="#local-6989586621679141542"><span class="hs-identifier hs-var">showCap</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;x&quot;</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141539"><span class="hs-identifier hs-var">hs</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [BitsPerPlane] -&gt; String
+forall {a}. Show a =&gt; String -&gt; [a] -&gt; String
+</span><a href="#local-6989586621679141542"><span class="hs-identifier hs-var">showCap</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;:&quot;</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141540"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [BitsPerPlane] -&gt; String
+forall {a}. Show a =&gt; String -&gt; [a] -&gt; String
+</span><a href="#local-6989586621679141542"><span class="hs-identifier hs-var">showCap</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;@&quot;</span></span><span> </span><span class="annot"><span class="annottext">[BitsPerPlane]
+</span><a href="#local-6989586621679141541"><span class="hs-identifier hs-var">rs</span></a></span><span>
+</span><span id="line-119"></span><span>   </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679141542"><span class="annot"><span class="annottext">showCap :: String -&gt; [a] -&gt; String
+</span><a href="#local-6989586621679141542"><span class="hs-identifier hs-var hs-var">showCap</span></a></span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-identifier">_</span></span><span>      </span><span class="hs-special">[</span><span class="hs-special">]</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span>
+</span><span id="line-120"></span><span>         </span><span class="annot"><a href="#local-6989586621679141542"><span class="hs-identifier hs-var">showCap</span></a></span><span> </span><span id="local-6989586621679141545"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679141545"><span class="hs-identifier hs-var">prefix</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679141546"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679141546"><span class="hs-identifier hs-var">x</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span class="annot"><span class="annottext">[a]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679141545"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">a -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679141546"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#generalCapStr"><span class="hs-identifier hs-type">generalCapStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeCapabilityDescription"><span class="hs-identifier hs-type">GameModeCapabilityDescription</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-123"></span><span id="generalCapStr"><span class="annot"><span class="annottext">generalCapStr :: [GameModeCapabilityDescription] -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#generalCapStr"><span class="hs-identifier hs-var hs-var">generalCapStr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-124"></span><span>   </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall (t :: * -&gt; *) a. Foldable t =&gt; t [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">concat</span></span><span> </span><span class="annot"><span class="annottext">([String] -&gt; String)
+-&gt; ([GameModeCapabilityDescription] -&gt; [String])
+-&gt; [GameModeCapabilityDescription]
+-&gt; String
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; [String]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">intersperse</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; &quot;</span></span><span> </span><span class="annot"><span class="annottext">([String] -&gt; [String])
+-&gt; ([GameModeCapabilityDescription] -&gt; [String])
+-&gt; [GameModeCapabilityDescription]
+-&gt; [String]
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(GameModeCapabilityDescription -&gt; String)
+-&gt; [GameModeCapabilityDescription] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">GameModeCapabilityDescription -&gt; String
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeCapabilityDescriptionToString"><span class="hs-identifier hs-var">gameModeCapabilityDescriptionToString</span></a></span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-127"></span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- | Enter /game mode/, trying to change resolution, refresh rate, etc., as</span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- specified by the current value of 'gameModeCapabilities'. An identifier for</span><span>
+</span><span id="line-130"></span><span class="hs-comment">-- the game mode window and a flag, indicating if the display mode actually</span><span>
+</span><span id="line-131"></span><span class="hs-comment">-- changed, are returned. The game mode window is made the /current window/.</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--</span><span>
+</span><span id="line-133"></span><span class="hs-comment">-- Re-entering /game mode/ is allowed, the previous game mode window gets</span><span>
+</span><span id="line-134"></span><span class="hs-comment">-- destroyed by this, and a new one is created.</span><span>
+</span><span id="line-135"></span><span>
+</span><span id="line-136"></span><span id="local-6989586621679141334"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#enterGameMode"><span class="hs-identifier hs-type">enterGameMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679141334"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679141334"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Types.html#Window"><span class="hs-identifier hs-type">Window</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-137"></span><span id="enterGameMode"><span class="annot"><span class="annottext">enterGameMode :: forall (m :: * -&gt; *). MonadIO m =&gt; m (Window, Bool)
+</span><a href="Graphics.UI.GLUT.GameMode.html#enterGameMode"><span class="hs-identifier hs-var hs-var">enterGameMode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-138"></span><span>   </span><span id="local-6989586621679141557"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141557"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutEnterGameMode"><span class="hs-identifier hs-var">glutEnterGameMode</span></a></span><span>
+</span><span id="line-139"></span><span>   </span><span id="local-6989586621679141559"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141559"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; m Bool
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m Bool
+</span><a href="Graphics.UI.GLUT.GameMode.html#getBool"><span class="hs-identifier hs-var">getBool</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_DISPLAY_CHANGED"><span class="hs-identifier hs-var">glut_GAME_MODE_DISPLAY_CHANGED</span></a></span><span>
+</span><span id="line-140"></span><span>   </span><span class="annot"><span class="annottext">(Window, Bool) -&gt; m (Window, Bool)
+forall a. a -&gt; m a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; Window
+</span><a href="Graphics.UI.GLUT.Types.html#Window"><span class="hs-identifier hs-var">Window</span></a></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141557"><span class="hs-identifier hs-var">w</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141559"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-141"></span><span>
+</span><span id="line-142"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-143"></span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- | Leave /game mode/, restoring the old display mode and destroying the game</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- mode window.</span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span id="local-6989586621679141343"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#leaveGameMode"><span class="hs-identifier hs-type">leaveGameMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679141343"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679141343"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-148"></span><span id="leaveGameMode"><span class="annot"><span class="annottext">leaveGameMode :: forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.GameMode.html#leaveGameMode"><span class="hs-identifier hs-var hs-var">leaveGameMode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutLeaveGameMode"><span class="hs-identifier hs-var">glutLeaveGameMode</span></a></span><span>
+</span><span id="line-149"></span><span>
+</span><span id="line-150"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-151"></span><span>
+</span><span id="line-152"></span><span class="annot"><span class="hs-comment">-- | The color depth of the screen, measured in bits (e.g. 8, 16, 24, 32, ...)</span></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span class="hs-keyword">type</span><span> </span><span id="BitsPerPlane"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#BitsPerPlane"><span class="hs-identifier hs-var">BitsPerPlane</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span class="annot"><span class="hs-comment">-- | The refresh rate of the screen, measured in Hertz (e.g. 60, 75, 100, ...)</span></span><span>
+</span><span id="line-157"></span><span>
+</span><span id="line-158"></span><span class="hs-keyword">type</span><span> </span><span id="RefreshRate"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#RefreshRate"><span class="hs-identifier hs-var">RefreshRate</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-159"></span><span>
+</span><span id="line-160"></span><span class="hs-keyword">data</span><span> </span><span id="GameModeInfo"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeInfo"><span class="hs-identifier hs-var">GameModeInfo</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="GameModeInfo"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeInfo"><span class="hs-identifier hs-var">GameModeInfo</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Size</span></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#BitsPerPlane"><span class="hs-identifier hs-type">BitsPerPlane</span></a></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#RefreshRate"><span class="hs-identifier hs-type">RefreshRate</span></a></span><span>
+</span><span id="line-161"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679141568"><span id="local-6989586621679141574"><span class="annot"><span class="annottext">GameModeInfo -&gt; GameModeInfo -&gt; Bool
+(GameModeInfo -&gt; GameModeInfo -&gt; Bool)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; Bool) -&gt; Eq GameModeInfo
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+== :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+$c/= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+/= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141580"><span id="local-6989586621679141586"><span id="local-6989586621679141591"><span id="local-6989586621679141595"><span id="local-6989586621679141598"><span id="local-6989586621679141601"><span id="local-6989586621679141604"><span class="annot"><span class="annottext">Eq GameModeInfo
+Eq GameModeInfo =&gt;
+(GameModeInfo -&gt; GameModeInfo -&gt; Ordering)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; Bool)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; Bool)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; Bool)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; Bool)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo)
+-&gt; (GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo)
+-&gt; Ord GameModeInfo
+GameModeInfo -&gt; GameModeInfo -&gt; Bool
+GameModeInfo -&gt; GameModeInfo -&gt; Ordering
+GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: GameModeInfo -&gt; GameModeInfo -&gt; Ordering
+compare :: GameModeInfo -&gt; GameModeInfo -&gt; Ordering
+$c&lt; :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+&lt; :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+$c&lt;= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+&lt;= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+$c&gt; :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+&gt; :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+$c&gt;= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+&gt;= :: GameModeInfo -&gt; GameModeInfo -&gt; Bool
+$cmax :: GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo
+max :: GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo
+$cmin :: GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo
+min :: GameModeInfo -&gt; GameModeInfo -&gt; GameModeInfo
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679141607"><span id="local-6989586621679141614"><span id="local-6989586621679141618"><span class="annot"><span class="annottext">BitsPerPlane -&gt; GameModeInfo -&gt; ShowS
+[GameModeInfo] -&gt; ShowS
+GameModeInfo -&gt; String
+(BitsPerPlane -&gt; GameModeInfo -&gt; ShowS)
+-&gt; (GameModeInfo -&gt; String)
+-&gt; ([GameModeInfo] -&gt; ShowS)
+-&gt; Show GameModeInfo
+forall a.
+(BitsPerPlane -&gt; a -&gt; ShowS)
+-&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: BitsPerPlane -&gt; GameModeInfo -&gt; ShowS
+showsPrec :: BitsPerPlane -&gt; GameModeInfo -&gt; ShowS
+$cshow :: GameModeInfo -&gt; String
+show :: GameModeInfo -&gt; String
+$cshowList :: [GameModeInfo] -&gt; ShowS
+showList :: [GameModeInfo] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span>
+</span><span id="line-163"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span class="hs-comment">-- | Return 'Just' the mode which would be tried by the next call to</span><span>
+</span><span id="line-166"></span><span class="hs-comment">-- 'enterGameMode'. Returns 'Nothing' if the mode requested by the current value</span><span>
+</span><span id="line-167"></span><span class="hs-comment">-- of 'gameModeCapabilities' is not possible, in which case 'enterGameMode'</span><span>
+</span><span id="line-168"></span><span class="hs-comment">-- would simply create a full screen window using the current mode.</span><span>
+</span><span id="line-169"></span><span>
+</span><span id="line-170"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeInfo"><span class="hs-identifier hs-type">gameModeInfo</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#GameModeInfo"><span class="hs-identifier hs-type">GameModeInfo</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-171"></span><span id="gameModeInfo"><span class="annot"><span class="annottext">gameModeInfo :: GettableStateVar (Maybe GameModeInfo)
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeInfo"><span class="hs-identifier hs-var hs-var">gameModeInfo</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar (Maybe GameModeInfo)
+-&gt; GettableStateVar (Maybe GameModeInfo)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(GettableStateVar (Maybe GameModeInfo)
+ -&gt; GettableStateVar (Maybe GameModeInfo))
+-&gt; GettableStateVar (Maybe GameModeInfo)
+-&gt; GettableStateVar (Maybe GameModeInfo)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-172"></span><span>   </span><span id="local-6989586621679141620"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141620"><span class="hs-identifier hs-var">possible</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO Bool
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m Bool
+</span><a href="Graphics.UI.GLUT.GameMode.html#getBool"><span class="hs-identifier hs-var">getBool</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_POSSIBLE"><span class="hs-identifier hs-var">glut_GAME_MODE_POSSIBLE</span></a></span><span>
+</span><span id="line-173"></span><span>   </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679141620"><span class="hs-identifier hs-var">possible</span></a></span><span>
+</span><span id="line-174"></span><span>      </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-175"></span><span>         </span><span id="local-6989586621679141622"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141622"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeGet"><span class="hs-identifier hs-var">glutGameModeGet</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_WIDTH"><span class="hs-identifier hs-var">glut_GAME_MODE_WIDTH</span></a></span><span>
+</span><span id="line-176"></span><span>         </span><span id="local-6989586621679141625"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141625"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeGet"><span class="hs-identifier hs-var">glutGameModeGet</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_HEIGHT"><span class="hs-identifier hs-var">glut_GAME_MODE_HEIGHT</span></a></span><span>
+</span><span id="line-177"></span><span>         </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679141632"><span class="annot"><span class="annottext">size :: Size
+</span><a href="#local-6989586621679141632"><span class="hs-identifier hs-var hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; GLsizei -&gt; Size
+</span><span class="hs-identifier hs-var">Size</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; GLsizei
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141622"><span class="hs-identifier hs-var">w</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; GLsizei
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141625"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-178"></span><span>         </span><span id="local-6989586621679141634"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141634"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeGet"><span class="hs-identifier hs-var">glutGameModeGet</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_PIXEL_DEPTH"><span class="hs-identifier hs-var">glut_GAME_MODE_PIXEL_DEPTH</span></a></span><span>
+</span><span id="line-179"></span><span>         </span><span id="local-6989586621679141636"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141636"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeGet"><span class="hs-identifier hs-var">glutGameModeGet</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_REFRESH_RATE"><span class="hs-identifier hs-var">glut_GAME_MODE_REFRESH_RATE</span></a></span><span>
+</span><span id="line-180"></span><span>         </span><span class="annot"><span class="annottext">Maybe GameModeInfo -&gt; GettableStateVar (Maybe GameModeInfo)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Maybe GameModeInfo -&gt; GettableStateVar (Maybe GameModeInfo))
+-&gt; Maybe GameModeInfo -&gt; GettableStateVar (Maybe GameModeInfo)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GameModeInfo -&gt; Maybe GameModeInfo
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(GameModeInfo -&gt; Maybe GameModeInfo)
+-&gt; GameModeInfo -&gt; Maybe GameModeInfo
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Size -&gt; BitsPerPlane -&gt; BitsPerPlane -&gt; GameModeInfo
+</span><a href="Graphics.UI.GLUT.GameMode.html#GameModeInfo"><span class="hs-identifier hs-var">GameModeInfo</span></a></span><span> </span><span class="annot"><span class="annottext">Size
+</span><a href="#local-6989586621679141632"><span class="hs-identifier hs-var">size</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; BitsPerPlane
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141634"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CInt -&gt; BitsPerPlane
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141636"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-181"></span><span>      </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe GameModeInfo -&gt; GettableStateVar (Maybe GameModeInfo)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Maybe GameModeInfo
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-182"></span><span>
+</span><span id="line-183"></span><span id="local-6989586621679141340"><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#getBool"><span class="hs-identifier hs-type">getBool</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679141340"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679141340"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-184"></span><span id="getBool"><span class="annot"><span class="annottext">getBool :: forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m Bool
+</span><a href="Graphics.UI.GLUT.GameMode.html#getBool"><span class="hs-identifier hs-var hs-var">getBool</span></a></span></span><span> </span><span id="local-6989586621679141647"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679141647"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-185"></span><span>  </span><span id="local-6989586621679141648"><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141648"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; m CInt
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m CInt
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutGameModeGet"><span class="hs-identifier hs-var">glutGameModeGet</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679141647"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-186"></span><span>  </span><span class="annot"><span class="annottext">Bool -&gt; m Bool
+forall a. a -&gt; m a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; m Bool) -&gt; Bool -&gt; m Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><a href="#local-6989586621679141648"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; CInt -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">CInt
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-189"></span><span>
+</span><span id="line-190"></span><span class="annot"><span class="hs-comment">-- | Contains 'True' when the /game mode/ is active, 'False' otherwise.</span></span><span>
+</span><span id="line-191"></span><span>
+</span><span id="line-192"></span><span class="annot"><a href="Graphics.UI.GLUT.GameMode.html#gameModeActive"><span class="hs-identifier hs-type">gameModeActive</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-193"></span><span id="gameModeActive"><span class="annot"><span class="annottext">gameModeActive :: IO Bool
+</span><a href="Graphics.UI.GLUT.GameMode.html#gameModeActive"><span class="hs-identifier hs-var hs-var">gameModeActive</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO Bool -&gt; IO Bool
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO Bool -&gt; IO Bool) -&gt; IO Bool -&gt; IO Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO Bool
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m Bool
+</span><a href="Graphics.UI.GLUT.GameMode.html#getBool"><span class="hs-identifier hs-var">getBool</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="Graphics.UI.GLUT.Raw.Tokens.html#glut_GAME_MODE_ACTIVE"><span class="hs-identifier hs-var">glut_GAME_MODE_ACTIVE</span></a></span><span>
+</span><span id="line-194"></span></pre></body></html>

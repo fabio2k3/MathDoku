@@ -1,0 +1,321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2009-2019, Lars Corbijn 2009-2016</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-7"></span><span class="hs-comment">--</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;, Jason Dagit &lt;dagitj@gmail.com&gt;</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier">AttribLocation</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier">GetVertexAttribPName</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribInteger1"><span class="hs-identifier">getVertexAttribInteger1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribEnum1"><span class="hs-identifier">getVertexAttribEnum1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribBoolean1"><span class="hs-identifier">getVertexAttribBoolean1</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribFloat4"><span class="hs-identifier">getVertexAttribFloat4</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIInteger4"><span class="hs-identifier">getVertexAttribIInteger4</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIuInteger4"><span class="hs-identifier">getVertexAttribIuInteger4</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPointerPName"><span class="hs-identifier">GetVertexAttribPointerPName</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribPointer"><span class="hs-identifier">getVertexAttribPointer</span></a></span><span>
+</span><span id="line-19"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Alloc</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Utils</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Storable</span></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PeekPoke</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">newtype</span><span> </span><span id="AttribLocation"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-var">AttribLocation</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="AttribLocation"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-var">AttribLocation</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span>
+</span><span id="line-31"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679268318"><span id="local-6989586621679268323"><span class="annot"><span class="annottext">AttribLocation -&gt; AttribLocation -&gt; Bool
+(AttribLocation -&gt; AttribLocation -&gt; Bool)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; Bool) -&gt; Eq AttribLocation
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: AttribLocation -&gt; AttribLocation -&gt; Bool
+== :: AttribLocation -&gt; AttribLocation -&gt; Bool
+$c/= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+/= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268331"><span id="local-6989586621679268336"><span id="local-6989586621679268340"><span id="local-6989586621679268344"><span id="local-6989586621679268348"><span id="local-6989586621679268352"><span id="local-6989586621679268356"><span class="annot"><span class="annottext">Eq AttribLocation
+Eq AttribLocation =&gt;
+(AttribLocation -&gt; AttribLocation -&gt; Ordering)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; Bool)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; Bool)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; Bool)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; Bool)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; AttribLocation)
+-&gt; (AttribLocation -&gt; AttribLocation -&gt; AttribLocation)
+-&gt; Ord AttribLocation
+AttribLocation -&gt; AttribLocation -&gt; Bool
+AttribLocation -&gt; AttribLocation -&gt; Ordering
+AttribLocation -&gt; AttribLocation -&gt; AttribLocation
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: AttribLocation -&gt; AttribLocation -&gt; Ordering
+compare :: AttribLocation -&gt; AttribLocation -&gt; Ordering
+$c&lt; :: AttribLocation -&gt; AttribLocation -&gt; Bool
+&lt; :: AttribLocation -&gt; AttribLocation -&gt; Bool
+$c&lt;= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+&lt;= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+$c&gt; :: AttribLocation -&gt; AttribLocation -&gt; Bool
+&gt; :: AttribLocation -&gt; AttribLocation -&gt; Bool
+$c&gt;= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+&gt;= :: AttribLocation -&gt; AttribLocation -&gt; Bool
+$cmax :: AttribLocation -&gt; AttribLocation -&gt; AttribLocation
+max :: AttribLocation -&gt; AttribLocation -&gt; AttribLocation
+$cmin :: AttribLocation -&gt; AttribLocation -&gt; AttribLocation
+min :: AttribLocation -&gt; AttribLocation -&gt; AttribLocation
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679268362"><span id="local-6989586621679268368"><span id="local-6989586621679268372"><span class="annot"><span class="annottext">Int -&gt; AttribLocation -&gt; ShowS
+[AttribLocation] -&gt; ShowS
+AttribLocation -&gt; String
+(Int -&gt; AttribLocation -&gt; ShowS)
+-&gt; (AttribLocation -&gt; String)
+-&gt; ([AttribLocation] -&gt; ShowS)
+-&gt; Show AttribLocation
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; AttribLocation -&gt; ShowS
+showsPrec :: Int -&gt; AttribLocation -&gt; ShowS
+$cshow :: AttribLocation -&gt; String
+show :: AttribLocation -&gt; String
+$cshowList :: [AttribLocation] -&gt; ShowS
+showList :: [AttribLocation] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">data</span><span> </span><span id="GetVertexAttribPName"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-var">GetVertexAttribPName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-36"></span><span>     </span><span id="GetVertexAttribArrayEnabled"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayEnabled"><span class="hs-identifier hs-var">GetVertexAttribArrayEnabled</span></a></span></span><span>
+</span><span id="line-37"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArraySize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArraySize"><span class="hs-identifier hs-var">GetVertexAttribArraySize</span></a></span></span><span>
+</span><span id="line-38"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArrayStride"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayStride"><span class="hs-identifier hs-var">GetVertexAttribArrayStride</span></a></span></span><span>
+</span><span id="line-39"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArrayType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayType"><span class="hs-identifier hs-var">GetVertexAttribArrayType</span></a></span></span><span>
+</span><span id="line-40"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArrayNormalized"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayNormalized"><span class="hs-identifier hs-var">GetVertexAttribArrayNormalized</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetCurrentVertexAttrib"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetCurrentVertexAttrib"><span class="hs-identifier hs-var">GetCurrentVertexAttrib</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArrayBufferBinding"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayBufferBinding"><span class="hs-identifier hs-var">GetVertexAttribArrayBufferBinding</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GetVertexAttribArrayInteger"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayInteger"><span class="hs-identifier hs-var">GetVertexAttribArrayInteger</span></a></span></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-type">marshalGetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-46"></span><span id="marshalGetVertexAttribPName"><span class="annot"><span class="annottext">marshalGetVertexAttribPName :: GetVertexAttribPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-var hs-var">marshalGetVertexAttribPName</span></a></span></span><span> </span><span id="local-6989586621679268385"><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268385"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268385"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-47"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayEnabled"><span class="hs-identifier hs-var">GetVertexAttribArrayEnabled</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_ENABLED</span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArraySize"><span class="hs-identifier hs-var">GetVertexAttribArraySize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_SIZE</span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayStride"><span class="hs-identifier hs-var">GetVertexAttribArrayStride</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_STRIDE</span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayType"><span class="hs-identifier hs-var">GetVertexAttribArrayType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_TYPE</span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayNormalized"><span class="hs-identifier hs-var">GetVertexAttribArrayNormalized</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_NORMALIZED</span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetCurrentVertexAttrib"><span class="hs-identifier hs-var">GetCurrentVertexAttrib</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_CURRENT_VERTEX_ATTRIB</span></span><span>
+</span><span id="line-53"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayBufferBinding"><span class="hs-identifier hs-var">GetVertexAttribArrayBufferBinding</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING</span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribArrayInteger"><span class="hs-identifier hs-var">GetVertexAttribArrayInteger</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_INTEGER</span></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span id="local-6989586621679268265"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribInteger1"><span class="hs-identifier hs-type">getVertexAttribInteger1</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268265"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268265"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-59"></span><span id="getVertexAttribInteger1"><span class="annot"><span class="annottext">getVertexAttribInteger1 :: forall b.
+(GLint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribInteger1"><span class="hs-identifier hs-var hs-var">getVertexAttribInteger1</span></a></span></span><span> </span><span id="local-6989586621679268403"><span class="annot"><span class="annottext">GLint -&gt; b
+</span><a href="#local-6989586621679268403"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span id="local-6989586621679268404"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268404"><span class="hs-identifier hs-var">location</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679268405"><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268405"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLint -&gt; (Ptr GLint -&gt; IO b) -&gt; IO b
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLint -&gt; IO b) -&gt; IO b) -&gt; (Ptr GLint -&gt; IO b) -&gt; IO b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679268407"><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268407"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-60"></span><span>   </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLuint -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetVertexAttribiv</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268404"><span class="hs-identifier hs-var">location</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GetVertexAttribPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-var">marshalGetVertexAttribPName</span></a></span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268405"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268407"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-61"></span><span>   </span><span class="annot"><span class="annottext">(GLint -&gt; b) -&gt; Ptr GLint -&gt; IO b
+forall a b. Storable a =&gt; (a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek1"><span class="hs-identifier hs-var">peek1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; b
+</span><a href="#local-6989586621679268403"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268407"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span id="local-6989586621679268278"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribEnum1"><span class="hs-identifier hs-type">getVertexAttribEnum1</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268278"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268278"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-64"></span><span id="getVertexAttribEnum1"><span class="annot"><span class="annottext">getVertexAttribEnum1 :: forall b.
+(GLuint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribEnum1"><span class="hs-identifier hs-var hs-var">getVertexAttribEnum1</span></a></span></span><span> </span><span id="local-6989586621679268414"><span class="annot"><span class="annottext">GLuint -&gt; b
+</span><a href="#local-6989586621679268414"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+forall b.
+(GLint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribInteger1"><span class="hs-identifier hs-var">getVertexAttribInteger1</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLuint -&gt; b
+</span><a href="#local-6989586621679268414"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; b) -&gt; (GLint -&gt; GLuint) -&gt; GLint -&gt; b
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLuint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span id="local-6989586621679268286"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribBoolean1"><span class="hs-identifier hs-type">getVertexAttribBoolean1</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLboolean</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268286"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268286"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-67"></span><span id="getVertexAttribBoolean1"><span class="annot"><span class="annottext">getVertexAttribBoolean1 :: forall b.
+(GLboolean -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribBoolean1"><span class="hs-identifier hs-var hs-var">getVertexAttribBoolean1</span></a></span></span><span> </span><span id="local-6989586621679268419"><span class="annot"><span class="annottext">GLboolean -&gt; b
+</span><a href="#local-6989586621679268419"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+forall b.
+(GLint -&gt; b) -&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribInteger1"><span class="hs-identifier hs-var">getVertexAttribInteger1</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLboolean -&gt; b
+</span><a href="#local-6989586621679268419"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">(GLboolean -&gt; b) -&gt; (GLint -&gt; GLboolean) -&gt; GLint -&gt; b
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLboolean
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span id="local-6989586621679268289"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribFloat4"><span class="hs-identifier hs-type">getVertexAttribFloat4</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268289"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268289"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-70"></span><span id="getVertexAttribFloat4"><span class="annot"><span class="annottext">getVertexAttribFloat4 :: forall b.
+(GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; b)
+-&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribFloat4"><span class="hs-identifier hs-var hs-var">getVertexAttribFloat4</span></a></span></span><span> </span><span id="local-6989586621679268425"><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; b
+</span><a href="#local-6989586621679268425"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span id="local-6989586621679268426"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268426"><span class="hs-identifier hs-var">location</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679268427"><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268427"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr GLfloat -&gt; IO b) -&gt; IO b
+forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLfloat -&gt; IO b) -&gt; IO b) -&gt; (Ptr GLfloat -&gt; IO b) -&gt; IO b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679268429"><span class="annot"><span class="annottext">Ptr GLfloat
+</span><a href="#local-6989586621679268429"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-71"></span><span>   </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; Ptr GLfloat -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLuint -&gt; Ptr GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetVertexAttribfv</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268426"><span class="hs-identifier hs-var">location</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GetVertexAttribPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-var">marshalGetVertexAttribPName</span></a></span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268427"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat
+</span><a href="#local-6989586621679268429"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-72"></span><span>   </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; b)
+-&gt; Ptr GLfloat -&gt; IO b
+forall a b. Storable a =&gt; (a -&gt; a -&gt; a -&gt; a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek4"><span class="hs-identifier hs-var">peek4</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; b
+</span><a href="#local-6989586621679268425"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLfloat
+</span><a href="#local-6989586621679268429"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span id="local-6989586621679268296"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIInteger4"><span class="hs-identifier hs-type">getVertexAttribIInteger4</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268296"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268296"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-75"></span><span id="getVertexAttribIInteger4"><span class="annot"><span class="annottext">getVertexAttribIInteger4 :: forall b.
+(GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; b)
+-&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIInteger4"><span class="hs-identifier hs-var hs-var">getVertexAttribIInteger4</span></a></span></span><span> </span><span id="local-6989586621679268436"><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; b
+</span><a href="#local-6989586621679268436"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span id="local-6989586621679268437"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268437"><span class="hs-identifier hs-var">location</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679268438"><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268438"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr GLint -&gt; IO b) -&gt; IO b
+forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLint -&gt; IO b) -&gt; IO b) -&gt; (Ptr GLint -&gt; IO b) -&gt; IO b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679268439"><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268439"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-76"></span><span>   </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLuint -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetVertexAttribIiv</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268437"><span class="hs-identifier hs-var">location</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GetVertexAttribPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-var">marshalGetVertexAttribPName</span></a></span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268438"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268439"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-77"></span><span>   </span><span class="annot"><span class="annottext">(GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; b) -&gt; Ptr GLint -&gt; IO b
+forall a b. Storable a =&gt; (a -&gt; a -&gt; a -&gt; a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek4"><span class="hs-identifier hs-var">peek4</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; b
+</span><a href="#local-6989586621679268436"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679268439"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span id="local-6989586621679268298"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIuInteger4"><span class="hs-identifier hs-type">getVertexAttribIuInteger4</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLuint</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679268298"><span class="hs-identifier hs-type">b</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPName"><span class="hs-identifier hs-type">GetVertexAttribPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679268298"><span class="hs-identifier hs-type">b</span></a></span></span><span>
+</span><span id="line-80"></span><span id="getVertexAttribIuInteger4"><span class="annot"><span class="annottext">getVertexAttribIuInteger4 :: forall b.
+(GLuint -&gt; GLuint -&gt; GLuint -&gt; GLuint -&gt; b)
+-&gt; AttribLocation -&gt; GetVertexAttribPName -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribIuInteger4"><span class="hs-identifier hs-var hs-var">getVertexAttribIuInteger4</span></a></span></span><span> </span><span id="local-6989586621679268446"><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; GLuint -&gt; GLuint -&gt; b
+</span><a href="#local-6989586621679268446"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span id="local-6989586621679268447"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268447"><span class="hs-identifier hs-var">location</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679268448"><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268448"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ptr GLuint -&gt; IO b) -&gt; IO b
+forall a b. Storable a =&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">alloca</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLuint -&gt; IO b) -&gt; IO b) -&gt; (Ptr GLuint -&gt; IO b) -&gt; IO b
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679268449"><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679268449"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-81"></span><span>   </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; Ptr GLuint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLuint -&gt; GLuint -&gt; Ptr GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetVertexAttribIuiv</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268447"><span class="hs-identifier hs-var">location</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GetVertexAttribPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPName"><span class="hs-identifier hs-var">marshalGetVertexAttribPName</span></a></span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPName
+</span><a href="#local-6989586621679268448"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679268449"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-82"></span><span>   </span><span class="annot"><span class="annottext">(GLuint -&gt; GLuint -&gt; GLuint -&gt; GLuint -&gt; b) -&gt; Ptr GLuint -&gt; IO b
+forall a b. Storable a =&gt; (a -&gt; a -&gt; a -&gt; a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek4"><span class="hs-identifier hs-var">peek4</span></a></span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; GLuint -&gt; GLuint -&gt; b
+</span><a href="#local-6989586621679268446"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679268449"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-keyword">data</span><span> </span><span id="GetVertexAttribPointerPName"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPointerPName"><span class="hs-identifier hs-var">GetVertexAttribPointerPName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-87"></span><span>   </span><span id="VertexAttribArrayPointer"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#VertexAttribArrayPointer"><span class="hs-identifier hs-var">VertexAttribArrayPointer</span></a></span></span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPointerPName"><span class="hs-identifier hs-type">marshalGetVertexAttribPointerPName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPointerPName"><span class="hs-identifier hs-type">GetVertexAttribPointerPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-90"></span><span id="marshalGetVertexAttribPointerPName"><span class="annot"><span class="annottext">marshalGetVertexAttribPointerPName :: GetVertexAttribPointerPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPointerPName"><span class="hs-identifier hs-var hs-var">marshalGetVertexAttribPointerPName</span></a></span></span><span> </span><span id="local-6989586621679268453"><span class="annot"><span class="annottext">GetVertexAttribPointerPName
+</span><a href="#local-6989586621679268453"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPointerPName
+</span><a href="#local-6989586621679268453"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-91"></span><span>   </span><span class="annot"><span class="annottext">GetVertexAttribPointerPName
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#VertexAttribArrayPointer"><span class="hs-identifier hs-var">VertexAttribArrayPointer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-identifier hs-var">GL_VERTEX_ATTRIB_ARRAY_POINTER</span></span><span>
+</span><span id="line-92"></span><span>
+</span><span id="line-93"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span id="local-6989586621679268302"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribPointer"><span class="hs-identifier hs-type">getVertexAttribPointer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#GetVertexAttribPointerPName"><span class="hs-identifier hs-type">GetVertexAttribPointerPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><a href="#local-6989586621679268302"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-96"></span><span id="getVertexAttribPointer"><span class="annot"><span class="annottext">getVertexAttribPointer :: forall a.
+AttribLocation -&gt; GetVertexAttribPointerPName -&gt; IO (Ptr a)
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#getVertexAttribPointer"><span class="hs-identifier hs-var hs-var">getVertexAttribPointer</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#AttribLocation"><span class="hs-identifier hs-type">AttribLocation</span></a></span><span> </span><span id="local-6989586621679268460"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268460"><span class="hs-identifier hs-var">location</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679268461"><span class="annot"><span class="annottext">GetVertexAttribPointerPName
+</span><a href="#local-6989586621679268461"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ptr a -&gt; (Ptr (Ptr a) -&gt; IO (Ptr a)) -&gt; IO (Ptr a)
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">Ptr a
+forall a. Ptr a
+</span><span class="hs-identifier hs-var">nullPtr</span></span><span> </span><span class="annot"><span class="annottext">((Ptr (Ptr a) -&gt; IO (Ptr a)) -&gt; IO (Ptr a))
+-&gt; (Ptr (Ptr a) -&gt; IO (Ptr a)) -&gt; IO (Ptr a)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679268463"><span class="annot"><span class="annottext">Ptr (Ptr a)
+</span><a href="#local-6989586621679268463"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-97"></span><span>   </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; Ptr (Ptr a) -&gt; IO ()
+forall (m :: * -&gt; *) a.
+MonadIO m =&gt;
+GLuint -&gt; GLuint -&gt; Ptr (Ptr a) -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetVertexAttribPointerv</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679268460"><span class="hs-identifier hs-var">location</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GetVertexAttribPointerPName -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.VertexAttrib.html#marshalGetVertexAttribPointerPName"><span class="hs-identifier hs-var">marshalGetVertexAttribPointerPName</span></a></span><span> </span><span class="annot"><span class="annottext">GetVertexAttribPointerPName
+</span><a href="#local-6989586621679268461"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr (Ptr a)
+</span><a href="#local-6989586621679268463"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-98"></span><span>   </span><span class="annot"><span class="annottext">Ptr (Ptr a) -&gt; IO (Ptr a)
+forall a. Storable a =&gt; Ptr a -&gt; IO a
+</span><span class="hs-identifier hs-var">peek</span></span><span> </span><span class="annot"><span class="annottext">Ptr (Ptr a)
+</span><a href="#local-6989586621679268463"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-99"></span></pre></body></html>

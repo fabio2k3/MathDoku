@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Display</span><span>
+</span><span id="line-3"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Display.html#displayWithBackend"><span class="hs-identifier">displayWithBackend</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Color.html"><span class="hs-identifier">Graphics.Gloss.Data.Color</span></a></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Controller.html"><span class="hs-identifier">Graphics.Gloss.Data.Controller</span></a></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Picture.html"><span class="hs-identifier">Graphics.Gloss.Data.Picture</span></a></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.ViewPort.html"><span class="hs-identifier">Graphics.Gloss.Data.ViewPort</span></a></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.ViewState.html"><span class="hs-identifier">Graphics.Gloss.Data.ViewState</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Gloss.Rendering</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Backend</span></a></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Window.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Window</span></a></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Common.Exit.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Common.Exit</span></a></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.ViewState.KeyMouse.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.ViewState.KeyMouse</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.ViewState.Motion.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.ViewState.Motion</span></a></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.ViewState.Reshape.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.ViewState.Reshape</span></a></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Callback.html"><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Callback</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Callback</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.IORef</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Mem</span></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span id="local-6989586621679108511"><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Display.html#displayWithBackend"><span class="hs-identifier hs-type">displayWithBackend</span></a></span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Backend"><span class="hs-identifier hs-type">Backend</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679108511"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-24"></span><span>        </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679108511"><span class="hs-identifier hs-type">a</span></a></span><span>                            </span><span class="annot"><span class="hs-comment">-- ^ Initial state of the backend.</span></span><span>
+</span><span id="line-25"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Display.html#Display"><span class="hs-identifier hs-type">Display</span></a></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ Display config.</span></span><span>
+</span><span id="line-26"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Color</span></span><span>                        </span><span class="annot"><span class="hs-comment">-- ^ Background color.</span></span><span>
+</span><span id="line-27"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Picture</span></span><span>                   </span><span class="annot"><span class="hs-comment">-- ^ Make the picture to draw.</span></span><span>
+</span><span id="line-28"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Gloss.Data.Controller.html#Controller"><span class="hs-identifier hs-type">Controller</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Eat the controller</span></span><span>
+</span><span id="line-29"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span id="displayWithBackend"><span class="annot"><span class="annottext">displayWithBackend :: forall a.
+Backend a =&gt;
+a
+-&gt; Display -&gt; Color -&gt; IO Picture -&gt; (Controller -&gt; IO ()) -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Interface.Display.html#displayWithBackend"><span class="hs-identifier hs-var hs-var">displayWithBackend</span></a></span></span><span>
+</span><span id="line-32"></span><span>        </span><span id="local-6989586621679108551"><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679108551"><span class="hs-identifier hs-var">backend</span></a></span></span><span> </span><span id="local-6989586621679108552"><span class="annot"><span class="annottext">Display
+</span><a href="#local-6989586621679108552"><span class="hs-identifier hs-var">displayMode</span></a></span></span><span> </span><span id="local-6989586621679108553"><span class="annot"><span class="annottext">Color
+</span><a href="#local-6989586621679108553"><span class="hs-identifier hs-var">background</span></a></span></span><span>
+</span><span id="line-33"></span><span>        </span><span id="local-6989586621679108554"><span class="annot"><span class="annottext">IO Picture
+</span><a href="#local-6989586621679108554"><span class="hs-identifier hs-var">makePicture</span></a></span></span><span>
+</span><span id="line-34"></span><span>        </span><span id="local-6989586621679108555"><span class="annot"><span class="annottext">Controller -&gt; IO ()
+</span><a href="#local-6989586621679108555"><span class="hs-identifier hs-var">eatController</span></a></span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span> </span><span class="hs-glyph">=</span><span>  </span><span class="hs-keyword">do</span><span>  </span><span id="local-6989586621679108556"><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span></span><span>          </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ViewState -&gt; IO (IORef ViewState)
+forall a. a -&gt; IO (IORef a)
+</span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="annot"><span class="annottext">ViewState
+</span><a href="Graphics.Gloss.Data.ViewState.html#viewStateInit"><span class="hs-identifier hs-var">viewStateInit</span></a></span><span>
+</span><span id="line-37"></span><span>        </span><span id="local-6989586621679108559"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679108559"><span class="hs-identifier hs-var">renderS</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO State
+</span><span class="hs-identifier hs-var">initState</span></span><span>
+</span><span id="line-38"></span><span>        </span><span id="local-6989586621679108561"><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679108561"><span class="hs-identifier hs-var">renderSR</span></a></span></span><span>        </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">State -&gt; IO (IORef State)
+forall a. a -&gt; IO (IORef a)
+</span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679108559"><span class="hs-identifier hs-var">renderS</span></a></span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679108571"><span class="annot"><span class="annottext">renderFun :: IORef a -&gt; IO ()
+</span><a href="#local-6989586621679108571"><span class="hs-identifier hs-var hs-var">renderFun</span></a></span></span><span> </span><span id="local-6989586621679108572"><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679108572"><span class="hs-identifier hs-var">backendRef</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-41"></span><span>                </span><span id="local-6989586621679108573"><span class="annot"><span class="annottext">ViewPort
+</span><a href="#local-6989586621679108573"><span class="hs-identifier hs-var">port</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ViewState -&gt; ViewPort
+</span><a href="Graphics.Gloss.Data.ViewState.html#viewStateViewPort"><span class="hs-identifier hs-var">viewStateViewPort</span></a></span><span> </span><span class="annot"><span class="annottext">(ViewState -&gt; ViewPort) -&gt; IO ViewState -&gt; IO ViewPort
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">IORef ViewState -&gt; IO ViewState
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span><span>
+</span><span id="line-42"></span><span>                </span><span id="local-6989586621679108577"><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679108577"><span class="hs-identifier hs-var">options</span></a></span></span><span>    </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef State -&gt; IO State
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef State
+</span><a href="#local-6989586621679108561"><span class="hs-identifier hs-var">renderSR</span></a></span><span>
+</span><span id="line-43"></span><span>                </span><span id="local-6989586621679108578"><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679108578"><span class="hs-identifier hs-var">windowSize</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO (Int, Int)
+forall a. Backend a =&gt; IORef a -&gt; IO (Int, Int)
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#getWindowDimensions"><span class="hs-identifier hs-var">getWindowDimensions</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679108572"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-44"></span><span>                </span><span id="local-6989586621679108580"><span class="annot"><span class="annottext">Picture
+</span><a href="#local-6989586621679108580"><span class="hs-identifier hs-var">picture</span></a></span></span><span>    </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Picture
+</span><a href="#local-6989586621679108554"><span class="hs-identifier hs-var">makePicture</span></a></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span>                </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Color -&gt; State -&gt; Float -&gt; Picture -&gt; IO ()
+</span><span class="hs-identifier hs-var">displayPicture</span></span><span>
+</span><span id="line-47"></span><span>                        </span><span class="annot"><span class="annottext">(Int, Int)
+</span><a href="#local-6989586621679108578"><span class="hs-identifier hs-var">windowSize</span></a></span><span>
+</span><span id="line-48"></span><span>                        </span><span class="annot"><span class="annottext">Color
+</span><a href="#local-6989586621679108553"><span class="hs-identifier hs-var">background</span></a></span><span>
+</span><span id="line-49"></span><span>                        </span><span class="annot"><span class="annottext">State
+</span><a href="#local-6989586621679108577"><span class="hs-identifier hs-var">options</span></a></span><span>
+</span><span id="line-50"></span><span>                        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ViewPort -&gt; Float
+</span><a href="Graphics.Gloss.Data.ViewPort.html#viewPortScale"><span class="hs-identifier hs-var">viewPortScale</span></a></span><span> </span><span class="annot"><span class="annottext">ViewPort
+</span><a href="#local-6989586621679108573"><span class="hs-identifier hs-var">port</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>                        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ViewPort -&gt; Picture -&gt; Picture
+</span><a href="Graphics.Gloss.Data.ViewPort.html#applyViewPortToPicture"><span class="hs-identifier hs-var">applyViewPortToPicture</span></a></span><span> </span><span class="annot"><span class="annottext">ViewPort
+</span><a href="#local-6989586621679108573"><span class="hs-identifier hs-var">port</span></a></span><span> </span><span class="annot"><span class="annottext">Picture
+</span><a href="#local-6989586621679108580"><span class="hs-identifier hs-var">picture</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span>                </span><span class="hs-comment">-- perform GC every frame to try and avoid long pauses</span><span>
+</span><span id="line-54"></span><span>                </span><span class="annot"><span class="annottext">IO ()
+</span><span class="hs-identifier hs-var">performGC</span></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679108585"><span class="annot"><span class="annottext">callbacks :: [Callback]
+</span><a href="#local-6989586621679108585"><span class="hs-identifier hs-var hs-var">callbacks</span></a></span></span><span>
+</span><span id="line-57"></span><span>             </span><span class="hs-glyph">=</span><span>  </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">DisplayCallback -&gt; Callback
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#Display"><span class="hs-identifier hs-var">Callback.Display</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO ()
+DisplayCallback
+</span><a href="#local-6989586621679108571"><span class="hs-identifier hs-var">renderFun</span></a></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span>                </span><span class="hs-comment">-- Escape exits the program</span><span>
+</span><span id="line-60"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">() -&gt; Callback
+forall a. a -&gt; Callback
+</span><a href="Graphics.Gloss.Internals.Interface.Common.Exit.html#callback_exit"><span class="hs-identifier hs-var">callback_exit</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span>                </span><span class="hs-comment">-- Viewport control with mouse</span><span>
+</span><span id="line-63"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">IORef ViewState -&gt; Callback
+</span><a href="Graphics.Gloss.Internals.Interface.ViewState.KeyMouse.html#callback_viewState_keyMouse"><span class="hs-identifier hs-var">callback_viewState_keyMouse</span></a></span><span> </span><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span><span>
+</span><span id="line-64"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">IORef ViewState -&gt; Callback
+</span><a href="Graphics.Gloss.Internals.Interface.ViewState.Motion.html#callback_viewState_motion"><span class="hs-identifier hs-var">callback_viewState_motion</span></a></span><span>   </span><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span><span>
+</span><span id="line-65"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Callback
+</span><a href="Graphics.Gloss.Internals.Interface.ViewState.Reshape.html#callback_viewState_reshape"><span class="hs-identifier hs-var">callback_viewState_reshape</span></a></span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span>        </span><span class="hs-comment">-- When we create the window we can pass a function to get a</span><span>
+</span><span id="line-68"></span><span>        </span><span class="hs-comment">-- reference to the backend state. Using this we make a controller</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-comment">-- so the client can control the window asynchronously.</span><span>
+</span><span id="line-70"></span><span>        </span><span class="annot"><span class="annottext">a -&gt; Display -&gt; Color -&gt; [Callback] -&gt; (IORef a -&gt; IO ()) -&gt; IO ()
+forall a.
+Backend a =&gt;
+a -&gt; Display -&gt; Color -&gt; [Callback] -&gt; (IORef a -&gt; IO ()) -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Interface.Window.html#createWindow"><span class="hs-identifier hs-var">createWindow</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><a href="#local-6989586621679108551"><span class="hs-identifier hs-var">backend</span></a></span><span> </span><span class="annot"><span class="annottext">Display
+</span><a href="#local-6989586621679108552"><span class="hs-identifier hs-var">displayMode</span></a></span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="#local-6989586621679108553"><span class="hs-identifier hs-var">background</span></a></span><span> </span><span class="annot"><span class="annottext">[Callback]
+</span><a href="#local-6989586621679108585"><span class="hs-identifier hs-var">callbacks</span></a></span><span>
+</span><span id="line-71"></span><span>         </span><span class="annot"><span class="annottext">((IORef a -&gt; IO ()) -&gt; IO ()) -&gt; (IORef a -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span>  </span><span id="local-6989586621679108594"><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679108594"><span class="hs-identifier hs-var">backendRef</span></a></span></span><span>
+</span><span id="line-72"></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Controller -&gt; IO ()
+</span><a href="#local-6989586621679108555"><span class="hs-identifier hs-var">eatController</span></a></span><span>
+</span><span id="line-73"></span><span>                </span><span class="annot"><span class="annottext">(Controller -&gt; IO ()) -&gt; Controller -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Controller.html#Controller"><span class="hs-identifier hs-type">Controller</span></a></span><span>
+</span><span id="line-74"></span><span>                </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">controllerSetRedraw :: IO ()
+</span><a href="Graphics.Gloss.Data.Controller.html#controllerSetRedraw"><span class="hs-identifier hs-var">controllerSetRedraw</span></a></span><span>
+</span><span id="line-75"></span><span>                   </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span> </span><span class="annot"><span class="annottext">IORef a -&gt; IO ()
+DisplayCallback
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#postRedisplay"><span class="hs-identifier hs-var">postRedisplay</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679108594"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span>                </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">controllerModifyViewPort :: (ViewPort -&gt; IO ViewPort) -&gt; IO ()
+</span><a href="Graphics.Gloss.Data.Controller.html#controllerModifyViewPort"><span class="hs-identifier hs-var">controllerModifyViewPort</span></a></span><span>
+</span><span id="line-78"></span><span>                   </span><span class="hs-glyph">=</span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679108599"><span class="annot"><span class="annottext">ViewPort -&gt; IO ViewPort
+</span><a href="#local-6989586621679108599"><span class="hs-identifier hs-var">modViewPort</span></a></span></span><span>
+</span><span id="line-79"></span><span>                     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679108600"><span class="annot"><span class="annottext">ViewState
+</span><a href="#local-6989586621679108600"><span class="hs-identifier hs-var">viewState</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef ViewState -&gt; IO ViewState
+forall a. IORef a -&gt; IO a
+</span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span><span>
+</span><span id="line-80"></span><span>                           </span><span id="local-6989586621679108601"><span class="annot"><span class="annottext">ViewPort
+</span><a href="#local-6989586621679108601"><span class="hs-identifier hs-var">port'</span></a></span></span><span>           </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ViewPort -&gt; IO ViewPort
+</span><a href="#local-6989586621679108599"><span class="hs-identifier hs-var">modViewPort</span></a></span><span> </span><span class="annot"><span class="annottext">(ViewPort -&gt; IO ViewPort) -&gt; ViewPort -&gt; IO ViewPort
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ViewState -&gt; ViewPort
+</span><a href="Graphics.Gloss.Data.ViewState.html#viewStateViewPort"><span class="hs-identifier hs-var">viewStateViewPort</span></a></span><span> </span><span class="annot"><span class="annottext">ViewState
+</span><a href="#local-6989586621679108600"><span class="hs-identifier hs-var">viewState</span></a></span><span>
+</span><span id="line-81"></span><span>                           </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679108602"><span class="annot"><span class="annottext">viewState' :: ViewState
+</span><a href="#local-6989586621679108602"><span class="hs-identifier hs-var hs-var">viewState'</span></a></span></span><span>  </span><span class="hs-glyph">=</span><span>  </span><span class="annot"><span class="annottext">ViewState
+</span><a href="#local-6989586621679108600"><span class="hs-identifier hs-var">viewState</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.ViewState.html#viewStateViewPort"><span class="hs-identifier hs-var">viewStateViewPort</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679108601"><span class="hs-identifier hs-type">port'</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-82"></span><span>                           </span><span class="annot"><span class="annottext">IORef ViewState -&gt; ViewState -&gt; IO ()
+forall a. IORef a -&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">writeIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef ViewState
+</span><a href="#local-6989586621679108556"><span class="hs-identifier hs-var">viewSR</span></a></span><span> </span><span class="annot"><span class="annottext">ViewState
+</span><a href="#local-6989586621679108602"><span class="hs-identifier hs-var">viewState'</span></a></span><span>
+</span><span id="line-83"></span><span>                           </span><span class="annot"><span class="annottext">IORef a -&gt; IO ()
+DisplayCallback
+</span><a href="Graphics.Gloss.Internals.Interface.Backend.Types.html#postRedisplay"><span class="hs-identifier hs-var">postRedisplay</span></a></span><span> </span><span class="annot"><span class="annottext">IORef a
+</span><a href="#local-6989586621679108594"><span class="hs-identifier hs-var">backendRef</span></a></span><span>
+</span><span id="line-84"></span><span>                </span><span class="hs-special">}</span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span></pre></body></html>

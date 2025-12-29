@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.ReadCopyPixels</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 4.3 (Drawing, Reading, and Copying Pixels)</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- of the OpenGL 2.1 specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.ReadCopyPixels</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Reading Pixels</span></span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readPixels"><span class="hs-identifier">readPixels</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readBuffer"><span class="hs-identifier">readBuffer</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Copying Pixels</span></span><span>
+</span><span id="line-21"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#PixelCopyType"><span class="hs-identifier">PixelCopyType</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#copyPixels"><span class="hs-identifier">copyPixels</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Copying Pixels for framebuffers</span></span><span>
+</span><span id="line-24"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#BlitBuffer"><span class="hs-identifier">BlitBuffer</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#blitFramebuffer"><span class="hs-identifier">blitFramebuffer</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.BufferMode.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.BufferMode</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.CoordTrans</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelData.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelData</span></a></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Filter.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.Filter</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GLU.ErrorsInternal</span></a></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span id="local-6989586621679292709"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readPixels"><span class="hs-identifier hs-type">readPixels</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelData.html#PixelData"><span class="hs-identifier hs-type">PixelData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679292709"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-39"></span><span id="readPixels"><span class="annot"><span class="annottext">readPixels :: forall a. Position -&gt; Size -&gt; PixelData a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readPixels"><span class="hs-identifier hs-var hs-var">readPixels</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292765"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292765"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679292766"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292766"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span id="local-6989586621679292768"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292768"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679292769"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292769"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679292770"><span class="annot"><span class="annottext">PixelData a
+</span><a href="#local-6989586621679292770"><span class="hs-identifier hs-var">pd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-40"></span><span>   </span><span class="annot"><span class="annottext">PixelData a
+-&gt; (GLbitfield -&gt; GLbitfield -&gt; Ptr a -&gt; IO ()) -&gt; IO ()
+forall a b.
+PixelData a -&gt; (GLbitfield -&gt; GLbitfield -&gt; Ptr a -&gt; b) -&gt; b
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelData.html#withPixelData"><span class="hs-identifier hs-var">withPixelData</span></a></span><span> </span><span class="annot"><span class="annottext">PixelData a
+</span><a href="#local-6989586621679292770"><span class="hs-identifier hs-var">pd</span></a></span><span> </span><span class="annot"><span class="annottext">((GLbitfield -&gt; GLbitfield -&gt; Ptr a -&gt; IO ()) -&gt; IO ())
+-&gt; (GLbitfield -&gt; GLbitfield -&gt; Ptr a -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLbitfield
+-&gt; GLbitfield
+-&gt; Ptr a
+-&gt; IO ()
+forall (m :: * -&gt; *) a.
+MonadIO m =&gt;
+GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLbitfield
+-&gt; GLbitfield
+-&gt; Ptr a
+-&gt; m ()
+</span><span class="hs-identifier hs-var">glReadPixels</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292765"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292766"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292768"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292769"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readBuffer"><span class="hs-identifier hs-type">readBuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.BufferMode.html#BufferMode"><span class="hs-identifier hs-type">BufferMode</span></a></span><span>
+</span><span id="line-45"></span><span id="readBuffer"><span class="annot"><span class="annottext">readBuffer :: StateVar BufferMode
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#readBuffer"><span class="hs-identifier hs-var hs-var">readBuffer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-46"></span><span>   </span><span class="annot"><span class="annottext">IO BufferMode -&gt; (BufferMode -&gt; IO ()) -&gt; StateVar BufferMode
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-47"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLbitfield -&gt; BufferMode) -&gt; PName1I -&gt; IO BufferMode
+forall p a. GetPName1I p =&gt; (GLbitfield -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLbitfield -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getEnum1"><span class="hs-identifier hs-var">getEnum1</span></a></span><span> </span><span class="annot"><span class="annottext">GLbitfield -&gt; BufferMode
+</span><a href="Graphics.Rendering.OpenGL.GL.BufferMode.html#unmarshalBufferMode"><span class="hs-identifier hs-var">unmarshalBufferMode</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetReadBuffer"><span class="hs-identifier hs-var">GetReadBuffer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IO () -&gt; (GLbitfield -&gt; IO ()) -&gt; Maybe GLbitfield -&gt; IO ()
+forall b a. b -&gt; (a -&gt; b) -&gt; Maybe a -&gt; b
+</span><span class="hs-identifier hs-var">maybe</span></span><span> </span><span class="annot"><span class="annottext">IO ()
+</span><a href="Graphics.Rendering.OpenGL.GLU.ErrorsInternal.html#recordInvalidValue"><span class="hs-identifier hs-var">recordInvalidValue</span></a></span><span> </span><span class="annot"><span class="annottext">GLbitfield -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLbitfield -&gt; m ()
+</span><span class="hs-identifier hs-var">glReadBuffer</span></span><span> </span><span class="annot"><span class="annottext">(Maybe GLbitfield -&gt; IO ())
+-&gt; (BufferMode -&gt; Maybe GLbitfield) -&gt; BufferMode -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">BufferMode -&gt; Maybe GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.BufferMode.html#marshalBufferMode"><span class="hs-identifier hs-var">marshalBufferMode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">data</span><span> </span><span id="PixelCopyType"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#PixelCopyType"><span class="hs-identifier hs-var">PixelCopyType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-53"></span><span>     </span><span id="CopyColor"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyColor"><span class="hs-identifier hs-var">CopyColor</span></a></span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="CopyDepth"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyDepth"><span class="hs-identifier hs-var">CopyDepth</span></a></span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="CopyStencil"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyStencil"><span class="hs-identifier hs-var">CopyStencil</span></a></span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679292786"><span id="local-6989586621679292788"><span class="annot"><span class="annottext">PixelCopyType -&gt; PixelCopyType -&gt; Bool
+(PixelCopyType -&gt; PixelCopyType -&gt; Bool)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; Bool) -&gt; Eq PixelCopyType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+== :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+$c/= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+/= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679292795"><span id="local-6989586621679292797"><span id="local-6989586621679292799"><span id="local-6989586621679292803"><span id="local-6989586621679292806"><span id="local-6989586621679292809"><span id="local-6989586621679292812"><span class="annot"><span class="annottext">Eq PixelCopyType
+Eq PixelCopyType =&gt;
+(PixelCopyType -&gt; PixelCopyType -&gt; Ordering)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; Bool)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; Bool)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; Bool)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; Bool)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType)
+-&gt; (PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType)
+-&gt; Ord PixelCopyType
+PixelCopyType -&gt; PixelCopyType -&gt; Bool
+PixelCopyType -&gt; PixelCopyType -&gt; Ordering
+PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PixelCopyType -&gt; PixelCopyType -&gt; Ordering
+compare :: PixelCopyType -&gt; PixelCopyType -&gt; Ordering
+$c&lt; :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+&lt; :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+$c&lt;= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+&lt;= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+$c&gt; :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+&gt; :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+$c&gt;= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+&gt;= :: PixelCopyType -&gt; PixelCopyType -&gt; Bool
+$cmax :: PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType
+max :: PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType
+$cmin :: PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType
+min :: PixelCopyType -&gt; PixelCopyType -&gt; PixelCopyType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679292816"><span id="local-6989586621679292818"><span id="local-6989586621679292822"><span class="annot"><span class="annottext">Int -&gt; PixelCopyType -&gt; ShowS
+[PixelCopyType] -&gt; ShowS
+PixelCopyType -&gt; String
+(Int -&gt; PixelCopyType -&gt; ShowS)
+-&gt; (PixelCopyType -&gt; String)
+-&gt; ([PixelCopyType] -&gt; ShowS)
+-&gt; Show PixelCopyType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PixelCopyType -&gt; ShowS
+showsPrec :: Int -&gt; PixelCopyType -&gt; ShowS
+$cshow :: PixelCopyType -&gt; String
+show :: PixelCopyType -&gt; String
+$cshowList :: [PixelCopyType] -&gt; ShowS
+showList :: [PixelCopyType] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalPixelCopyType"><span class="hs-identifier hs-type">marshalPixelCopyType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#PixelCopyType"><span class="hs-identifier hs-type">PixelCopyType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-59"></span><span id="marshalPixelCopyType"><span class="annot"><span class="annottext">marshalPixelCopyType :: PixelCopyType -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalPixelCopyType"><span class="hs-identifier hs-var hs-var">marshalPixelCopyType</span></a></span></span><span> </span><span id="local-6989586621679292827"><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="#local-6989586621679292827"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="#local-6989586621679292827"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-60"></span><span>   </span><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyColor"><span class="hs-identifier hs-var">CopyColor</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_COLOR</span></span><span>
+</span><span id="line-61"></span><span>   </span><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyDepth"><span class="hs-identifier hs-var">CopyDepth</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_DEPTH</span></span><span>
+</span><span id="line-62"></span><span>   </span><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#CopyStencil"><span class="hs-identifier hs-var">CopyStencil</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_STENCIL</span></span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#copyPixels"><span class="hs-identifier hs-type">copyPixels</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#PixelCopyType"><span class="hs-identifier hs-type">PixelCopyType</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span id="copyPixels"><span class="annot"><span class="annottext">copyPixels :: Position -&gt; Size -&gt; PixelCopyType -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#copyPixels"><span class="hs-identifier hs-var hs-var">copyPixels</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292831"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292831"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679292832"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292832"><span class="hs-identifier hs-var">y</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span id="local-6989586621679292833"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292833"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679292834"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292834"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679292835"><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="#local-6989586621679292835"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-68"></span><span>   </span><span class="annot"><span class="annottext">GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; GLbitfield -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLint -&gt; GLint -&gt; GLint -&gt; GLint -&gt; GLbitfield -&gt; m ()
+</span><span class="hs-identifier hs-var">glCopyPixels</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292831"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292832"><span class="hs-identifier hs-var">y</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292833"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292834"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelCopyType -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalPixelCopyType"><span class="hs-identifier hs-var">marshalPixelCopyType</span></a></span><span> </span><span class="annot"><span class="annottext">PixelCopyType
+</span><a href="#local-6989586621679292835"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="annot"><span class="hs-comment">-- | The buffers which can be copied with 'blitFramebuffer'.</span></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="hs-keyword">data</span><span> </span><span id="BlitBuffer"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#BlitBuffer"><span class="hs-identifier hs-var">BlitBuffer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>     </span><span id="ColorBuffer%27"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#ColorBuffer%27"><span class="hs-identifier hs-var">ColorBuffer'</span></a></span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="StencilBuffer%27"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#StencilBuffer%27"><span class="hs-identifier hs-var">StencilBuffer'</span></a></span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthBuffer%27"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#DepthBuffer%27"><span class="hs-identifier hs-var">DepthBuffer'</span></a></span></span><span>
+</span><span id="line-78"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679292841"><span id="local-6989586621679292843"><span class="annot"><span class="annottext">BlitBuffer -&gt; BlitBuffer -&gt; Bool
+(BlitBuffer -&gt; BlitBuffer -&gt; Bool)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; Bool) -&gt; Eq BlitBuffer
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+== :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+$c/= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+/= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679292849"><span id="local-6989586621679292851"><span id="local-6989586621679292853"><span id="local-6989586621679292857"><span id="local-6989586621679292860"><span id="local-6989586621679292863"><span id="local-6989586621679292866"><span class="annot"><span class="annottext">Eq BlitBuffer
+Eq BlitBuffer =&gt;
+(BlitBuffer -&gt; BlitBuffer -&gt; Ordering)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; Bool)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; Bool)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; Bool)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; Bool)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer)
+-&gt; (BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer)
+-&gt; Ord BlitBuffer
+BlitBuffer -&gt; BlitBuffer -&gt; Bool
+BlitBuffer -&gt; BlitBuffer -&gt; Ordering
+BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: BlitBuffer -&gt; BlitBuffer -&gt; Ordering
+compare :: BlitBuffer -&gt; BlitBuffer -&gt; Ordering
+$c&lt; :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+&lt; :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+$c&lt;= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+&lt;= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+$c&gt; :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+&gt; :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+$c&gt;= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+&gt;= :: BlitBuffer -&gt; BlitBuffer -&gt; Bool
+$cmax :: BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer
+max :: BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer
+$cmin :: BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer
+min :: BlitBuffer -&gt; BlitBuffer -&gt; BlitBuffer
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679292869"><span id="local-6989586621679292871"><span id="local-6989586621679292875"><span class="annot"><span class="annottext">Int -&gt; BlitBuffer -&gt; ShowS
+[BlitBuffer] -&gt; ShowS
+BlitBuffer -&gt; String
+(Int -&gt; BlitBuffer -&gt; ShowS)
+-&gt; (BlitBuffer -&gt; String)
+-&gt; ([BlitBuffer] -&gt; ShowS)
+-&gt; Show BlitBuffer
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; BlitBuffer -&gt; ShowS
+showsPrec :: Int -&gt; BlitBuffer -&gt; ShowS
+$cshow :: BlitBuffer -&gt; String
+show :: BlitBuffer -&gt; String
+$cshowList :: [BlitBuffer] -&gt; ShowS
+showList :: [BlitBuffer] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalBlitBuffer"><span class="hs-identifier hs-type">marshalBlitBuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#BlitBuffer"><span class="hs-identifier hs-type">BlitBuffer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLbitfield</span></span><span>
+</span><span id="line-81"></span><span id="marshalBlitBuffer"><span class="annot"><span class="annottext">marshalBlitBuffer :: BlitBuffer -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalBlitBuffer"><span class="hs-identifier hs-var hs-var">marshalBlitBuffer</span></a></span></span><span> </span><span id="local-6989586621679292878"><span class="annot"><span class="annottext">BlitBuffer
+</span><a href="#local-6989586621679292878"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">BlitBuffer
+</span><a href="#local-6989586621679292878"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-82"></span><span>   </span><span class="annot"><span class="annottext">BlitBuffer
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#ColorBuffer%27"><span class="hs-identifier hs-var">ColorBuffer'</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_COLOR_BUFFER_BIT</span></span><span>
+</span><span id="line-83"></span><span>   </span><span class="annot"><span class="annottext">BlitBuffer
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#StencilBuffer%27"><span class="hs-identifier hs-var">StencilBuffer'</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_STENCIL_BUFFER_BIT</span></span><span>
+</span><span id="line-84"></span><span>   </span><span class="annot"><span class="annottext">BlitBuffer
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#DepthBuffer%27"><span class="hs-identifier hs-var">DepthBuffer'</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLbitfield
+</span><span class="hs-identifier hs-var">GL_DEPTH_BUFFER_BIT</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-87"></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#blitFramebuffer"><span class="hs-identifier hs-type">blitFramebuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span>
+</span><span id="line-89"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span>
+</span><span id="line-90"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span>
+</span><span id="line-91"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span>
+</span><span id="line-92"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#BlitBuffer"><span class="hs-identifier hs-type">BlitBuffer</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-93"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Filter.html#TextureFilter"><span class="hs-identifier hs-type">TextureFilter</span></a></span><span>
+</span><span id="line-94"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span id="blitFramebuffer"><span class="annot"><span class="annottext">blitFramebuffer :: Position
+-&gt; Position
+-&gt; Position
+-&gt; Position
+-&gt; [BlitBuffer]
+-&gt; TextureFilter
+-&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#blitFramebuffer"><span class="hs-identifier hs-var hs-var">blitFramebuffer</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292882"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292882"><span class="hs-identifier hs-var">sx0</span></a></span></span><span> </span><span id="local-6989586621679292883"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292883"><span class="hs-identifier hs-var">sy0</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292884"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292884"><span class="hs-identifier hs-var">sx1</span></a></span></span><span> </span><span id="local-6989586621679292885"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292885"><span class="hs-identifier hs-var">sy1</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292886"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292886"><span class="hs-identifier hs-var">dx0</span></a></span></span><span> </span><span id="local-6989586621679292887"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292887"><span class="hs-identifier hs-var">dy0</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Position"><span class="hs-identifier hs-type">Position</span></a></span><span> </span><span id="local-6989586621679292888"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292888"><span class="hs-identifier hs-var">dx1</span></a></span></span><span> </span><span id="local-6989586621679292889"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292889"><span class="hs-identifier hs-var">dy1</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-99"></span><span>                </span><span id="local-6989586621679292890"><span class="annot"><span class="annottext">[BlitBuffer]
+</span><a href="#local-6989586621679292890"><span class="hs-identifier hs-var">buffers</span></a></span></span><span>
+</span><span id="line-100"></span><span>                </span><span id="local-6989586621679292891"><span class="annot"><span class="annottext">TextureFilter
+</span><a href="#local-6989586621679292891"><span class="hs-identifier hs-var">filt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-101"></span><span>   </span><span class="annot"><span class="annottext">GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLbitfield
+-&gt; GLbitfield
+-&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLint
+-&gt; GLbitfield
+-&gt; GLbitfield
+-&gt; m ()
+</span><span class="hs-identifier hs-var">glBlitFramebuffer</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292882"><span class="hs-identifier hs-var">sx0</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292883"><span class="hs-identifier hs-var">sy0</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292884"><span class="hs-identifier hs-var">sx1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292885"><span class="hs-identifier hs-var">sy1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292886"><span class="hs-identifier hs-var">dx0</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292887"><span class="hs-identifier hs-var">dy0</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292888"><span class="hs-identifier hs-var">dx1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679292889"><span class="hs-identifier hs-var">dy1</span></a></span><span>
+</span><span id="line-102"></span><span>                     </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[GLbitfield] -&gt; GLbitfield
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(BlitBuffer -&gt; GLbitfield) -&gt; [BlitBuffer] -&gt; [GLbitfield]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">BlitBuffer -&gt; GLbitfield
+</span><a href="Graphics.Rendering.OpenGL.GL.ReadCopyPixels.html#marshalBlitBuffer"><span class="hs-identifier hs-var">marshalBlitBuffer</span></a></span><span> </span><span class="annot"><span class="annottext">[BlitBuffer]
+</span><a href="#local-6989586621679292890"><span class="hs-identifier hs-var">buffers</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>                     </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLint -&gt; GLbitfield
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TextureFilter -&gt; GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Filter.html#marshalMagnificationFilter"><span class="hs-identifier hs-var">marshalMagnificationFilter</span></a></span><span> </span><span class="annot"><span class="annottext">TextureFilter
+</span><a href="#local-6989586621679292891"><span class="hs-identifier hs-var">filt</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span></pre></body></html>

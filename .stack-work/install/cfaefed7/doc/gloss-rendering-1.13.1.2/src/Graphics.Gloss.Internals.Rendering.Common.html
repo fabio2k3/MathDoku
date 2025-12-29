@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Rendering.Common</span><span>
+</span><span id="line-4"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier">gf</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gsizei"><span class="hs-identifier">gsizei</span></a></span><span>
+</span><span id="line-5"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#withModelview"><span class="hs-identifier">withModelview</span></a></span><span>
+</span><span id="line-6"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#withClearBuffer"><span class="hs-identifier">withClearBuffer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Unsafe.Coerce</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Data.Color.html"><span class="hs-identifier">Graphics.Gloss.Internals.Data.Color</span></a></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Color.html"><span class="hs-identifier">Graphics.Gloss.Internals.Rendering.Color</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL</span></span><span>               </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">($=)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL</span></span><span>   </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">GL</span></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | The OpenGL library doesn't seem to provide a nice way convert</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--      a Float to a GLfloat, even though they're the same thing</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--      under the covers.</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--  Using realToFrac is too slow, as it doesn't get fused in at</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--      least GHC 6.12.1</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-type">gf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GL.GLfloat</span></span><span>
+</span><span id="line-23"></span><span id="gf"><span class="annot"><span class="annottext">gf :: GLfloat -&gt; GLfloat
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-var hs-var">gf</span></a></span></span><span> </span><span id="local-6989586621679100869"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679100869"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a b. a -&gt; b
+</span><span class="hs-identifier hs-var">unsafeCoerce</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679100869"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-pragma hs-type">gf</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><span class="hs-comment">-- | Used for similar reasons to above</span></span><span>
+</span><span id="line-28"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gsizei"><span class="hs-identifier hs-type">gsizei</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GL.GLsizei</span></span><span>
+</span><span id="line-29"></span><span id="gsizei"><span class="annot"><span class="annottext">gsizei :: Int -&gt; GLsizei
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gsizei"><span class="hs-identifier hs-var hs-var">gsizei</span></a></span></span><span> </span><span id="local-6989586621679100871"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100871"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; GLsizei
+forall a b. a -&gt; b
+</span><span class="hs-identifier hs-var">unsafeCoerce</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100871"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#gsizei"><span class="hs-pragma hs-type">gsizei</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- | Set up the OpenGL rendering context for orthographic projection and run an</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--   action to draw the model.</span><span>
+</span><span id="line-35"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#withModelview"><span class="hs-identifier hs-type">withModelview</span></a></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>  </span><span class="annot"><span class="hs-comment">-- ^ Width and height of window.</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>       </span><span class="annot"><span class="hs-comment">-- ^ Action to perform.</span></span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span id="withModelview"><span class="annot"><span class="annottext">withModelview :: (Int, Int) -&gt; IO () -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#withModelview"><span class="hs-identifier hs-var hs-var">withModelview</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679100872"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100872"><span class="hs-identifier hs-var">sizeX</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679100873"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100873"><span class="hs-identifier hs-var">sizeY</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679100874"><span class="annot"><span class="annottext">IO ()
+</span><a href="#local-6989586621679100874"><span class="hs-identifier hs-var">action</span></a></span></span><span>
+</span><span id="line-41"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="annottext">StateVar MatrixMode
+</span><span class="hs-identifier hs-var">GL.matrixMode</span></span><span>   </span><span class="annot"><span class="annottext">StateVar MatrixMode -&gt; MatrixMode -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar MatrixMode -&gt; MatrixMode -&gt; m ()
+</span><span class="hs-operator hs-var">$=</span></span><span> </span><span class="annot"><span class="annottext">MatrixMode
+</span><span class="hs-identifier hs-var">GL.Projection</span></span><span>
+</span><span id="line-43"></span><span>        </span><span class="annot"><span class="annottext">IO () -&gt; IO ()
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.preservingMatrix</span></span><span>
+</span><span id="line-44"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-45"></span><span>                </span><span class="hs-comment">-- setup the co-ordinate system</span><span>
+</span><span id="line-46"></span><span>                </span><span class="annot"><span class="annottext">IO ()
+</span><span class="hs-identifier hs-var">GL.loadIdentity</span></span><span>
+</span><span id="line-47"></span><span>                </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679100891"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100891"><span class="hs-identifier hs-var">sx</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679100892"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100892"><span class="hs-identifier hs-var">sy</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; GLdouble
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100872"><span class="hs-identifier hs-var">sizeX</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; GLdouble -&gt; GLdouble
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; GLdouble
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679100873"><span class="hs-identifier hs-var">sizeY</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; GLdouble -&gt; GLdouble
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span>                </span><span class="annot"><span class="annottext">GLdouble
+-&gt; GLdouble
+-&gt; GLdouble
+-&gt; GLdouble
+-&gt; GLdouble
+-&gt; GLdouble
+-&gt; IO ()
+</span><span class="hs-identifier hs-var">GL.ortho</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100891"><span class="hs-identifier hs-var">sx</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100891"><span class="hs-identifier hs-var">sx</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100892"><span class="hs-identifier hs-var">sy</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679100892"><span class="hs-identifier hs-var">sy</span></a></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">GLdouble
+</span><span class="hs-number">100</span></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>                </span><span class="hs-comment">-- draw the world</span><span>
+</span><span id="line-51"></span><span>                </span><span class="annot"><span class="annottext">StateVar MatrixMode
+</span><span class="hs-identifier hs-var">GL.matrixMode</span></span><span>   </span><span class="annot"><span class="annottext">StateVar MatrixMode -&gt; MatrixMode -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar MatrixMode -&gt; MatrixMode -&gt; m ()
+</span><span class="hs-operator hs-var">$=</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; MatrixMode
+</span><span class="hs-identifier hs-var">GL.Modelview</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-52"></span><span>                </span><span class="annot"><span class="annottext">IO ()
+</span><a href="#local-6989586621679100874"><span class="hs-identifier hs-var">action</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>                </span><span class="annot"><span class="annottext">StateVar MatrixMode
+</span><span class="hs-identifier hs-var">GL.matrixMode</span></span><span>   </span><span class="annot"><span class="annottext">StateVar MatrixMode -&gt; MatrixMode -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar MatrixMode -&gt; MatrixMode -&gt; m ()
+</span><span class="hs-operator hs-var">$=</span></span><span> </span><span class="annot"><span class="annottext">MatrixMode
+</span><span class="hs-identifier hs-var">GL.Projection</span></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">StateVar MatrixMode
+</span><span class="hs-identifier hs-var">GL.matrixMode</span></span><span>   </span><span class="annot"><span class="annottext">StateVar MatrixMode -&gt; MatrixMode -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar MatrixMode -&gt; MatrixMode -&gt; m ()
+</span><span class="hs-operator hs-var">$=</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; MatrixMode
+</span><span class="hs-identifier hs-var">GL.Modelview</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | Clear the OpenGL buffer with the given background color and run</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--   an action to draw the model.</span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html#withClearBuffer"><span class="hs-identifier hs-type">withClearBuffer</span></a></span><span>
+</span><span id="line-62"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Data.Color.html#Color"><span class="hs-identifier hs-type">Color</span></a></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Background color</span></span><span>
+</span><span id="line-63"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Action to perform</span></span><span>
+</span><span id="line-64"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span id="withClearBuffer"><span class="annot"><span class="annottext">withClearBuffer :: Color -&gt; IO () -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#withClearBuffer"><span class="hs-identifier hs-var hs-var">withClearBuffer</span></a></span></span><span> </span><span id="local-6989586621679100896"><span class="annot"><span class="annottext">Color
+</span><a href="#local-6989586621679100896"><span class="hs-identifier hs-var">clearColor</span></a></span></span><span> </span><span id="local-6989586621679100897"><span class="annot"><span class="annottext">IO ()
+</span><a href="#local-6989586621679100897"><span class="hs-identifier hs-var">action</span></a></span></span><span>
+</span><span id="line-67"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-68"></span><span>        </span><span class="hs-comment">-- initialization (done every time in this case)</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-comment">-- we don't need the depth buffer for 2d.</span><span>
+</span><span id="line-70"></span><span>        </span><span class="annot"><span class="annottext">StateVar (Maybe ComparisonFunction)
+</span><span class="hs-identifier hs-var">GL.depthFunc</span></span><span>    </span><span class="annot"><span class="annottext">StateVar (Maybe ComparisonFunction)
+-&gt; Maybe ComparisonFunction -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (Maybe ComparisonFunction)
+-&gt; Maybe ComparisonFunction -&gt; m ()
+</span><span class="hs-operator hs-var">GL.$=</span></span><span> </span><span class="annot"><span class="annottext">ComparisonFunction -&gt; Maybe ComparisonFunction
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">ComparisonFunction
+</span><span class="hs-identifier hs-var">GL.Always</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span>        </span><span class="hs-comment">-- always clear the buffer to white</span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat)
+</span><span class="hs-identifier hs-var">GL.clearColor</span></span><span>   </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat) -&gt; Color4 GLfloat -&gt; IO ()
+forall t a (m :: * -&gt; *).
+(HasSetter t a, MonadIO m) =&gt;
+t -&gt; a -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (Color4 GLfloat) -&gt; Color4 GLfloat -&gt; m ()
+</span><span class="hs-operator hs-var">GL.$=</span></span><span> </span><span class="annot"><span class="annottext">Color -&gt; Color4 GLfloat
+forall a. Color -&gt; Color4 a
+</span><a href="Graphics.Gloss.Internals.Rendering.Color.html#glColor4OfColor"><span class="hs-identifier hs-var">glColor4OfColor</span></a></span><span> </span><span class="annot"><span class="annottext">Color
+</span><a href="#local-6989586621679100896"><span class="hs-identifier hs-var">clearColor</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span>        </span><span class="hs-comment">-- on every loop</span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><span class="annottext">[ClearBuffer] -&gt; IO ()
+</span><span class="hs-identifier hs-var">GL.clear</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">ClearBuffer
+</span><span class="hs-identifier hs-var">GL.ColorBuffer</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">ClearBuffer
+</span><span class="hs-identifier hs-var">GL.DepthBuffer</span></span><span class="hs-special">]</span><span>
+</span><span id="line-77"></span><span>        </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; IO ()
+forall a. Color a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">GL.color</span></span><span> </span><span class="annot"><span class="annottext">(Color4 GLfloat -&gt; IO ()) -&gt; Color4 GLfloat -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; Color4 GLfloat
+forall a. a -&gt; a -&gt; a -&gt; a -&gt; Color4 a
+</span><span class="hs-identifier hs-var">GL.Color4</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLfloat
+</span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GL.GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span>        </span><span class="annot"><span class="annottext">IO ()
+</span><a href="#local-6989586621679100897"><span class="hs-identifier hs-var">action</span></a></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span></pre></body></html>

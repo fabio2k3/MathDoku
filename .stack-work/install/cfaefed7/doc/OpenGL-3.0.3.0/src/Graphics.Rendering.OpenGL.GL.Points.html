@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Points</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 3.3 (Points) of the OpenGL 2.1 specs.</span><span>
+</span><span id="line-12"></span><span class="hs-comment">--</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Points</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-16"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Point Rasterization</span></span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSize"><span class="hs-identifier">pointSize</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#vertexProgramPointSize"><span class="hs-identifier">vertexProgramPointSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Controlling the Derived Size</span></span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSizeRange"><span class="hs-identifier">pointSizeRange</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointDistanceAttenuation"><span class="hs-identifier">pointDistanceAttenuation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Fading Points</span></span><span>
+</span><span id="line-23"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointFadeThresholdSize"><span class="hs-identifier">pointFadeThresholdSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Point Antialiasing</span></span><span>
+</span><span id="line-26"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSmooth"><span class="hs-identifier">pointSmooth</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Point Sprites</span></span><span>
+</span><span id="line-29"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSprite"><span class="hs-identifier">pointSprite</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Implementation-Dependent Limits</span></span><span>
+</span><span id="line-32"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#aliasedPointSizeRange"><span class="hs-identifier">aliasedPointSizeRange</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeRange"><span class="hs-identifier">smoothPointSizeRange</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeGranularity"><span class="hs-identifier">smoothPointSizeGranularity</span></a></span><span>
+</span><span id="line-33"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Array</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Capability</span></a></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PointParameter</span></a></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- | 'pointSize' contains the rasterized diameter of both aliased and</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- antialiased points. The initial value is 1. Using a point size other than 1</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- has different effects, depending on whether point antialiasing is enabled</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- (see 'pointSmooth') or point sprites are enabled (see 'pointSprite'). Both</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- are initially disabled.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- The specified point size is multiplied with a distance attenuation factor</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- and clamped to the specified 'pointSizeRange', and further clamped to the</span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- implementation-dependent point size range to produce the derived point size</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- using</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- @   /derivedSize/ = /clamp/ (/size/ * /sqrt/ (1 \/ (/a/ + /b/ * /d/ + /c/ * /d/^2)))@</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- where /d/ is the eye-coordinate distance from the eye to the vertex, and /a/,</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- /b/, and /c/ are the distance attenuation coefficients (see</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- 'pointDistanceAttenuation').</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- If multisampling is disabled, the computed point size is used as the point\'s</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- width.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- If multisampling is enabled, the point may be faded by modifying the point</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- alpha value (see 'Graphics.Rendering.OpenGL.GL.PerFragment.sampleCoverage')</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- instead of allowing the point width to go below a given</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- 'pointFadeThresholdSize'. In this case, the width is further modified in</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- the following manner:</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--</span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- @   /width/ = if /derivedSize/ &gt;= /threshold/ then /derivedSize/ else /threshold/@</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- The point alpha value is modified by computing:</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--</span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- @   /alpha/ = if /derivedSize/ &gt;= /threshold/ then 1 else (/derivedSize/ \/ /threshold/)^2@</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- If point antialiasing is disabled, the actual size is determined by rounding</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- the supplied size to the nearest integer. (If the rounding results in the</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- value 0, it is as if the point size were 1.) If the rounded size is odd,</span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- then the center point (/x/, /y/) of the pixel fragment that represents</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- the point is computed as</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- @   (/x/, /y/) = (/floor/ /xw/ + 0.5, /floor/ /yw/ + 0.5)@</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- where /xw/ and /yw/ indicate window coordinates. All pixels that lie within</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- the square grid of the rounded size centered at (/x/, /y/) make up the</span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- fragment. If the size is even, the center point is</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--</span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- @   (/x/, /y/) = (/floor/ (/xw/ + 0.5), /floor/ (/yw/ + 0.5))@</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="hs-comment">-- and the rasterized fragment\'s centers are the half-integer window</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- coordinates within the square of the rounded size centered at (/x/, /y/). All</span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- pixel fragments produced in rasterizing a nonantialiased point are assigned</span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- the same associated data, that of the vertex corresponding to the point.</span><span>
+</span><span id="line-95"></span><span class="hs-comment">--</span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- If antialiasing is enabled, then point rasterization produces a fragment for</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- each pixel square that intersects the region lying within the circle having</span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- diameter equal to the current point size and centered at the point\'s</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- (/xw/, /yw/). The coverage value for each fragment is the window coordinate</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- area of the intersection of the circular region with the corresponding pixel</span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- square. This value is saved and used in the final rasterization step. The</span><span>
+</span><span id="line-102"></span><span class="hs-comment">-- data associated with each fragment is the data associated with the point</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- being rasterized.</span><span>
+</span><span id="line-104"></span><span class="hs-comment">--</span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- Not all sizes are supported when point antialiasing is enabled. If an</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- unsupported size is requested, the nearest supported size is used.  Only size</span><span>
+</span><span id="line-107"></span><span class="hs-comment">-- 1 is guaranteed to be supported; others depend on the implementation. To</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- query the range of supported sizes for antialiased points and the size</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- difference between supported sizes within the range, query</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- 'smoothPointSizeRange' and 'smoothPointSizeGranularity', respectively. For</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- aliased points, query the supported range with 'aliasedPointSizeRange'.</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- The point size specified when 'pointSize' is set is always returned when it</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- is queried. Clamping and rounding for aliased and antialiased points have no</span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- effect on the specified value.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--</span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- A non-antialiased point size may be clamped to an implementation-dependent</span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- maximum. Although this maximum cannot be queried, it must be no less than the</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- maximum value for antialiased points, rounded to the nearest integer value.</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- An 'Graphics.Rendering.OpenGL.GLU.Errors.InvalidValue' is generated if</span><span>
+</span><span id="line-122"></span><span class="hs-comment">-- 'pointSize' is set to a value less than or equal to zero.</span><span>
+</span><span id="line-123"></span><span class="hs-comment">--</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- An 'Graphics.Rendering.OpenGL.GLU.Errors.InvalidOperation' is generated if</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- 'pointSize' is set during</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- 'Graphics.Rendering.OpenGL.GL.BeginEnd.renderPrimitive'.</span><span>
+</span><span id="line-127"></span><span>
+</span><span id="line-128"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSize"><span class="hs-identifier hs-type">pointSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-129"></span><span id="pointSize"><span class="annot"><span class="annottext">pointSize :: StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSize"><span class="hs-identifier hs-var hs-var">pointSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO GLfloat -&gt; (GLfloat -&gt; IO ()) -&gt; StateVar GLfloat
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPointSize"><span class="hs-identifier hs-var">GetPointSize</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPointSize</span></span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-132"></span><span>
+</span><span id="line-133"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#vertexProgramPointSize"><span class="hs-identifier hs-type">vertexProgramPointSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span><span>
+</span><span id="line-134"></span><span id="vertexProgramPointSize"><span class="annot"><span class="annottext">vertexProgramPointSize :: StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#vertexProgramPointSize"><span class="hs-identifier hs-var hs-var">vertexProgramPointSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">EnableCap -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#makeCapability"><span class="hs-identifier hs-var">makeCapability</span></a></span><span> </span><span class="annot"><span class="annottext">EnableCap
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#CapVertexProgramPointSize"><span class="hs-identifier hs-var">CapVertexProgramPointSize</span></a></span><span>
+</span><span id="line-135"></span><span>
+</span><span id="line-136"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-137"></span><span>
+</span><span id="line-138"></span><span class="hs-comment">-- | The range to which the derived point size is clamped, see 'pointSize'. Note</span><span>
+</span><span id="line-139"></span><span class="hs-comment">-- that the size is further clamped to the implementation-dependent limits, see</span><span>
+</span><span id="line-140"></span><span class="hs-comment">-- 'aliasedPointSizeRange' and 'smoothPointSizeRange'. The initial range is</span><span>
+</span><span id="line-141"></span><span class="hs-comment">-- (0, 1).</span><span>
+</span><span id="line-142"></span><span class="hs-comment">--</span><span>
+</span><span id="line-143"></span><span class="hs-comment">-- An 'Graphics.Rendering.OpenGL.GLU.Errors.InvalidValue' is generated if the</span><span>
+</span><span id="line-144"></span><span class="hs-comment">-- lower or upper bound of the range is set to a value less than zero. If the</span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- lower bound is greater than the upper bound, the point size after clamping is</span><span>
+</span><span id="line-146"></span><span class="hs-comment">-- undefined, but no error is generated.</span><span>
+</span><span id="line-147"></span><span>
+</span><span id="line-148"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSizeRange"><span class="hs-identifier hs-type">pointSizeRange</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-149"></span><span id="pointSizeRange"><span class="annot"><span class="annottext">pointSizeRange :: StateVar (GLfloat, GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSizeRange"><span class="hs-identifier hs-var hs-var">pointSizeRange</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-150"></span><span>   </span><span class="annot"><span class="annottext">IO (GLfloat, GLfloat)
+-&gt; ((GLfloat, GLfloat) -&gt; IO ()) -&gt; StateVar (GLfloat, GLfloat)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-151"></span><span>   </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; (GLfloat, GLfloat))
+-&gt; IO GLfloat -&gt; IO GLfloat -&gt; IO (GLfloat, GLfloat)
+forall (m :: * -&gt; *) a1 a2 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM2</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPointSizeMin"><span class="hs-identifier hs-var">GetPointSizeMin</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPointSizeMax"><span class="hs-identifier hs-var">GetPointSizeMax</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-152"></span><span>   </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679285956"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285956"><span class="hs-identifier hs-var">sizeMin</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679285957"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285957"><span class="hs-identifier hs-var">sizeMax</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span> </span><span class="annot"><span class="annottext">PointParameter -&gt; GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#pointParameterf"><span class="hs-identifier hs-var">pointParameterf</span></a></span><span> </span><span class="annot"><span class="annottext">PointParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#PointSizeMin"><span class="hs-identifier hs-var">PointSizeMin</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285956"><span class="hs-identifier hs-var">sizeMin</span></a></span><span>
+</span><span id="line-153"></span><span>                              </span><span class="annot"><span class="annottext">PointParameter -&gt; GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#pointParameterf"><span class="hs-identifier hs-var">pointParameterf</span></a></span><span> </span><span class="annot"><span class="annottext">PointParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#PointSizeMax"><span class="hs-identifier hs-var">PointSizeMax</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285957"><span class="hs-identifier hs-var">sizeMax</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-156"></span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- | The  constant, linear, and quadratic distance attenuation coefficients, see</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- 'pointSize'. The initial coefficients are (1, 0, 0).</span><span>
+</span><span id="line-159"></span><span>
+</span><span id="line-160"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointDistanceAttenuation"><span class="hs-identifier hs-type">pointDistanceAttenuation</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-161"></span><span id="pointDistanceAttenuation"><span class="annot"><span class="annottext">pointDistanceAttenuation :: StateVar (GLfloat, GLfloat, GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointDistanceAttenuation"><span class="hs-identifier hs-var hs-var">pointDistanceAttenuation</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-162"></span><span>   </span><span class="annot"><span class="annottext">IO (GLfloat, GLfloat, GLfloat)
+-&gt; ((GLfloat, GLfloat, GLfloat) -&gt; IO ())
+-&gt; StateVar (GLfloat, GLfloat, GLfloat)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-163"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; (GLfloat, GLfloat, GLfloat))
+-&gt; PName3F -&gt; IO (GLfloat, GLfloat, GLfloat)
+forall p a.
+GetPName3F p =&gt;
+(GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; a) -&gt; PName3F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat3"><span class="hs-identifier hs-var">getFloat3</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PName3F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPointDistanceAttenuation"><span class="hs-identifier hs-var">GetPointDistanceAttenuation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-164"></span><span>      </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679285963"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285963"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679285964"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285964"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679285965"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285965"><span class="hs-identifier hs-var">c</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[GLfloat] -&gt; (Ptr GLfloat -&gt; IO ()) -&gt; IO ()
+forall a b. Storable a =&gt; [a] -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">withArray</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285963"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285964"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679285965"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">((Ptr GLfloat -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr GLfloat -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-165"></span><span>                        </span><span class="annot"><span class="annottext">PointParameter -&gt; Ptr GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#pointParameterfv"><span class="hs-identifier hs-var">pointParameterfv</span></a></span><span> </span><span class="annot"><span class="annottext">PointParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#PointDistanceAttenuation"><span class="hs-identifier hs-var">PointDistanceAttenuation</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-168"></span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- | The threshold for alpha attenuation of points when multisampling is used,</span><span>
+</span><span id="line-170"></span><span class="hs-comment">-- see 'pointSize'. The initial threshold is 1.</span><span>
+</span><span id="line-171"></span><span class="hs-comment">--</span><span>
+</span><span id="line-172"></span><span class="hs-comment">-- An 'Graphics.Rendering.OpenGL.GLU.Errors.InvalidValue' is generated if the</span><span>
+</span><span id="line-173"></span><span class="hs-comment">-- threshold is set to a value less than zero.</span><span>
+</span><span id="line-174"></span><span>
+</span><span id="line-175"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointFadeThresholdSize"><span class="hs-identifier hs-type">pointFadeThresholdSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-176"></span><span id="pointFadeThresholdSize"><span class="annot"><span class="annottext">pointFadeThresholdSize :: StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointFadeThresholdSize"><span class="hs-identifier hs-var hs-var">pointFadeThresholdSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-177"></span><span>   </span><span class="annot"><span class="annottext">IO GLfloat -&gt; (GLfloat -&gt; IO ()) -&gt; StateVar GLfloat
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-178"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPointFadeThresholdSize"><span class="hs-identifier hs-var">GetPointFadeThresholdSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PointParameter -&gt; GLfloat -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#pointParameterf"><span class="hs-identifier hs-var">pointParameterf</span></a></span><span> </span><span class="annot"><span class="annottext">PointParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.PointParameter.html#PointFadeThresholdSize"><span class="hs-identifier hs-var">PointFadeThresholdSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-180"></span><span>
+</span><span id="line-181"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-182"></span><span>
+</span><span id="line-183"></span><span class="hs-comment">-- | Controls whether point antialiasing is enabled. The initial state is</span><span>
+</span><span id="line-184"></span><span class="hs-comment">-- 'Graphics.Rendering.OpenGL.GL.Capability.Disabled'.</span><span>
+</span><span id="line-185"></span><span>
+</span><span id="line-186"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSmooth"><span class="hs-identifier hs-type">pointSmooth</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span><span>
+</span><span id="line-187"></span><span id="pointSmooth"><span class="annot"><span class="annottext">pointSmooth :: StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSmooth"><span class="hs-identifier hs-var hs-var">pointSmooth</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">EnableCap -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#makeCapability"><span class="hs-identifier hs-var">makeCapability</span></a></span><span> </span><span class="annot"><span class="annottext">EnableCap
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#CapPointSmooth"><span class="hs-identifier hs-var">CapPointSmooth</span></a></span><span>
+</span><span id="line-188"></span><span>
+</span><span id="line-189"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-190"></span><span>
+</span><span id="line-191"></span><span class="hs-comment">-- | Controls whether point sprites are enabled. The initial state is</span><span>
+</span><span id="line-192"></span><span class="hs-comment">-- 'Graphics.Rendering.OpenGL.GL.Capability.Disabled'. When point sprites are</span><span>
+</span><span id="line-193"></span><span class="hs-comment">-- enabled, the state of point antialiasing (i.e. 'pointSmooth') is ignored.</span><span>
+</span><span id="line-194"></span><span>
+</span><span id="line-195"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSprite"><span class="hs-identifier hs-type">pointSprite</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span><span>
+</span><span id="line-196"></span><span id="pointSprite"><span class="annot"><span class="annottext">pointSprite :: StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#pointSprite"><span class="hs-identifier hs-var hs-var">pointSprite</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">EnableCap -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#makeCapability"><span class="hs-identifier hs-var">makeCapability</span></a></span><span> </span><span class="annot"><span class="annottext">EnableCap
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#CapPointSprite"><span class="hs-identifier hs-var">CapPointSprite</span></a></span><span>
+</span><span id="line-197"></span><span>
+</span><span id="line-198"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-199"></span><span>
+</span><span id="line-200"></span><span class="annot"><span class="hs-comment">-- | The smallest and largest supported size of aliased points.</span></span><span>
+</span><span id="line-201"></span><span>
+</span><span id="line-202"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#aliasedPointSizeRange"><span class="hs-identifier hs-type">aliasedPointSizeRange</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span id="aliasedPointSizeRange"><span class="annot"><span class="annottext">aliasedPointSizeRange :: IO (GLfloat, GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#aliasedPointSizeRange"><span class="hs-identifier hs-var hs-var">aliasedPointSizeRange</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-204"></span><span>   </span><span class="annot"><span class="annottext">IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat))
+-&gt; IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; (GLfloat, GLfloat))
+-&gt; PName2F -&gt; IO (GLfloat, GLfloat)
+forall p a. GetPName2F p =&gt; (GLfloat -&gt; GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; GLfloat -&gt; a) -&gt; PName2F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat2"><span class="hs-identifier hs-var">getFloat2</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PName2F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetAliasedPointSizeRange"><span class="hs-identifier hs-var">GetAliasedPointSizeRange</span></a></span><span>
+</span><span id="line-205"></span><span>
+</span><span id="line-206"></span><span class="annot"><span class="hs-comment">-- | The smallest and largest supported size of antialiased points.</span></span><span>
+</span><span id="line-207"></span><span>
+</span><span id="line-208"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeRange"><span class="hs-identifier hs-type">smoothPointSizeRange</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-209"></span><span id="smoothPointSizeRange"><span class="annot"><span class="annottext">smoothPointSizeRange :: IO (GLfloat, GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeRange"><span class="hs-identifier hs-var hs-var">smoothPointSizeRange</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-210"></span><span>   </span><span class="annot"><span class="annottext">IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat)
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat))
+-&gt; IO (GLfloat, GLfloat) -&gt; IO (GLfloat, GLfloat)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; (GLfloat, GLfloat))
+-&gt; PName2F -&gt; IO (GLfloat, GLfloat)
+forall p a. GetPName2F p =&gt; (GLfloat -&gt; GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; GLfloat -&gt; a) -&gt; PName2F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat2"><span class="hs-identifier hs-var">getFloat2</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">PName2F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetSmoothPointSizeRange"><span class="hs-identifier hs-var">GetSmoothPointSizeRange</span></a></span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span class="hs-comment">-- | The antialiased point size granularity, i.e. the size difference between</span><span>
+</span><span id="line-213"></span><span class="hs-comment">-- supported sizes.</span><span>
+</span><span id="line-214"></span><span>
+</span><span id="line-215"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeGranularity"><span class="hs-identifier hs-type">smoothPointSizeGranularity</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-216"></span><span id="smoothPointSizeGranularity"><span class="annot"><span class="annottext">smoothPointSizeGranularity :: IO GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.Points.html#smoothPointSizeGranularity"><span class="hs-identifier hs-var hs-var">smoothPointSizeGranularity</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-217"></span><span>   </span><span class="annot"><span class="annottext">IO GLfloat -&gt; IO GLfloat
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(IO GLfloat -&gt; IO GLfloat) -&gt; IO GLfloat -&gt; IO GLfloat
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetSmoothPointSizeGranularity"><span class="hs-identifier hs-var">GetSmoothPointSizeGranularity</span></a></span><span>
+</span><span id="line-218"></span></pre></body></html>

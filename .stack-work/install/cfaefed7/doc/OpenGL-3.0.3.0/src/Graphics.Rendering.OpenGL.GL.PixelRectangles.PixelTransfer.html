@@ -1,0 +1,629 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to a part of section 3.6.1 (Pixel Storage Modes) of</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- the OpenGL 2.1 specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier">PixelTransferStage</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapColor"><span class="hs-identifier">mapColor</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapStencil"><span class="hs-identifier">mapStencil</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexShift"><span class="hs-identifier">indexShift</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexOffset"><span class="hs-identifier">indexOffset</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthScale"><span class="hs-identifier">depthScale</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthBias"><span class="hs-identifier">depthBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaScale"><span class="hs-identifier">rgbaScale</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaBias"><span class="hs-identifier">rgbaBias</span></a></span><span>
+</span><span id="line-20"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Capability</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexSpec.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.VertexSpec</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">data</span><span> </span><span id="PixelTransfer"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-var">PixelTransfer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-31"></span><span>     </span><span id="MapColor"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapColor"><span class="hs-identifier hs-var">MapColor</span></a></span></span><span>
+</span><span id="line-32"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="MapStencil"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapStencil"><span class="hs-identifier hs-var">MapStencil</span></a></span></span><span>
+</span><span id="line-33"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IndexShift"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexShift"><span class="hs-identifier hs-var">IndexShift</span></a></span></span><span>
+</span><span id="line-34"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IndexOffset"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexOffset"><span class="hs-identifier hs-var">IndexOffset</span></a></span></span><span>
+</span><span id="line-35"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="RedScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedScale"><span class="hs-identifier hs-var">RedScale</span></a></span></span><span>
+</span><span id="line-36"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="RedBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedBias"><span class="hs-identifier hs-var">RedBias</span></a></span></span><span>
+</span><span id="line-37"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GreenScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenScale"><span class="hs-identifier hs-var">GreenScale</span></a></span></span><span>
+</span><span id="line-38"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GreenBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenBias"><span class="hs-identifier hs-var">GreenBias</span></a></span></span><span>
+</span><span id="line-39"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="BlueScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueScale"><span class="hs-identifier hs-var">BlueScale</span></a></span></span><span>
+</span><span id="line-40"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="BlueBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueBias"><span class="hs-identifier hs-var">BlueBias</span></a></span></span><span>
+</span><span id="line-41"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AlphaScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaScale"><span class="hs-identifier hs-var">AlphaScale</span></a></span></span><span>
+</span><span id="line-42"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AlphaBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaBias"><span class="hs-identifier hs-var">AlphaBias</span></a></span></span><span>
+</span><span id="line-43"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthScale"><span class="hs-identifier hs-var">DepthScale</span></a></span></span><span>
+</span><span id="line-44"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthBias"><span class="hs-identifier hs-var">DepthBias</span></a></span></span><span>
+</span><span id="line-45"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionRedScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedScale"><span class="hs-identifier hs-var">PostConvolutionRedScale</span></a></span></span><span>
+</span><span id="line-46"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionGreenScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenScale"><span class="hs-identifier hs-var">PostConvolutionGreenScale</span></a></span></span><span>
+</span><span id="line-47"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionBlueScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueScale"><span class="hs-identifier hs-var">PostConvolutionBlueScale</span></a></span></span><span>
+</span><span id="line-48"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionAlphaScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaScale"><span class="hs-identifier hs-var">PostConvolutionAlphaScale</span></a></span></span><span>
+</span><span id="line-49"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionRedBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedBias"><span class="hs-identifier hs-var">PostConvolutionRedBias</span></a></span></span><span>
+</span><span id="line-50"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionGreenBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenBias"><span class="hs-identifier hs-var">PostConvolutionGreenBias</span></a></span></span><span>
+</span><span id="line-51"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionBlueBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueBias"><span class="hs-identifier hs-var">PostConvolutionBlueBias</span></a></span></span><span>
+</span><span id="line-52"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolutionAlphaBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaBias"><span class="hs-identifier hs-var">PostConvolutionAlphaBias</span></a></span></span><span>
+</span><span id="line-53"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixRedScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedScale"><span class="hs-identifier hs-var">PostColorMatrixRedScale</span></a></span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixGreenScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenScale"><span class="hs-identifier hs-var">PostColorMatrixGreenScale</span></a></span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixBlueScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueScale"><span class="hs-identifier hs-var">PostColorMatrixBlueScale</span></a></span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixAlphaScale"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaScale"><span class="hs-identifier hs-var">PostColorMatrixAlphaScale</span></a></span></span><span>
+</span><span id="line-57"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixRedBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedBias"><span class="hs-identifier hs-var">PostColorMatrixRedBias</span></a></span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixGreenBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenBias"><span class="hs-identifier hs-var">PostColorMatrixGreenBias</span></a></span></span><span>
+</span><span id="line-59"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixBlueBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueBias"><span class="hs-identifier hs-var">PostColorMatrixBlueBias</span></a></span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrixAlphaBias"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaBias"><span class="hs-identifier hs-var">PostColorMatrixAlphaBias</span></a></span></span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-type">marshalPixelTransfer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-63"></span><span id="marshalPixelTransfer"><span class="annot"><span class="annottext">marshalPixelTransfer :: PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var hs-var">marshalPixelTransfer</span></a></span></span><span> </span><span id="local-6989586621679286080"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286080"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286080"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-64"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapColor"><span class="hs-identifier hs-var">MapColor</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_MAP_COLOR</span></span><span>
+</span><span id="line-65"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapStencil"><span class="hs-identifier hs-var">MapStencil</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_MAP_STENCIL</span></span><span>
+</span><span id="line-66"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexShift"><span class="hs-identifier hs-var">IndexShift</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INDEX_SHIFT</span></span><span>
+</span><span id="line-67"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexOffset"><span class="hs-identifier hs-var">IndexOffset</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_INDEX_OFFSET</span></span><span>
+</span><span id="line-68"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedScale"><span class="hs-identifier hs-var">RedScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RED_SCALE</span></span><span>
+</span><span id="line-69"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedBias"><span class="hs-identifier hs-var">RedBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RED_BIAS</span></span><span>
+</span><span id="line-70"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenScale"><span class="hs-identifier hs-var">GreenScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_GREEN_SCALE</span></span><span>
+</span><span id="line-71"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenBias"><span class="hs-identifier hs-var">GreenBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_GREEN_BIAS</span></span><span>
+</span><span id="line-72"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueScale"><span class="hs-identifier hs-var">BlueScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_BLUE_SCALE</span></span><span>
+</span><span id="line-73"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueBias"><span class="hs-identifier hs-var">BlueBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_BLUE_BIAS</span></span><span>
+</span><span id="line-74"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaScale"><span class="hs-identifier hs-var">AlphaScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_ALPHA_SCALE</span></span><span>
+</span><span id="line-75"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaBias"><span class="hs-identifier hs-var">AlphaBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_ALPHA_BIAS</span></span><span>
+</span><span id="line-76"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthScale"><span class="hs-identifier hs-var">DepthScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_DEPTH_SCALE</span></span><span>
+</span><span id="line-77"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthBias"><span class="hs-identifier hs-var">DepthBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_DEPTH_BIAS</span></span><span>
+</span><span id="line-78"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedScale"><span class="hs-identifier hs-var">PostConvolutionRedScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_RED_SCALE</span></span><span>
+</span><span id="line-79"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenScale"><span class="hs-identifier hs-var">PostConvolutionGreenScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_GREEN_SCALE</span></span><span>
+</span><span id="line-80"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueScale"><span class="hs-identifier hs-var">PostConvolutionBlueScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_BLUE_SCALE</span></span><span>
+</span><span id="line-81"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaScale"><span class="hs-identifier hs-var">PostConvolutionAlphaScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_ALPHA_SCALE</span></span><span>
+</span><span id="line-82"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedBias"><span class="hs-identifier hs-var">PostConvolutionRedBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_RED_BIAS</span></span><span>
+</span><span id="line-83"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenBias"><span class="hs-identifier hs-var">PostConvolutionGreenBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_GREEN_BIAS</span></span><span>
+</span><span id="line-84"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueBias"><span class="hs-identifier hs-var">PostConvolutionBlueBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_BLUE_BIAS</span></span><span>
+</span><span id="line-85"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaBias"><span class="hs-identifier hs-var">PostConvolutionAlphaBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_CONVOLUTION_ALPHA_BIAS</span></span><span>
+</span><span id="line-86"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedScale"><span class="hs-identifier hs-var">PostColorMatrixRedScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_RED_SCALE</span></span><span>
+</span><span id="line-87"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenScale"><span class="hs-identifier hs-var">PostColorMatrixGreenScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_GREEN_SCALE</span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueScale"><span class="hs-identifier hs-var">PostColorMatrixBlueScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_BLUE_SCALE</span></span><span>
+</span><span id="line-89"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaScale"><span class="hs-identifier hs-var">PostColorMatrixAlphaScale</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_ALPHA_SCALE</span></span><span>
+</span><span id="line-90"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedBias"><span class="hs-identifier hs-var">PostColorMatrixRedBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_RED_BIAS</span></span><span>
+</span><span id="line-91"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenBias"><span class="hs-identifier hs-var">PostColorMatrixGreenBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_GREEN_BIAS</span></span><span>
+</span><span id="line-92"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueBias"><span class="hs-identifier hs-var">PostColorMatrixBlueBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_BLUE_BIAS</span></span><span>
+</span><span id="line-93"></span><span>   </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaBias"><span class="hs-identifier hs-var">PostColorMatrixAlphaBias</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_POST_COLOR_MATRIX_ALPHA_BIAS</span></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-keyword">data</span><span> </span><span id="PixelTransferStage"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-var">PixelTransferStage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-98"></span><span>     </span><span id="PreConvolution"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PreConvolution"><span class="hs-identifier hs-var">PreConvolution</span></a></span></span><span>
+</span><span id="line-99"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostConvolution"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolution"><span class="hs-identifier hs-var">PostConvolution</span></a></span></span><span>
+</span><span id="line-100"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="PostColorMatrix"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrix"><span class="hs-identifier hs-var">PostColorMatrix</span></a></span></span><span>
+</span><span id="line-101"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679286115"><span id="local-6989586621679286117"><span class="annot"><span class="annottext">PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+(PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; Eq PixelTransferStage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+== :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+$c/= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+/= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286124"><span id="local-6989586621679286126"><span id="local-6989586621679286128"><span id="local-6989586621679286132"><span id="local-6989586621679286135"><span id="local-6989586621679286138"><span id="local-6989586621679286141"><span class="annot"><span class="annottext">Eq PixelTransferStage
+Eq PixelTransferStage =&gt;
+(PixelTransferStage -&gt; PixelTransferStage -&gt; Ordering)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; Bool)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage)
+-&gt; (PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage)
+-&gt; Ord PixelTransferStage
+PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+PixelTransferStage -&gt; PixelTransferStage -&gt; Ordering
+PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: PixelTransferStage -&gt; PixelTransferStage -&gt; Ordering
+compare :: PixelTransferStage -&gt; PixelTransferStage -&gt; Ordering
+$c&lt; :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+&lt; :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+$c&lt;= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+&lt;= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+$c&gt; :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+&gt; :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+$c&gt;= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+&gt;= :: PixelTransferStage -&gt; PixelTransferStage -&gt; Bool
+$cmax :: PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage
+max :: PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage
+$cmin :: PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage
+min :: PixelTransferStage -&gt; PixelTransferStage -&gt; PixelTransferStage
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286145"><span id="local-6989586621679286147"><span id="local-6989586621679286151"><span class="annot"><span class="annottext">Int -&gt; PixelTransferStage -&gt; ShowS
+[PixelTransferStage] -&gt; ShowS
+PixelTransferStage -&gt; String
+(Int -&gt; PixelTransferStage -&gt; ShowS)
+-&gt; (PixelTransferStage -&gt; String)
+-&gt; ([PixelTransferStage] -&gt; ShowS)
+-&gt; Show PixelTransferStage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PixelTransferStage -&gt; ShowS
+showsPrec :: Int -&gt; PixelTransferStage -&gt; ShowS
+$cshow :: PixelTransferStage -&gt; String
+show :: PixelTransferStage -&gt; String
+$cshowList :: [PixelTransferStage] -&gt; ShowS
+showList :: [PixelTransferStage] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetScales"><span class="hs-identifier hs-type">stageToGetScales</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-104"></span><span>      </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span>
+</span><span id="line-105"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span id="stageToGetScales"><span class="annot"><span class="annottext">stageToGetScales :: PixelTransferStage -&gt; (PName1F, PName1F, PName1F, PName1F)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetScales"><span class="hs-identifier hs-var hs-var">stageToGetScales</span></a></span></span><span> </span><span id="local-6989586621679286155"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286155"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286155"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-107"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PreConvolution"><span class="hs-identifier hs-var">PreConvolution</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetRedScale"><span class="hs-identifier hs-var">GetRedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-108"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetGreenScale"><span class="hs-identifier hs-var">GetGreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-109"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetBlueScale"><span class="hs-identifier hs-var">GetBlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-110"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetAlphaScale"><span class="hs-identifier hs-var">GetAlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolution"><span class="hs-identifier hs-var">PostConvolution</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionRedScale"><span class="hs-identifier hs-var">GetPostConvolutionRedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-112"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionGreenScale"><span class="hs-identifier hs-var">GetPostConvolutionGreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-113"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionBlueScale"><span class="hs-identifier hs-var">GetPostConvolutionBlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-114"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionAlphaScale"><span class="hs-identifier hs-var">GetPostConvolutionAlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-115"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrix"><span class="hs-identifier hs-var">PostColorMatrix</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixRedScale"><span class="hs-identifier hs-var">GetPostColorMatrixRedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-116"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixGreenScale"><span class="hs-identifier hs-var">GetPostColorMatrixGreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-117"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixBlueScale"><span class="hs-identifier hs-var">GetPostColorMatrixBlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-118"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixAlphaScale"><span class="hs-identifier hs-var">GetPostColorMatrixAlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetScales"><span class="hs-identifier hs-type">stageToSetScales</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-121"></span><span>      </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span>
+</span><span id="line-122"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span id="stageToSetScales"><span class="annot"><span class="annottext">stageToSetScales :: PixelTransferStage
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetScales"><span class="hs-identifier hs-var hs-var">stageToSetScales</span></a></span></span><span> </span><span id="local-6989586621679286169"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286169"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286169"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-124"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PreConvolution"><span class="hs-identifier hs-var">PreConvolution</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedScale"><span class="hs-identifier hs-var">RedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-125"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenScale"><span class="hs-identifier hs-var">GreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-126"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueScale"><span class="hs-identifier hs-var">BlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-127"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaScale"><span class="hs-identifier hs-var">AlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolution"><span class="hs-identifier hs-var">PostConvolution</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedScale"><span class="hs-identifier hs-var">PostConvolutionRedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-129"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenScale"><span class="hs-identifier hs-var">PostConvolutionGreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-130"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueScale"><span class="hs-identifier hs-var">PostConvolutionBlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-131"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaScale"><span class="hs-identifier hs-var">PostConvolutionAlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrix"><span class="hs-identifier hs-var">PostColorMatrix</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedScale"><span class="hs-identifier hs-var">PostColorMatrixRedScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-133"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenScale"><span class="hs-identifier hs-var">PostColorMatrixGreenScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueScale"><span class="hs-identifier hs-var">PostColorMatrixBlueScale</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-135"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaScale"><span class="hs-identifier hs-var">PostColorMatrixAlphaScale</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span>
+</span><span id="line-137"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetBiases"><span class="hs-identifier hs-type">stageToGetBiases</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-138"></span><span>      </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span>
+</span><span id="line-139"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1F"><span class="hs-identifier hs-type">PName1F</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-140"></span><span id="stageToGetBiases"><span class="annot"><span class="annottext">stageToGetBiases :: PixelTransferStage -&gt; (PName1F, PName1F, PName1F, PName1F)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetBiases"><span class="hs-identifier hs-var hs-var">stageToGetBiases</span></a></span></span><span> </span><span id="local-6989586621679286171"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286171"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286171"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-141"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PreConvolution"><span class="hs-identifier hs-var">PreConvolution</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetRedBias"><span class="hs-identifier hs-var">GetRedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-142"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetGreenBias"><span class="hs-identifier hs-var">GetGreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetBlueBias"><span class="hs-identifier hs-var">GetBlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-144"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetAlphaBias"><span class="hs-identifier hs-var">GetAlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-145"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolution"><span class="hs-identifier hs-var">PostConvolution</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionRedBias"><span class="hs-identifier hs-var">GetPostConvolutionRedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-146"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionGreenBias"><span class="hs-identifier hs-var">GetPostConvolutionGreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-147"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionBlueBias"><span class="hs-identifier hs-var">GetPostConvolutionBlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-148"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostConvolutionAlphaBias"><span class="hs-identifier hs-var">GetPostConvolutionAlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-149"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrix"><span class="hs-identifier hs-var">PostColorMatrix</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixRedBias"><span class="hs-identifier hs-var">GetPostColorMatrixRedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-150"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixGreenBias"><span class="hs-identifier hs-var">GetPostColorMatrixGreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-151"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixBlueBias"><span class="hs-identifier hs-var">GetPostColorMatrixBlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-152"></span><span>                       </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPostColorMatrixAlphaBias"><span class="hs-identifier hs-var">GetPostColorMatrixAlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetBiases"><span class="hs-identifier hs-type">stageToSetBiases</span></a></span><span> </span><span class="hs-glyph">::</span><span>
+</span><span id="line-155"></span><span>      </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span>
+</span><span id="line-156"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-157"></span><span id="stageToSetBiases"><span class="annot"><span class="annottext">stageToSetBiases :: PixelTransferStage
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetBiases"><span class="hs-identifier hs-var hs-var">stageToSetBiases</span></a></span></span><span> </span><span id="local-6989586621679286185"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286185"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286185"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-158"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PreConvolution"><span class="hs-identifier hs-var">PreConvolution</span></a></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#RedBias"><span class="hs-identifier hs-var">RedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-159"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#GreenBias"><span class="hs-identifier hs-var">GreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-160"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#BlueBias"><span class="hs-identifier hs-var">BlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-161"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#AlphaBias"><span class="hs-identifier hs-var">AlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolution"><span class="hs-identifier hs-var">PostConvolution</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionRedBias"><span class="hs-identifier hs-var">PostConvolutionRedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-163"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionGreenBias"><span class="hs-identifier hs-var">PostConvolutionGreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-164"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionBlueBias"><span class="hs-identifier hs-var">PostConvolutionBlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-165"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostConvolutionAlphaBias"><span class="hs-identifier hs-var">PostConvolutionAlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>   </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrix"><span class="hs-identifier hs-var">PostColorMatrix</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixRedBias"><span class="hs-identifier hs-var">PostColorMatrixRedBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-167"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixGreenBias"><span class="hs-identifier hs-var">PostColorMatrixGreenBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-168"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixBlueBias"><span class="hs-identifier hs-var">PostColorMatrixBlueBias</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-169"></span><span>                       </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PostColorMatrixAlphaBias"><span class="hs-identifier hs-var">PostColorMatrixAlphaBias</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-172"></span><span>
+</span><span id="line-173"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapColor"><span class="hs-identifier hs-type">mapColor</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span><span>
+</span><span id="line-174"></span><span id="mapColor"><span class="annot"><span class="annottext">mapColor :: StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapColor"><span class="hs-identifier hs-var hs-var">mapColor</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; PixelTransfer -&gt; StateVar Capability
+forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferb"><span class="hs-identifier hs-var">pixelTransferb</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMapColor"><span class="hs-identifier hs-var">GetMapColor</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapColor"><span class="hs-identifier hs-var">MapColor</span></a></span><span>
+</span><span id="line-175"></span><span>
+</span><span id="line-176"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapStencil"><span class="hs-identifier hs-type">mapStencil</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span><span>
+</span><span id="line-177"></span><span id="mapStencil"><span class="annot"><span class="annottext">mapStencil :: StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#mapStencil"><span class="hs-identifier hs-var hs-var">mapStencil</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; PixelTransfer -&gt; StateVar Capability
+forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferb"><span class="hs-identifier hs-var">pixelTransferb</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetMapStencil"><span class="hs-identifier hs-var">GetMapStencil</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#MapStencil"><span class="hs-identifier hs-var">MapStencil</span></a></span><span>
+</span><span id="line-178"></span><span>
+</span><span id="line-179"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexShift"><span class="hs-identifier hs-type">indexShift</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-180"></span><span id="indexShift"><span class="annot"><span class="annottext">indexShift :: StateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexShift"><span class="hs-identifier hs-var hs-var">indexShift</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; PixelTransfer -&gt; StateVar GLint
+forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferi"><span class="hs-identifier hs-var">pixelTransferi</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetIndexShift"><span class="hs-identifier hs-var">GetIndexShift</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexShift"><span class="hs-identifier hs-var">IndexShift</span></a></span><span>
+</span><span id="line-181"></span><span>
+</span><span id="line-182"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexOffset"><span class="hs-identifier hs-type">indexOffset</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-183"></span><span id="indexOffset"><span class="annot"><span class="annottext">indexOffset :: StateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#indexOffset"><span class="hs-identifier hs-var hs-var">indexOffset</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1I -&gt; PixelTransfer -&gt; StateVar GLint
+forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferi"><span class="hs-identifier hs-var">pixelTransferi</span></a></span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetIndexOffset"><span class="hs-identifier hs-var">GetIndexOffset</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#IndexOffset"><span class="hs-identifier hs-var">IndexOffset</span></a></span><span>
+</span><span id="line-184"></span><span>
+</span><span id="line-185"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthScale"><span class="hs-identifier hs-type">depthScale</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-186"></span><span id="depthScale"><span class="annot"><span class="annottext">depthScale :: StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthScale"><span class="hs-identifier hs-var hs-var">depthScale</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1F -&gt; PixelTransfer -&gt; StateVar GLfloat
+forall p. GetPName1F p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferf"><span class="hs-identifier hs-var">pixelTransferf</span></a></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetDepthScale"><span class="hs-identifier hs-var">GetDepthScale</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthScale"><span class="hs-identifier hs-var">DepthScale</span></a></span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthBias"><span class="hs-identifier hs-type">depthBias</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span>
+</span><span id="line-189"></span><span id="depthBias"><span class="annot"><span class="annottext">depthBias :: StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#depthBias"><span class="hs-identifier hs-var hs-var">depthBias</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PName1F -&gt; PixelTransfer -&gt; StateVar GLfloat
+forall p. GetPName1F p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferf"><span class="hs-identifier hs-var">pixelTransferf</span></a></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetDepthBias"><span class="hs-identifier hs-var">GetDepthBias</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#DepthBias"><span class="hs-identifier hs-var">DepthBias</span></a></span><span>
+</span><span id="line-190"></span><span>
+</span><span id="line-191"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaScale"><span class="hs-identifier hs-type">rgbaScale</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-192"></span><span id="rgbaScale"><span class="annot"><span class="annottext">rgbaScale :: PixelTransferStage -&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaScale"><span class="hs-identifier hs-var hs-var">rgbaScale</span></a></span></span><span> </span><span id="local-6989586621679286195"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286195"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PName1F, PName1F, PName1F, PName1F)
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+-&gt; StateVar (Color4 GLfloat)
+forall p.
+GetPName1F p =&gt;
+(p, p, p, p)
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+-&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransfer4f"><span class="hs-identifier hs-var">pixelTransfer4f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransferStage -&gt; (PName1F, PName1F, PName1F, PName1F)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetScales"><span class="hs-identifier hs-var">stageToGetScales</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286195"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransferStage
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetScales"><span class="hs-identifier hs-var">stageToSetScales</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286195"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-193"></span><span>
+</span><span id="line-194"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaBias"><span class="hs-identifier hs-type">rgbaBias</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransferStage"><span class="hs-identifier hs-type">PixelTransferStage</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-195"></span><span id="rgbaBias"><span class="annot"><span class="annottext">rgbaBias :: PixelTransferStage -&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#rgbaBias"><span class="hs-identifier hs-var hs-var">rgbaBias</span></a></span></span><span> </span><span id="local-6989586621679286197"><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286197"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(PName1F, PName1F, PName1F, PName1F)
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+-&gt; StateVar (Color4 GLfloat)
+forall p.
+GetPName1F p =&gt;
+(p, p, p, p)
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+-&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransfer4f"><span class="hs-identifier hs-var">pixelTransfer4f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransferStage -&gt; (PName1F, PName1F, PName1F, PName1F)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToGetBiases"><span class="hs-identifier hs-var">stageToGetBiases</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286197"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransferStage
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#stageToSetBiases"><span class="hs-identifier hs-var">stageToSetBiases</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransferStage
+</span><a href="#local-6989586621679286197"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-196"></span><span>
+</span><span id="line-197"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-198"></span><span>
+</span><span id="line-199"></span><span id="local-6989586621679285993"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferb"><span class="hs-identifier hs-type">pixelTransferb</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPName1I"><span class="hs-identifier hs-type">GetPName1I</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679285993"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679285993"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Capability.html#Capability"><span class="hs-identifier hs-type">Capability</span></a></span></span><span>
+</span><span id="line-200"></span><span id="pixelTransferb"><span class="annot"><span class="annottext">pixelTransferb :: forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferb"><span class="hs-identifier hs-var hs-var">pixelTransferb</span></a></span></span><span> </span><span id="local-6989586621679286206"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286206"><span class="hs-identifier hs-var">pn</span></a></span></span><span> </span><span id="local-6989586621679286207"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286207"><span class="hs-identifier hs-var">pt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-201"></span><span>   </span><span class="annot"><span class="annottext">IO Capability -&gt; (Capability -&gt; IO ()) -&gt; StateVar Capability
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-202"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLboolean -&gt; Capability) -&gt; p -&gt; IO Capability
+forall p a. GetPName1I p =&gt; (GLboolean -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLboolean -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getBoolean1"><span class="hs-identifier hs-var">getBoolean1</span></a></span><span> </span><span class="annot"><span class="annottext">GLboolean -&gt; Capability
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#unmarshalCapability"><span class="hs-identifier hs-var">unmarshalCapability</span></a></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286206"><span class="hs-identifier hs-var">pn</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-203"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; GLint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferi</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286207"><span class="hs-identifier hs-var">pt</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(GLint -&gt; IO ()) -&gt; (Capability -&gt; GLint) -&gt; Capability -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span>
+</span><span id="line-204"></span><span>       </span><span class="annot"><span class="annottext">GLboolean -&gt; GLint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">(GLboolean -&gt; GLint)
+-&gt; (Capability -&gt; GLboolean) -&gt; Capability -&gt; GLint
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Capability -&gt; GLboolean
+</span><a href="Graphics.Rendering.OpenGL.GL.Capability.html#marshalCapability"><span class="hs-identifier hs-var">marshalCapability</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-205"></span><span>
+</span><span id="line-206"></span><span id="local-6989586621679285995"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferi"><span class="hs-identifier hs-type">pixelTransferi</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPName1I"><span class="hs-identifier hs-type">GetPName1I</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679285995"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679285995"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span></span><span>
+</span><span id="line-207"></span><span id="pixelTransferi"><span class="annot"><span class="annottext">pixelTransferi :: forall p. GetPName1I p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferi"><span class="hs-identifier hs-var hs-var">pixelTransferi</span></a></span></span><span> </span><span id="local-6989586621679286217"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286217"><span class="hs-identifier hs-var">pn</span></a></span></span><span> </span><span id="local-6989586621679286218"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286218"><span class="hs-identifier hs-var">pt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-208"></span><span>   </span><span class="annot"><span class="annottext">IO GLint -&gt; (GLint -&gt; IO ()) -&gt; StateVar GLint
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-209"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; p -&gt; IO GLint
+forall p a. GetPName1I p =&gt; (GLint -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLint -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getInteger1"><span class="hs-identifier hs-var">getInteger1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286217"><span class="hs-identifier hs-var">pn</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-210"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; GLint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferi</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286218"><span class="hs-identifier hs-var">pt</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span id="local-6989586621679285997"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferf"><span class="hs-identifier hs-type">pixelTransferf</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPName1F"><span class="hs-identifier hs-type">GetPName1F</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679285997"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679285997"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span></span><span>
+</span><span id="line-213"></span><span id="pixelTransferf"><span class="annot"><span class="annottext">pixelTransferf :: forall p. GetPName1F p =&gt; p -&gt; PixelTransfer -&gt; StateVar GLfloat
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransferf"><span class="hs-identifier hs-var hs-var">pixelTransferf</span></a></span></span><span> </span><span id="local-6989586621679286224"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286224"><span class="hs-identifier hs-var">pn</span></a></span></span><span> </span><span id="local-6989586621679286225"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286225"><span class="hs-identifier hs-var">pt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-214"></span><span>   </span><span class="annot"><span class="annottext">IO GLfloat -&gt; (GLfloat -&gt; IO ()) -&gt; StateVar GLfloat
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-215"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; p -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286224"><span class="hs-identifier hs-var">pn</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-216"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286225"><span class="hs-identifier hs-var">pt</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-217"></span><span>
+</span><span id="line-218"></span><span id="local-6989586621679285999"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransfer4f"><span class="hs-identifier hs-type">pixelTransfer4f</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetPName1F"><span class="hs-identifier hs-type">GetPName1F</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679285999"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span>
+</span><span id="line-219"></span><span>      </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679285999"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679285999"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679285999"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679285999"><span class="hs-identifier hs-type">p</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-220"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#PixelTransfer"><span class="hs-identifier hs-type">PixelTransfer</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-221"></span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span></span><span>
+</span><span id="line-222"></span><span id="pixelTransfer4f"><span class="annot"><span class="annottext">pixelTransfer4f :: forall p.
+GetPName1F p =&gt;
+(p, p, p, p)
+-&gt; (PixelTransfer, PixelTransfer, PixelTransfer, PixelTransfer)
+-&gt; StateVar (Color4 GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#pixelTransfer4f"><span class="hs-identifier hs-var hs-var">pixelTransfer4f</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679286232"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286232"><span class="hs-identifier hs-var">pr</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286233"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286233"><span class="hs-identifier hs-var">pg</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286234"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286234"><span class="hs-identifier hs-var">pb</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286235"><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286235"><span class="hs-identifier hs-var">pa</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679286236"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286236"><span class="hs-identifier hs-var">tr</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286237"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286237"><span class="hs-identifier hs-var">tg</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286238"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286238"><span class="hs-identifier hs-var">tb</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679286239"><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286239"><span class="hs-identifier hs-var">ta</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Color4 GLfloat)
+-&gt; (Color4 GLfloat -&gt; IO ()) -&gt; StateVar (Color4 GLfloat)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span> </span><span class="annot"><span class="annottext">IO (Color4 GLfloat)
+</span><a href="#local-6989586621679286240"><span class="hs-identifier hs-var">get4f</span></a></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; IO ()
+forall {m :: * -&gt; *}. MonadIO m =&gt; Color4 GLfloat -&gt; m ()
+</span><a href="#local-6989586621679286241"><span class="hs-identifier hs-var">set4f</span></a></span><span>
+</span><span id="line-223"></span><span>   </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679286240"><span class="annot"><span class="annottext">get4f :: IO (Color4 GLfloat)
+</span><a href="#local-6989586621679286240"><span class="hs-identifier hs-var hs-var">get4f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-224"></span><span>            </span><span id="local-6989586621679286253"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286253"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; p -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286232"><span class="hs-identifier hs-var">pr</span></a></span><span>
+</span><span id="line-225"></span><span>            </span><span id="local-6989586621679286254"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286254"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; p -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286233"><span class="hs-identifier hs-var">pg</span></a></span><span>
+</span><span id="line-226"></span><span>            </span><span id="local-6989586621679286255"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286255"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; p -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286234"><span class="hs-identifier hs-var">pb</span></a></span><span>
+</span><span id="line-227"></span><span>            </span><span id="local-6989586621679286256"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286256"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; p -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; p -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">p
+</span><a href="#local-6989586621679286235"><span class="hs-identifier hs-var">pa</span></a></span><span>
+</span><span id="line-228"></span><span>            </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; IO (Color4 GLfloat)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Color4 GLfloat -&gt; IO (Color4 GLfloat))
+-&gt; Color4 GLfloat -&gt; IO (Color4 GLfloat)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; GLfloat -&gt; Color4 GLfloat
+forall a. a -&gt; a -&gt; a -&gt; a -&gt; Color4 a
+</span><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-var">Color4</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286253"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286254"><span class="hs-identifier hs-var">g</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286255"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286256"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-229"></span><span>         </span><span id="local-6989586621679286241"><span class="annot"><span class="annottext">set4f :: Color4 GLfloat -&gt; m ()
+</span><a href="#local-6989586621679286241"><span class="hs-identifier hs-var hs-var">set4f</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.VertexAttributes.html#Color4"><span class="hs-identifier hs-type">Color4</span></a></span><span> </span><span id="local-6989586621679286277"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286277"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679286278"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286278"><span class="hs-identifier hs-var">g</span></a></span></span><span> </span><span id="local-6989586621679286279"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286279"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span id="local-6989586621679286280"><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286280"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-230"></span><span>            </span><span class="annot"><span class="annottext">GLenum -&gt; GLfloat -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286236"><span class="hs-identifier hs-var">tr</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286277"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-231"></span><span>            </span><span class="annot"><span class="annottext">GLenum -&gt; GLfloat -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286237"><span class="hs-identifier hs-var">tg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286278"><span class="hs-identifier hs-var">g</span></a></span><span>
+</span><span id="line-232"></span><span>            </span><span class="annot"><span class="annottext">GLenum -&gt; GLfloat -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286238"><span class="hs-identifier hs-var">tb</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286279"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-233"></span><span>            </span><span class="annot"><span class="annottext">GLenum -&gt; GLfloat -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelTransferf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PixelTransfer -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.PixelTransfer.html#marshalPixelTransfer"><span class="hs-identifier hs-var">marshalPixelTransfer</span></a></span><span> </span><span class="annot"><span class="annottext">PixelTransfer
+</span><a href="#local-6989586621679286239"><span class="hs-identifier hs-var">ta</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLfloat
+</span><a href="#local-6989586621679286280"><span class="hs-identifier hs-var">a</span></a></span><span>
+</span><span id="line-234"></span></pre></body></html>

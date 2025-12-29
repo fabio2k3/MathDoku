@@ -1,0 +1,268 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2011-2019, Lars Corbijn 2011-2016</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-14"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier">FramebufferObject</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#defaultFramebufferObject"><span class="hs-identifier">defaultFramebufferObject</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier">FramebufferTarget</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#bindFramebuffer"><span class="hs-identifier">bindFramebuffer</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#FramebufferStatus"><span class="hs-identifier">FramebufferStatus</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#framebufferStatus"><span class="hs-identifier">framebufferStatus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject</span></a></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#defaultFramebufferObject"><span class="hs-identifier hs-type">defaultFramebufferObject</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-type">FramebufferObject</span></a></span><span>
+</span><span id="line-28"></span><span id="defaultFramebufferObject"><span class="annot"><span class="annottext">defaultFramebufferObject :: FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#defaultFramebufferObject"><span class="hs-identifier hs-var hs-var">defaultFramebufferObject</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-var">FramebufferObject</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#bindFramebuffer"><span class="hs-identifier hs-type">bindFramebuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-type">FramebufferObject</span></a></span><span>
+</span><span id="line-33"></span><span id="bindFramebuffer"><span class="annot"><span class="annottext">bindFramebuffer :: FramebufferTarget -&gt; StateVar FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#bindFramebuffer"><span class="hs-identifier hs-var hs-var">bindFramebuffer</span></a></span></span><span> </span><span id="local-6989586621679291179"><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291179"><span class="hs-identifier hs-var">fbt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">IO FramebufferObject
+-&gt; (FramebufferObject -&gt; IO ()) -&gt; StateVar FramebufferObject
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FramebufferTarget -&gt; IO FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#getBoundFramebuffer"><span class="hs-identifier hs-var">getBoundFramebuffer</span></a></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291179"><span class="hs-identifier hs-var">fbt</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FramebufferTarget -&gt; FramebufferObject -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#setFramebuffer"><span class="hs-identifier hs-var">setFramebuffer</span></a></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291179"><span class="hs-identifier hs-var">fbt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#marshalFramebufferTargetBinding"><span class="hs-identifier hs-type">marshalFramebufferTargetBinding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#PName1I"><span class="hs-identifier hs-type">PName1I</span></a></span><span>
+</span><span id="line-37"></span><span id="marshalFramebufferTargetBinding"><span class="annot"><span class="annottext">marshalFramebufferTargetBinding :: FramebufferTarget -&gt; PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#marshalFramebufferTargetBinding"><span class="hs-identifier hs-var hs-var">marshalFramebufferTargetBinding</span></a></span></span><span> </span><span id="local-6989586621679291184"><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291184"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291184"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-38"></span><span>   </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#DrawFramebuffer"><span class="hs-identifier hs-var">DrawFramebuffer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetDrawFramebufferBinding"><span class="hs-identifier hs-var">GetDrawFramebufferBinding</span></a></span><span>
+</span><span id="line-39"></span><span>   </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#ReadFramebuffer"><span class="hs-identifier hs-var">ReadFramebuffer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetReadFramebufferBinding"><span class="hs-identifier hs-var">GetReadFramebufferBinding</span></a></span><span>
+</span><span id="line-40"></span><span>   </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#Framebuffer"><span class="hs-identifier hs-var">Framebuffer</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetFramebufferBinding"><span class="hs-identifier hs-var">GetFramebufferBinding</span></a></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#getBoundFramebuffer"><span class="hs-identifier hs-type">getBoundFramebuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-type">FramebufferObject</span></a></span><span>
+</span><span id="line-43"></span><span id="getBoundFramebuffer"><span class="annot"><span class="annottext">getBoundFramebuffer :: FramebufferTarget -&gt; IO FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#getBoundFramebuffer"><span class="hs-identifier hs-var hs-var">getBoundFramebuffer</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-44"></span><span>   </span><span class="annot"><span class="annottext">(GLint -&gt; FramebufferObject) -&gt; PName1I -&gt; IO FramebufferObject
+forall p a. GetPName1I p =&gt; (GLint -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLint -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getInteger1"><span class="hs-identifier hs-var">getInteger1</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLenum -&gt; FramebufferObject
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-var">FramebufferObject</span></a></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; FramebufferObject)
+-&gt; (GLint -&gt; GLenum) -&gt; GLint -&gt; FramebufferObject
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLenum
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(PName1I -&gt; IO FramebufferObject)
+-&gt; (FramebufferTarget -&gt; PName1I)
+-&gt; FramebufferTarget
+-&gt; IO FramebufferObject
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget -&gt; PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#marshalFramebufferTargetBinding"><span class="hs-identifier hs-var">marshalFramebufferTargetBinding</span></a></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#setFramebuffer"><span class="hs-identifier hs-type">setFramebuffer</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#FramebufferObject"><span class="hs-identifier hs-type">FramebufferObject</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span id="setFramebuffer"><span class="annot"><span class="annottext">setFramebuffer :: FramebufferTarget -&gt; FramebufferObject -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#setFramebuffer"><span class="hs-identifier hs-var hs-var">setFramebuffer</span></a></span></span><span> </span><span id="local-6989586621679291193"><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291193"><span class="hs-identifier hs-var">fbt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-48"></span><span>   </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; GLenum -&gt; m ()
+</span><span class="hs-identifier hs-var">glBindFramebuffer</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FramebufferTarget -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#marshalFramebufferTarget"><span class="hs-identifier hs-var">marshalFramebufferTarget</span></a></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291193"><span class="hs-identifier hs-var">fbt</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; IO ())
+-&gt; (FramebufferObject -&gt; GLenum) -&gt; FramebufferObject -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">FramebufferObject -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObject.html#framebufferID"><span class="hs-identifier hs-var">framebufferID</span></a></span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-keyword">data</span><span> </span><span id="FramebufferStatus"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#FramebufferStatus"><span class="hs-identifier hs-var">FramebufferStatus</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-53"></span><span>     </span><span id="Complete"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Complete"><span class="hs-identifier hs-var">Complete</span></a></span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="Undefined"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Undefined"><span class="hs-identifier hs-var">Undefined</span></a></span></span><span>
+</span><span id="line-55"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IncompleteMissingAttachment"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteMissingAttachment"><span class="hs-identifier hs-var">IncompleteMissingAttachment</span></a></span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IncompleteDrawBuffer"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteDrawBuffer"><span class="hs-identifier hs-var">IncompleteDrawBuffer</span></a></span></span><span>
+</span><span id="line-57"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IncompleteReadBuffer"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteReadBuffer"><span class="hs-identifier hs-var">IncompleteReadBuffer</span></a></span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="IncompleteMultiSample"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteMultiSample"><span class="hs-identifier hs-var">IncompleteMultiSample</span></a></span></span><span>
+</span><span id="line-59"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="Unsupported"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Unsupported"><span class="hs-identifier hs-var">Unsupported</span></a></span></span><span>
+</span><span id="line-60"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679291205"><span id="local-6989586621679291207"><span class="annot"><span class="annottext">FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+(FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; Eq FramebufferStatus
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+== :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+$c/= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+/= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679291214"><span id="local-6989586621679291216"><span id="local-6989586621679291218"><span id="local-6989586621679291222"><span id="local-6989586621679291225"><span id="local-6989586621679291228"><span id="local-6989586621679291231"><span class="annot"><span class="annottext">Eq FramebufferStatus
+Eq FramebufferStatus =&gt;
+(FramebufferStatus -&gt; FramebufferStatus -&gt; Ordering)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; Bool)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus)
+-&gt; (FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus)
+-&gt; Ord FramebufferStatus
+FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+FramebufferStatus -&gt; FramebufferStatus -&gt; Ordering
+FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: FramebufferStatus -&gt; FramebufferStatus -&gt; Ordering
+compare :: FramebufferStatus -&gt; FramebufferStatus -&gt; Ordering
+$c&lt; :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+&lt; :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+$c&lt;= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+&lt;= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+$c&gt; :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+&gt; :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+$c&gt;= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+&gt;= :: FramebufferStatus -&gt; FramebufferStatus -&gt; Bool
+$cmax :: FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus
+max :: FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus
+$cmin :: FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus
+min :: FramebufferStatus -&gt; FramebufferStatus -&gt; FramebufferStatus
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679291235"><span id="local-6989586621679291237"><span id="local-6989586621679291241"><span class="annot"><span class="annottext">Int -&gt; FramebufferStatus -&gt; ShowS
+[FramebufferStatus] -&gt; ShowS
+FramebufferStatus -&gt; String
+(Int -&gt; FramebufferStatus -&gt; ShowS)
+-&gt; (FramebufferStatus -&gt; String)
+-&gt; ([FramebufferStatus] -&gt; ShowS)
+-&gt; Show FramebufferStatus
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; FramebufferStatus -&gt; ShowS
+showsPrec :: Int -&gt; FramebufferStatus -&gt; ShowS
+$cshow :: FramebufferStatus -&gt; String
+show :: FramebufferStatus -&gt; String
+$cshowList :: [FramebufferStatus] -&gt; ShowS
+showList :: [FramebufferStatus] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#unmarshalFramebufferStatus"><span class="hs-identifier hs-type">unmarshalFramebufferStatus</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#FramebufferStatus"><span class="hs-identifier hs-type">FramebufferStatus</span></a></span><span>
+</span><span id="line-63"></span><span id="unmarshalFramebufferStatus"><span class="annot"><span class="annottext">unmarshalFramebufferStatus :: GLenum -&gt; FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#unmarshalFramebufferStatus"><span class="hs-identifier hs-var hs-var">unmarshalFramebufferStatus</span></a></span></span><span> </span><span id="local-6989586621679291245"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span></span><span>
+</span><span id="line-64"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_COMPLETE</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Complete"><span class="hs-identifier hs-var">Complete</span></a></span><span>
+</span><span id="line-65"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_UNDEFINED</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Undefined"><span class="hs-identifier hs-var">Undefined</span></a></span><span>
+</span><span id="line-66"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT</span></span><span>
+</span><span id="line-67"></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteMissingAttachment"><span class="hs-identifier hs-var">IncompleteMissingAttachment</span></a></span><span>
+</span><span id="line-68"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteDrawBuffer"><span class="hs-identifier hs-var">IncompleteDrawBuffer</span></a></span><span>
+</span><span id="line-69"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteReadBuffer"><span class="hs-identifier hs-var">IncompleteReadBuffer</span></a></span><span>
+</span><span id="line-70"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#IncompleteMultiSample"><span class="hs-identifier hs-var">IncompleteMultiSample</span></a></span><span>
+</span><span id="line-71"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; GLenum -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_UNSUPPORTED</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#Unsupported"><span class="hs-identifier hs-var">Unsupported</span></a></span><span>
+</span><span id="line-72"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; FramebufferStatus
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; FramebufferStatus) -&gt; String -&gt; FramebufferStatus
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;unmarshalFramebufferStatus: unknown value: &quot;</span></span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679291245"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#framebufferStatus"><span class="hs-identifier hs-type">framebufferStatus</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#FramebufferStatus"><span class="hs-identifier hs-type">FramebufferStatus</span></a></span><span>
+</span><span id="line-78"></span><span id="framebufferStatus"><span class="annot"><span class="annottext">framebufferStatus :: FramebufferTarget -&gt; GettableStateVar FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#framebufferStatus"><span class="hs-identifier hs-var hs-var">framebufferStatus</span></a></span></span><span> </span><span id="local-6989586621679291255"><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291255"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar FramebufferStatus
+-&gt; GettableStateVar FramebufferStatus
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(GettableStateVar FramebufferStatus
+ -&gt; GettableStateVar FramebufferStatus)
+-&gt; GettableStateVar FramebufferStatus
+-&gt; GettableStateVar FramebufferStatus
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; FramebufferStatus)
+-&gt; IO GLenum -&gt; GettableStateVar FramebufferStatus
+forall a b. (a -&gt; b) -&gt; IO a -&gt; IO b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; FramebufferStatus
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjects.html#unmarshalFramebufferStatus"><span class="hs-identifier hs-var">unmarshalFramebufferStatus</span></a></span><span>
+</span><span id="line-79"></span><span>   </span><span class="annot"><span class="annottext">(IO GLenum -&gt; GettableStateVar FramebufferStatus)
+-&gt; (FramebufferTarget -&gt; IO GLenum)
+-&gt; FramebufferTarget
+-&gt; GettableStateVar FramebufferStatus
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLenum -&gt; IO GLenum
+forall (m :: * -&gt; *). MonadIO m =&gt; GLenum -&gt; m GLenum
+</span><span class="hs-identifier hs-var">glCheckFramebufferStatus</span></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; IO GLenum)
+-&gt; (FramebufferTarget -&gt; GLenum) -&gt; FramebufferTarget -&gt; IO GLenum
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#marshalFramebufferTarget"><span class="hs-identifier hs-var">marshalFramebufferTarget</span></a></span><span> </span><span class="annot"><span class="annottext">(FramebufferTarget -&gt; GettableStateVar FramebufferStatus)
+-&gt; FramebufferTarget -&gt; GettableStateVar FramebufferStatus
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679291255"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-82"></span></pre></body></html>

@@ -1,0 +1,917 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE BangPatterns #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE MagicHash    #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="annot"><span class="hs-comment">-- | Fast(ish) rendering of circles.</span></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Rendering.Circle</span><span>
+</span><span id="line-7"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircle"><span class="hs-identifier">renderCircle</span></a></span><span>
+</span><span id="line-8"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArc"><span class="hs-identifier">renderArc</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span>  </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Common.html"><span class="hs-identifier">Graphics.Gloss.Internals.Rendering.Common</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span>  </span><span class="annot"><span class="hs-identifier">GHC.Exts</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span>  </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL</span></span><span>          </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">GL</span></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Decide how many line segments to use to render the circle.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--   The number of segments we should use to get a nice picture depends on</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--   the size of the circle on the screen, not its intrinsic radius.</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   If the viewport has been zoomed-in then we need to use more segments.</span><span>
+</span><span id="line-20"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-type">circleSteps</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-21"></span><span id="circleSteps"><span class="annot"><span class="annottext">circleSteps :: Float -&gt; Int
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-var hs-var">circleSteps</span></a></span></span><span> </span><span id="local-6989586621679100984"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100984"><span class="hs-identifier hs-var">sDiam</span></a></span></span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100984"><span class="hs-identifier hs-var">sDiam</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">8</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">8</span></span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100984"><span class="hs-identifier hs-var">sDiam</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">16</span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">16</span></span><span>
+</span><span id="line-24"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100984"><span class="hs-identifier hs-var">sDiam</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">32</span></span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">32</span></span><span>
+</span><span id="line-25"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">64</span></span><span>
+</span><span id="line-26"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-pragma hs-type">circleSteps</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- Circle ---------------------------------------------------------------------</span><span>
+</span><span id="line-30"></span><span class="annot"><span class="hs-comment">-- | Render a circle with the given thickness</span></span><span>
+</span><span id="line-31"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircle"><span class="hs-identifier hs-type">renderCircle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span id="renderCircle"><span class="annot"><span class="annottext">renderCircle :: Float -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircle"><span class="hs-identifier hs-var hs-var">renderCircle</span></a></span></span><span> </span><span id="local-6989586621679100986"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100986"><span class="hs-identifier hs-var">posX</span></a></span></span><span> </span><span id="local-6989586621679100987"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100987"><span class="hs-identifier hs-var">posY</span></a></span></span><span> </span><span id="local-6989586621679100988"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100988"><span class="hs-identifier hs-var">scaleFactor</span></a></span></span><span> </span><span id="local-6989586621679100989"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100989"><span class="hs-identifier hs-var">radius_</span></a></span></span><span> </span><span id="local-6989586621679100990"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100990"><span class="hs-identifier hs-var">thickness_</span></a></span></span><span>
+</span><span id="line-33"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; IO ()
+</span><a href="#local-6989586621679100991"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100989"><span class="hs-identifier hs-var">radius_</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100990"><span class="hs-identifier hs-var">thickness_</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span> </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679100991"><span class="annot"><span class="annottext">go :: Float -&gt; Float -&gt; IO ()
+</span><a href="#local-6989586621679100991"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679101011"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span></span><span> </span><span id="local-6989586621679101012"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>        </span><span class="hs-comment">-- If the circle is smaller than a pixel, render it as a point.</span><span>
+</span><span id="line-37"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span><span>     </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101013"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101013"><span class="hs-identifier hs-var">radScreen</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100988"><span class="hs-identifier hs-var">scaleFactor</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101013"><span class="hs-identifier hs-var">radScreen</span></a></span><span>     </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-40"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PrimitiveMode -&gt; IO () -&gt; IO ()
+forall a. PrimitiveMode -&gt; IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.renderPrimitive</span></span><span> </span><span class="annot"><span class="annottext">PrimitiveMode
+</span><span class="hs-identifier hs-var">GL.Points</span></span><span>
+</span><span id="line-41"></span><span>            </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Vertex2 Float -&gt; IO ()
+forall a. Vertex a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">GL.vertex</span></span><span> </span><span class="annot"><span class="annottext">(Vertex2 Float -&gt; IO ()) -&gt; Vertex2 Float -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Vertex2 Float
+forall a. a -&gt; a -&gt; Vertex2 a
+</span><span class="hs-identifier hs-var">GL.Vertex2</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-var">gf</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100986"><span class="hs-identifier hs-var">posX</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-var">gf</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100987"><span class="hs-identifier hs-var">posY</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span>        </span><span class="hs-comment">-- Render zero thickness circles with lines.</span><span>
+</span><span id="line-44"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101023"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101023"><span class="hs-identifier hs-var">radScreen</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100988"><span class="hs-identifier hs-var">scaleFactor</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span><span>
+</span><span id="line-46"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101024"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101024"><span class="hs-identifier hs-var">steps</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Int
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-var">circleSteps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101023"><span class="hs-identifier hs-var">radScreen</span></a></span><span>
+</span><span id="line-47"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Int -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine"><span class="hs-identifier hs-var">renderCircleLine</span></a></span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100986"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100987"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101024"><span class="hs-identifier hs-var">steps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>        </span><span class="hs-comment">-- Some thick circle.</span><span>
+</span><span id="line-50"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679101026"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101026"><span class="hs-identifier hs-var">radScreen</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100988"><span class="hs-identifier hs-var">scaleFactor</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101027"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101027"><span class="hs-identifier hs-var">steps</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Int
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-var">circleSteps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101026"><span class="hs-identifier hs-var">radScreen</span></a></span><span>
+</span><span id="line-52"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip"><span class="hs-identifier hs-var">renderCircleStrip</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100986"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679100987"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101027"><span class="hs-identifier hs-var">steps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101011"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101012"><span class="hs-identifier hs-var">thickness</span></a></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><span class="hs-comment">-- | Render a circle as a line.</span></span><span>
+</span><span id="line-56"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine"><span class="hs-identifier hs-type">renderCircleLine</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span id="renderCircleLine"><span class="annot"><span class="annottext">renderCircleLine :: Float -&gt; Float -&gt; Int -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine"><span class="hs-identifier hs-var hs-var">renderCircleLine</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101029"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101029"><span class="hs-identifier hs-var">posX</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101030"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101030"><span class="hs-identifier hs-var">posY</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679101031"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101031"><span class="hs-identifier hs-var">steps</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101032"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101032"><span class="hs-identifier hs-var">rad</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>  </span><span id="local-6989586621679101035"><span class="annot"><span class="annottext">n :: Float
+</span><a href="#local-6989586621679101035"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span>               </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101031"><span class="hs-identifier hs-var">steps</span></a></span><span>
+</span><span id="line-59"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101040"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101040"><span class="hs-identifier hs-var">tStep</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101035"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-60"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101045"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101045"><span class="hs-identifier hs-var">tStop</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span>   </span><span class="hs-keyword">in</span><span>   </span><span class="annot"><span class="annottext">PrimitiveMode -&gt; IO () -&gt; IO ()
+forall a. PrimitiveMode -&gt; IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.renderPrimitive</span></span><span> </span><span class="annot"><span class="annottext">PrimitiveMode
+</span><span class="hs-identifier hs-var">GL.LineLoop</span></span><span>
+</span><span id="line-63"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-identifier hs-var">renderCircleLine_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101029"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101030"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101040"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101045"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101032"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><span class="hs-number">0.0#</span></span><span>
+</span><span id="line-64"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine"><span class="hs-pragma hs-type">renderCircleLine</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="annot"><span class="hs-comment">-- | Render a circle with a given thickness as a triangle strip</span></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip"><span class="hs-identifier hs-type">renderCircleStrip</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span id="renderCircleStrip"><span class="annot"><span class="annottext">renderCircleStrip :: Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip"><span class="hs-identifier hs-var hs-var">renderCircleStrip</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101048"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101048"><span class="hs-identifier hs-var">posX</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101049"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101049"><span class="hs-identifier hs-var">posY</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679101050"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101050"><span class="hs-identifier hs-var">steps</span></a></span></span><span> </span><span id="local-6989586621679101051"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101051"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679101052"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101052"><span class="hs-identifier hs-var">width</span></a></span></span><span>
+</span><span id="line-70"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>  </span><span id="local-6989586621679101055"><span class="annot"><span class="annottext">n :: Float
+</span><a href="#local-6989586621679101055"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span>               </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101050"><span class="hs-identifier hs-var">steps</span></a></span><span>
+</span><span id="line-71"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101060"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101060"><span class="hs-identifier hs-var">tStep</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101055"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-72"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101067"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101067"><span class="hs-identifier hs-var">tStop</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float# -&gt; Float
+</span><span class="hs-identifier hs-var">F#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101060"><span class="hs-identifier hs-var">tStep</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-73"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101071"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101071"><span class="hs-identifier hs-var">r1</span></a></span></span><span class="hs-special">)</span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101051"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101052"><span class="hs-identifier hs-var">width</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-74"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101075"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101075"><span class="hs-identifier hs-var">r2</span></a></span></span><span class="hs-special">)</span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101051"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101052"><span class="hs-identifier hs-var">width</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span>   </span><span class="hs-keyword">in</span><span>   </span><span class="annot"><span class="annottext">PrimitiveMode -&gt; IO () -&gt; IO ()
+forall a. PrimitiveMode -&gt; IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.renderPrimitive</span></span><span> </span><span class="annot"><span class="annottext">PrimitiveMode
+</span><span class="hs-identifier hs-var">GL.TriangleStrip</span></span><span>
+</span><span id="line-77"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-identifier hs-var">renderCircleStrip_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101048"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101049"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101060"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101067"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101071"><span class="hs-identifier hs-var">r1</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><span class="hs-number">0.0#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101075"><span class="hs-identifier hs-var">r2</span></a></span><span>
+</span><span id="line-78"></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101060"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`divideFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><span class="hs-number">2.0#</span></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip"><span class="hs-pragma hs-type">renderCircleStrip</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- Arc ------------------------------------------------------------------------</span><span>
+</span><span id="line-83"></span><span class="annot"><span class="hs-comment">-- | Render an arc with the given thickness.</span></span><span>
+</span><span id="line-84"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArc"><span class="hs-identifier hs-type">renderArc</span></a></span><span>
+</span><span id="line-85"></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span id="renderArc"><span class="annot"><span class="annottext">renderArc :: Float
+-&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArc"><span class="hs-identifier hs-var hs-var">renderArc</span></a></span></span><span> </span><span id="local-6989586621679101078"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101078"><span class="hs-identifier hs-var">posX</span></a></span></span><span> </span><span id="local-6989586621679101079"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101079"><span class="hs-identifier hs-var">posY</span></a></span></span><span> </span><span id="local-6989586621679101080"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101080"><span class="hs-identifier hs-var">scaleFactor</span></a></span></span><span> </span><span id="local-6989586621679101081"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101081"><span class="hs-identifier hs-var">radius_</span></a></span></span><span> </span><span id="local-6989586621679101082"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101082"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679101083"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101083"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679101084"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101084"><span class="hs-identifier hs-var">thickness_</span></a></span></span><span>
+</span><span id="line-87"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; IO ()
+</span><a href="#local-6989586621679101085"><span class="hs-identifier hs-var">go</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101081"><span class="hs-identifier hs-var">radius_</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">abs</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101084"><span class="hs-identifier hs-var">thickness_</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-89"></span><span>       </span><span id="local-6989586621679101085"><span class="annot"><span class="annottext">go :: Float -&gt; Float -&gt; IO ()
+</span><a href="#local-6989586621679101085"><span class="hs-identifier hs-var hs-var">go</span></a></span></span><span> </span><span id="local-6989586621679101093"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101093"><span class="hs-identifier hs-var">radius</span></a></span></span><span> </span><span id="local-6989586621679101094"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101094"><span class="hs-identifier hs-var">thickness</span></a></span></span><span>
+</span><span id="line-90"></span><span>        </span><span class="hs-comment">-- Render zero thickness arcs with lines.</span><span>
+</span><span id="line-91"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101094"><span class="hs-identifier hs-var">thickness</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-92"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101095"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101095"><span class="hs-identifier hs-var">radScreen</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101080"><span class="hs-identifier hs-var">scaleFactor</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101093"><span class="hs-identifier hs-var">radius</span></a></span><span>
+</span><span id="line-93"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101096"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101096"><span class="hs-identifier hs-var">steps</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Int
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-var">circleSteps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101095"><span class="hs-identifier hs-var">radScreen</span></a></span><span>
+</span><span id="line-94"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcLine"><span class="hs-identifier hs-var">renderArcLine</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101078"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101079"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101096"><span class="hs-identifier hs-var">steps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101093"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101082"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101083"><span class="hs-identifier hs-var">a2</span></a></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span>        </span><span class="hs-comment">-- Some thick arc.</span><span>
+</span><span id="line-97"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679101098"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101098"><span class="hs-identifier hs-var">radScreen</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101080"><span class="hs-identifier hs-var">scaleFactor</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101093"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101094"><span class="hs-identifier hs-var">thickness</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>        </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101099"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101099"><span class="hs-identifier hs-var">steps</span></a></span></span><span>         </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Int
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#circleSteps"><span class="hs-identifier hs-var">circleSteps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101098"><span class="hs-identifier hs-var">radScreen</span></a></span><span>
+</span><span id="line-99"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcStrip"><span class="hs-identifier hs-var">renderArcStrip</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101078"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101079"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101099"><span class="hs-identifier hs-var">steps</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101093"><span class="hs-identifier hs-var">radius</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101082"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101083"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101094"><span class="hs-identifier hs-var">thickness</span></a></span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span class="annot"><span class="hs-comment">-- | Render an arc as a line.</span></span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcLine"><span class="hs-identifier hs-type">renderArcLine</span></a></span><span>
+</span><span id="line-104"></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span id="renderArcLine"><span class="annot"><span class="annottext">renderArcLine :: Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcLine"><span class="hs-identifier hs-var hs-var">renderArcLine</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101101"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101101"><span class="hs-identifier hs-var">posX</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101102"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101102"><span class="hs-identifier hs-var">posY</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679101103"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101103"><span class="hs-identifier hs-var">steps</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101104"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101104"><span class="hs-identifier hs-var">rad</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679101105"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101105"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679101106"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101106"><span class="hs-identifier hs-var">a2</span></a></span></span><span>
+</span><span id="line-106"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>  </span><span id="local-6989586621679101109"><span class="annot"><span class="annottext">n :: Float
+</span><a href="#local-6989586621679101109"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span>               </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101103"><span class="hs-identifier hs-var">steps</span></a></span><span>
+</span><span id="line-107"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101114"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101114"><span class="hs-identifier hs-var">tStep</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101109"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-108"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101115"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101115"><span class="hs-identifier hs-var">tStart</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-var">degToRad</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101105"><span class="hs-identifier hs-var">a1</span></a></span><span>
+</span><span id="line-109"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101123"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101123"><span class="hs-identifier hs-var">tStop</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-var">degToRad</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101106"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101105"><span class="hs-identifier hs-var">a1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101106"><span class="hs-identifier hs-var">a2</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-110"></span><span>
+</span><span id="line-111"></span><span>        </span><span class="hs-comment">-- force the line to end at the desired angle</span><span>
+</span><span id="line-112"></span><span>        </span><span id="local-6989586621679101124"><span class="annot"><span class="annottext">endVertex :: IO ()
+</span><a href="#local-6989586621679101124"><span class="hs-identifier hs-var hs-var">endVertex</span></a></span></span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101101"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101102"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101104"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101123"><span class="hs-identifier hs-var">tStop</span></a></span><span>
+</span><span id="line-113"></span><span>
+</span><span id="line-114"></span><span>   </span><span class="hs-keyword">in</span><span>   </span><span class="annot"><span class="annottext">PrimitiveMode -&gt; IO () -&gt; IO ()
+forall a. PrimitiveMode -&gt; IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.renderPrimitive</span></span><span> </span><span class="annot"><span class="annottext">PrimitiveMode
+</span><span class="hs-identifier hs-var">GL.LineStrip</span></span><span>
+</span><span id="line-115"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>   </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-identifier hs-var">renderCircleLine_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101101"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101102"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101114"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101123"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101104"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101115"><span class="hs-identifier hs-var">tStart</span></a></span><span>
+</span><span id="line-116"></span><span>                </span><span class="annot"><span class="annottext">IO ()
+</span><a href="#local-6989586621679101124"><span class="hs-identifier hs-var">endVertex</span></a></span><span>
+</span><span id="line-117"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcLine"><span class="hs-pragma hs-type">renderArcLine</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span class="annot"><span class="hs-comment">-- | Render an arc with a given thickness as a triangle strip</span></span><span>
+</span><span id="line-121"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcStrip"><span class="hs-identifier hs-type">renderArcStrip</span></a></span><span>
+</span><span id="line-122"></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span id="renderArcStrip"><span class="annot"><span class="annottext">renderArcStrip :: Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcStrip"><span class="hs-identifier hs-var hs-var">renderArcStrip</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101127"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101128"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679101129"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101129"><span class="hs-identifier hs-var">steps</span></a></span></span><span> </span><span id="local-6989586621679101130"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101130"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679101131"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101131"><span class="hs-identifier hs-var">a1</span></a></span></span><span> </span><span id="local-6989586621679101132"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101132"><span class="hs-identifier hs-var">a2</span></a></span></span><span> </span><span id="local-6989586621679101133"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101133"><span class="hs-identifier hs-var">width</span></a></span></span><span>
+</span><span id="line-124"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">let</span><span>  </span><span id="local-6989586621679101136"><span class="annot"><span class="annottext">n :: Float
+</span><a href="#local-6989586621679101136"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span>               </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679101129"><span class="hs-identifier hs-var">steps</span></a></span><span>
+</span><span id="line-125"></span><span>        </span><span id="local-6989586621679101144"><span class="annot"><span class="annottext">tStep :: Float
+</span><a href="#local-6989586621679101144"><span class="hs-identifier hs-var hs-var">tStep</span></a></span></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101136"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span>        </span><span id="local-6989586621679101145"><span class="annot"><span class="annottext">t1 :: Float
+</span><a href="#local-6989586621679101145"><span class="hs-identifier hs-var hs-var">t1</span></a></span></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#normalizeAngle"><span class="hs-identifier hs-var">normalizeAngle</span></a></span><span> </span><span class="annot"><span class="annottext">(Float -&gt; Float) -&gt; Float -&gt; Float
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-var">degToRad</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101131"><span class="hs-identifier hs-var">a1</span></a></span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span>        </span><span id="local-6989586621679101147"><span class="annot"><span class="annottext">a2' :: Float
+</span><a href="#local-6989586621679101147"><span class="hs-identifier hs-var hs-var">a2'</span></a></span></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#normalizeAngle"><span class="hs-identifier hs-var">normalizeAngle</span></a></span><span> </span><span class="annot"><span class="annottext">(Float -&gt; Float) -&gt; Float -&gt; Float
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-var">degToRad</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101132"><span class="hs-identifier hs-var">a2</span></a></span><span>
+</span><span id="line-130"></span><span>        </span><span id="local-6989586621679101153"><span class="annot"><span class="annottext">t2 :: Float
+</span><a href="#local-6989586621679101153"><span class="hs-identifier hs-var hs-var">t2</span></a></span></span><span>              </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101147"><span class="hs-identifier hs-var">a2'</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101147"><span class="hs-identifier hs-var">a2'</span></a></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679101155"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101155"><span class="hs-identifier hs-var">tStart</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679101156"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101156"><span class="hs-identifier hs-var">tStop</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101145"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101153"><span class="hs-identifier hs-var">t2</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101145"><span class="hs-identifier hs-var">t1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101153"><span class="hs-identifier hs-var">t2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">else</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101153"><span class="hs-identifier hs-var">t2</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101145"><span class="hs-identifier hs-var">t1</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-133"></span><span>        </span><span id="local-6989586621679101158"><span class="annot"><span class="annottext">tDiff :: Float
+</span><a href="#local-6989586621679101158"><span class="hs-identifier hs-var hs-var">tDiff</span></a></span></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101156"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101155"><span class="hs-identifier hs-var">tStart</span></a></span><span>
+</span><span id="line-134"></span><span>        </span><span id="local-6989586621679101162"><span class="annot"><span class="annottext">tMid :: Float
+</span><a href="#local-6989586621679101162"><span class="hs-identifier hs-var hs-var">tMid</span></a></span></span><span>            </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101155"><span class="hs-identifier hs-var">tStart</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101158"><span class="hs-identifier hs-var">tDiff</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-135"></span><span>
+</span><span id="line-136"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101163"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101163"><span class="hs-identifier hs-var">tStep'</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101144"><span class="hs-identifier hs-var">tStep</span></a></span><span>
+</span><span id="line-137"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101166"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101166"><span class="hs-identifier hs-var">tStep2'</span></a></span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101144"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-138"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101167"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101167"><span class="hs-identifier hs-var">tStart'</span></a></span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101155"><span class="hs-identifier hs-var">tStart</span></a></span><span>
+</span><span id="line-139"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101168"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101168"><span class="hs-identifier hs-var">tStop'</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101156"><span class="hs-identifier hs-var">tStop</span></a></span><span>
+</span><span id="line-140"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101170"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101170"><span class="hs-identifier hs-var">tCut'</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101156"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101144"><span class="hs-identifier hs-var">tStep</span></a></span><span>
+</span><span id="line-141"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101171"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101171"><span class="hs-identifier hs-var">tMid'</span></a></span></span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101162"><span class="hs-identifier hs-var">tMid</span></a></span><span>
+</span><span id="line-142"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101175"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101130"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101133"><span class="hs-identifier hs-var">width</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-143"></span><span>        </span><span class="hs-glyph">!</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">F#</span></span><span> </span><span id="local-6989586621679101179"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101179"><span class="hs-identifier hs-var">r2'</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101130"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101133"><span class="hs-identifier hs-var">width</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-144"></span><span>
+</span><span id="line-145"></span><span>   </span><span class="hs-keyword">in</span><span>   </span><span class="annot"><span class="annottext">PrimitiveMode -&gt; IO () -&gt; IO ()
+forall a. PrimitiveMode -&gt; IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">GL.renderPrimitive</span></span><span> </span><span class="annot"><span class="annottext">PrimitiveMode
+</span><span class="hs-identifier hs-var">GL.TriangleStrip</span></span><span>
+</span><span id="line-146"></span><span>         </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>   </span><span class="hs-comment">-- start vector</span><span>
+</span><span id="line-147"></span><span>                </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101167"><span class="hs-identifier hs-var">tStart'</span></a></span><span>
+</span><span id="line-148"></span><span>                </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101179"><span class="hs-identifier hs-var">r2'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101167"><span class="hs-identifier hs-var">tStart'</span></a></span><span>
+</span><span id="line-149"></span><span>
+</span><span id="line-150"></span><span>                </span><span class="hs-comment">-- If we don't have a complete step then just drop a point</span><span>
+</span><span id="line-151"></span><span>                </span><span class="hs-comment">-- between the two ending lines.</span><span>
+</span><span id="line-152"></span><span>                </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101158"><span class="hs-identifier hs-var">tDiff</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101144"><span class="hs-identifier hs-var">tStep</span></a></span><span>
+</span><span id="line-153"></span><span>                  </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-154"></span><span>                        </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101171"><span class="hs-identifier hs-var">tMid'</span></a></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span>                        </span><span class="hs-comment">-- end vectors</span><span>
+</span><span id="line-157"></span><span>                        </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101179"><span class="hs-identifier hs-var">r2'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101168"><span class="hs-identifier hs-var">tStop'</span></a></span><span>
+</span><span id="line-158"></span><span>                        </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101168"><span class="hs-identifier hs-var">tStop'</span></a></span><span>
+</span><span id="line-159"></span><span>
+</span><span id="line-160"></span><span>                  </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-161"></span><span>                        </span><span class="annot"><span class="annottext">Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-identifier hs-var">renderCircleStrip_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span>
+</span><span id="line-162"></span><span>                                </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101163"><span class="hs-identifier hs-var">tStep'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101170"><span class="hs-identifier hs-var">tCut'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101167"><span class="hs-identifier hs-var">tStart'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101179"><span class="hs-identifier hs-var">r2'</span></a></span><span>
+</span><span id="line-163"></span><span>                                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101167"><span class="hs-identifier hs-var">tStart'</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101166"><span class="hs-identifier hs-var">tStep2'</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-164"></span><span>
+</span><span id="line-165"></span><span>                        </span><span class="hs-comment">-- end vectors</span><span>
+</span><span id="line-166"></span><span>                        </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101175"><span class="hs-identifier hs-var">r1'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101168"><span class="hs-identifier hs-var">tStop'</span></a></span><span>
+</span><span id="line-167"></span><span>                        </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101127"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101128"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101179"><span class="hs-identifier hs-var">r2'</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101168"><span class="hs-identifier hs-var">tStop'</span></a></span><span>
+</span><span id="line-168"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderArcStrip"><span class="hs-pragma hs-type">renderArcStrip</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-169"></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span class="hs-comment">-- Step functions -------------------------------------------------------------</span><span>
+</span><span id="line-172"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-identifier hs-type">renderCircleLine_step</span></a></span><span>
+</span><span id="line-173"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-174"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-175"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-176"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-177"></span><span>
+</span><span id="line-178"></span><span id="renderCircleLine_step"><span class="annot"><span class="annottext">renderCircleLine_step :: Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-identifier hs-var hs-var">renderCircleLine_step</span></a></span></span><span> </span><span id="local-6989586621679101180"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101180"><span class="hs-identifier hs-var">posX</span></a></span></span><span> </span><span id="local-6989586621679101181"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101181"><span class="hs-identifier hs-var">posY</span></a></span></span><span> </span><span id="local-6989586621679101182"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101182"><span class="hs-identifier hs-var">tStep</span></a></span></span><span> </span><span id="local-6989586621679101183"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101183"><span class="hs-identifier hs-var">tStop</span></a></span></span><span> </span><span id="local-6989586621679101184"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101184"><span class="hs-identifier hs-var">rad</span></a></span></span><span> </span><span id="local-6989586621679101185"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101185"><span class="hs-identifier hs-var">tt</span></a></span></span><span>
+</span><span id="line-179"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int#
+</span><span class="hs-number">1#</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101185"><span class="hs-identifier hs-var">tt</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Int#
+</span><span class="hs-operator hs-var">`geFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101183"><span class="hs-identifier hs-var">tStop</span></a></span><span>
+</span><span id="line-180"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-181"></span><span>
+</span><span id="line-182"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-183"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>    </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101180"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101181"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101184"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101185"><span class="hs-identifier hs-var">tt</span></a></span><span>
+</span><span id="line-184"></span><span>                </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-identifier hs-var">renderCircleLine_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101180"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101181"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101182"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101183"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101184"><span class="hs-identifier hs-var">rad</span></a></span><span>
+</span><span id="line-185"></span><span>                        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101185"><span class="hs-identifier hs-var">tt</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101182"><span class="hs-identifier hs-var">tStep</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-186"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleLine_step"><span class="hs-pragma hs-type">renderCircleLine_step</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-187"></span><span>
+</span><span id="line-188"></span><span>
+</span><span id="line-189"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-identifier hs-type">renderCircleStrip_step</span></a></span><span>
+</span><span id="line-190"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-191"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-192"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span>
+</span><span id="line-193"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-194"></span><span>
+</span><span id="line-195"></span><span id="renderCircleStrip_step"><span class="annot"><span class="annottext">renderCircleStrip_step :: Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-identifier hs-var hs-var">renderCircleStrip_step</span></a></span></span><span> </span><span id="local-6989586621679101186"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101186"><span class="hs-identifier hs-var">posX</span></a></span></span><span> </span><span id="local-6989586621679101187"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101187"><span class="hs-identifier hs-var">posY</span></a></span></span><span> </span><span id="local-6989586621679101188"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101188"><span class="hs-identifier hs-var">tStep</span></a></span></span><span> </span><span id="local-6989586621679101189"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101189"><span class="hs-identifier hs-var">tStop</span></a></span></span><span> </span><span id="local-6989586621679101190"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101190"><span class="hs-identifier hs-var">r1</span></a></span></span><span> </span><span id="local-6989586621679101191"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101191"><span class="hs-identifier hs-var">t1</span></a></span></span><span> </span><span id="local-6989586621679101192"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101192"><span class="hs-identifier hs-var">r2</span></a></span></span><span> </span><span id="local-6989586621679101193"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101193"><span class="hs-identifier hs-var">t2</span></a></span></span><span>
+</span><span id="line-196"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int#
+</span><span class="hs-number">1#</span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101191"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Int#
+</span><span class="hs-operator hs-var">`geFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101189"><span class="hs-identifier hs-var">tStop</span></a></span><span>
+</span><span id="line-197"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">() -&gt; IO ()
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-198"></span><span>
+</span><span id="line-199"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span>
+</span><span id="line-200"></span><span>        </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>    </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101186"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101187"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101190"><span class="hs-identifier hs-var">r1</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101191"><span class="hs-identifier hs-var">t1</span></a></span><span>
+</span><span id="line-201"></span><span>                </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var">addPointOnCircle</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101186"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101187"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101192"><span class="hs-identifier hs-var">r2</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101193"><span class="hs-identifier hs-var">t2</span></a></span><span>
+</span><span id="line-202"></span><span>                </span><span class="annot"><span class="annottext">Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; Float#
+-&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-identifier hs-var">renderCircleStrip_step</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101186"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101187"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101188"><span class="hs-identifier hs-var">tStep</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101189"><span class="hs-identifier hs-var">tStop</span></a></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101190"><span class="hs-identifier hs-var">r1</span></a></span><span>
+</span><span id="line-203"></span><span>                        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101191"><span class="hs-identifier hs-var">t1</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101188"><span class="hs-identifier hs-var">tStep</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101192"><span class="hs-identifier hs-var">r2</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101193"><span class="hs-identifier hs-var">t2</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101188"><span class="hs-identifier hs-var">tStep</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-204"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#renderCircleStrip_step"><span class="hs-pragma hs-type">renderCircleStrip_step</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-205"></span><span>
+</span><span id="line-206"></span><span>
+</span><span id="line-207"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPoint"><span class="hs-identifier hs-type">addPoint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-208"></span><span id="addPoint"><span class="annot"><span class="annottext">addPoint :: Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPoint"><span class="hs-identifier hs-var hs-var">addPoint</span></a></span></span><span> </span><span id="local-6989586621679101195"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101195"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679101196"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101196"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-209"></span><span>  </span><span class="annot"><span class="annottext">Vertex2 Float -&gt; IO ()
+forall a. Vertex a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">GL.vertex</span></span><span> </span><span class="annot"><span class="annottext">(Vertex2 Float -&gt; IO ()) -&gt; Vertex2 Float -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Vertex2 Float
+forall a. a -&gt; a -&gt; Vertex2 a
+</span><span class="hs-identifier hs-var">GL.Vertex2</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-var">gf</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float# -&gt; Float
+</span><span class="hs-identifier hs-var">F#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101195"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Common.html#gf"><span class="hs-identifier hs-var">gf</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float# -&gt; Float
+</span><span class="hs-identifier hs-var">F#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101196"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-210"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPoint"><span class="hs-pragma hs-type">addPoint</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span>
+</span><span id="line-213"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-type">addPointOnCircle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float#</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-214"></span><span id="addPointOnCircle"><span class="annot"><span class="annottext">addPointOnCircle :: Float# -&gt; Float# -&gt; Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-identifier hs-var hs-var">addPointOnCircle</span></a></span></span><span> </span><span id="local-6989586621679101197"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101197"><span class="hs-identifier hs-var">posX</span></a></span></span><span> </span><span id="local-6989586621679101198"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101198"><span class="hs-identifier hs-var">posY</span></a></span></span><span> </span><span id="local-6989586621679101199"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101199"><span class="hs-identifier hs-var">rad</span></a></span></span><span> </span><span id="local-6989586621679101200"><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101200"><span class="hs-identifier hs-var">tt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-215"></span><span>  </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; IO ()
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPoint"><span class="hs-identifier hs-var">addPoint</span></a></span><span>
+</span><span id="line-216"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101197"><span class="hs-identifier hs-var">posX</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101199"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`timesFloat#`</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float# -&gt; Float#
+</span><span class="hs-identifier hs-var">cosFloat#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101200"><span class="hs-identifier hs-var">tt</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-217"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101198"><span class="hs-identifier hs-var">posY</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`plusFloat#`</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101199"><span class="hs-identifier hs-var">rad</span></a></span><span> </span><span class="annot"><span class="annottext">Float# -&gt; Float# -&gt; Float#
+</span><span class="hs-operator hs-var">`timesFloat#`</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float# -&gt; Float#
+</span><span class="hs-identifier hs-var">sinFloat#</span></span><span> </span><span class="annot"><span class="annottext">Float#
+</span><a href="#local-6989586621679101200"><span class="hs-identifier hs-var">tt</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-218"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#addPointOnCircle"><span class="hs-pragma hs-type">addPointOnCircle</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-219"></span><span>
+</span><span id="line-220"></span><span>
+</span><span id="line-221"></span><span class="annot"><span class="hs-comment">-- | Convert degrees to radians</span></span><span>
+</span><span id="line-222"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-type">degToRad</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>
+</span><span id="line-223"></span><span id="degToRad"><span class="annot"><span class="annottext">degToRad :: Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-identifier hs-var hs-var">degToRad</span></a></span></span><span> </span><span id="local-6989586621679101201"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101201"><span class="hs-identifier hs-var">d</span></a></span></span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101201"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">180</span></span><span>
+</span><span id="line-224"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#degToRad"><span class="hs-pragma hs-type">degToRad</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-225"></span><span>
+</span><span id="line-226"></span><span>
+</span><span id="line-227"></span><span class="annot"><span class="hs-comment">-- | Normalise an angle to be between 0 and 2*pi radians</span></span><span>
+</span><span id="line-228"></span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#normalizeAngle"><span class="hs-identifier hs-type">normalizeAngle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>
+</span><span id="line-229"></span><span id="normalizeAngle"><span class="annot"><span class="annottext">normalizeAngle :: Float -&gt; Float
+</span><a href="Graphics.Gloss.Internals.Rendering.Circle.html#normalizeAngle"><span class="hs-identifier hs-var hs-var">normalizeAngle</span></a></span></span><span> </span><span id="local-6989586621679101202"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101202"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101202"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float
+</span><a href="#local-6989586621679101203"><span class="hs-identifier hs-var">floor'</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101202"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Fractional a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">/</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float
+</span><span class="hs-number">2</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">Float
+forall a. Floating a =&gt; a
+</span><span class="hs-identifier hs-var">pi</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-230"></span><span> </span><span class="hs-keyword">where</span><span>  </span><span class="annot"><a href="#local-6989586621679101203"><span class="hs-identifier hs-type">floor'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Float</span></span><span>
+</span><span id="line-231"></span><span>        </span><span id="local-6989586621679101203"><span class="annot"><span class="annottext">floor' :: Float -&gt; Float
+</span><a href="#local-6989586621679101203"><span class="hs-identifier hs-var hs-var">floor'</span></a></span></span><span> </span><span id="local-6989586621679101204"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101204"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Float
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Float -&gt; Int
+forall b. Integral b =&gt; Float -&gt; b
+forall a b. (RealFrac a, Integral b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">floor</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679101204"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-232"></span><span class="hs-pragma">{-# INLINE</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Rendering.Circle.html#normalizeAngle"><span class="hs-pragma hs-type">normalizeAngle</span></a></span><span> </span><span class="hs-pragma">#-}</span><span>
+</span><span id="line-233"></span><span>
+</span><span id="line-234"></span><span>
+</span><span id="line-235"></span><span class="hs-comment">{- Unused sector drawing code.
+   Sectors are currently drawn as compound Pictures,
+   but we might want this if we end up implementing the ThickSector
+   version as well.
+
+-- | Render a sector as a line.
+renderSectorLine :: Float -&gt; Float -&gt; Int -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+renderSectorLine pX@(F# posX) pY@(F# posY) steps (F# rad) a1 a2
+ = let  n               = fromIntegral steps
+        !(F# tStep)     = (2 * pi) / n
+        !(F# tStart)    = degToRad a1
+        !(F# tStop)     = degToRad a2 + if a1 &gt;= a2 then 2 * pi else 0
+
+        -- need to set up the edges of the start/end triangles
+        startVertex     = GL.vertex $ GL.Vertex2 (gf pX) (gf pY)
+        endVertex       = addPointOnCircle posX posY rad tStop
+
+   in   GL.renderPrimitive GL.LineLoop
+         $ do   startVertex
+                renderCircleLine_step posX posY tStep tStop rad tStart
+                endVertex
+
+-- | Render a sector.
+renderSector :: Float -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; Float -&gt; IO ()
+renderSector posX posY scaleFactor radius a1 a2
+        | radScreen     &lt;- scaleFactor * radius
+        , steps         &lt;- circleSteps (2 * radScreen)
+        = renderSectorLine posX posY steps radius a1 a2
+-}</span><span>
+</span><span id="line-264"></span><span>
+</span><span id="line-265"></span></pre></body></html>

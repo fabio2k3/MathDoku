@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">MathDoku.Solver</span><span>
+</span><span id="line-4"></span><span>  </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Public API</span></span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="MathDoku.Solver.html#resolverSudoku"><span class="hs-identifier">resolverSudoku</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Internal utilities (for testing)</span></span><span>
+</span><span id="line-7"></span><span>  </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier">emptyPositions</span></a></span><span>
+</span><span id="line-8"></span><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MathDoku.Core.html"><span class="hs-identifier">MathDoku.Core</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(\\)</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">mapMaybe</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- MAIN SOLVER</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- | Solve complete Sudoku using optimized backtracking</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--   Algorithm:</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--   1. If complete, validate and return</span><span>
+</span><span id="line-22"></span><span class="hs-comment">--   2. Find next empty cell</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--   3. Try valid candidates recursively</span><span>
+</span><span id="line-24"></span><span class="annot"><a href="MathDoku.Solver.html#resolverSudoku"><span class="hs-identifier hs-type">resolverSudoku</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span>
+</span><span id="line-25"></span><span id="resolverSudoku"><span class="annot"><span class="annottext">resolverSudoku :: Board -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#resolverSudoku"><span class="hs-identifier hs-var hs-var">resolverSudoku</span></a></span></span><span> </span><span id="local-6989586621679086761"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span></span><span>
+</span><span id="line-26"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
+</span><a href="MathDoku.Core.html#isComplete"><span class="hs-identifier hs-var">isComplete</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
+</span><a href="MathDoku.Core.html#isValidBoard"><span class="hs-identifier hs-var">isValidBoard</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe Board
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-27"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [Coord]
+</span><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-var">emptyPositions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-29"></span><span>        </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Board
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-30"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679086764"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086764"><span class="hs-identifier hs-var">pos</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679086765"><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086765"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#solveStep"><span class="hs-identifier hs-var">solveStep</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086761"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086764"><span class="hs-identifier hs-var">pos</span></a></span><span class="annot"><span class="annottext">Coord -&gt; [Coord] -&gt; [Coord]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086765"><span class="hs-identifier hs-var">rest</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- BACKTRACKING CORE</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="annot"><span class="hs-comment">-- | Recursive step: solve from specific position</span></span><span>
+</span><span id="line-37"></span><span class="annot"><a href="MathDoku.Solver.html#solveStep"><span class="hs-identifier hs-type">solveStep</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span>
+</span><span id="line-38"></span><span id="solveStep"><span class="annot"><span class="annottext">solveStep :: Board -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#solveStep"><span class="hs-identifier hs-var hs-var">solveStep</span></a></span></span><span> </span><span id="local-6989586621679086767"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086767"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086767"><span class="hs-identifier hs-var">board</span></a></span><span>
+</span><span id="line-39"></span><span class="annot"><a href="MathDoku.Solver.html#solveStep"><span class="hs-identifier hs-var">solveStep</span></a></span><span> </span><span id="local-6989586621679086768"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086768"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679086769"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086769"><span class="hs-identifier hs-var">pos</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679086770"><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086770"><span class="hs-identifier hs-var">rest</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-40"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679086771"><span class="annot"><span class="annottext">candidates :: [Int]
+</span><a href="#local-6989586621679086771"><span class="hs-identifier hs-var hs-var">candidates</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Coord -&gt; [Int]
+</span><a href="MathDoku.Solver.html#getCandidates"><span class="hs-identifier hs-var">getCandidates</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086768"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086769"><span class="hs-identifier hs-var">pos</span></a></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Coord -&gt; [Int] -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#tryCandidates"><span class="hs-identifier hs-var">tryCandidates</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086768"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086769"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679086771"><span class="hs-identifier hs-var">candidates</span></a></span><span> </span><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086770"><span class="hs-identifier hs-var">rest</span></a></span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><span class="hs-comment">-- | Valid candidates for position (reuses Core)</span></span><span>
+</span><span id="line-44"></span><span class="annot"><a href="MathDoku.Solver.html#getCandidates"><span class="hs-identifier hs-type">getCandidates</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span>
+</span><span id="line-45"></span><span id="getCandidates"><span class="annot"><span class="annottext">getCandidates :: Board -&gt; Coord -&gt; [Int]
+</span><a href="MathDoku.Solver.html#getCandidates"><span class="hs-identifier hs-var hs-var">getCandidates</span></a></span></span><span> </span><span id="local-6989586621679086774"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086774"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span id="local-6989586621679086775"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086775"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086776"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679086776"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086776"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">9</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Coord -&gt; Int -&gt; Board -&gt; Bool
+</span><a href="MathDoku.Core.html#isValidMove"><span class="hs-identifier hs-var">isValidMove</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086775"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086776"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086774"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><span class="hs-comment">-- | Try candidates until valid solution found</span></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="MathDoku.Solver.html#tryCandidates"><span class="hs-identifier hs-type">tryCandidates</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span>
+</span><span id="line-50"></span><span id="tryCandidates"><span class="annot"><span class="annottext">tryCandidates :: Board -&gt; Coord -&gt; [Int] -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#tryCandidates"><span class="hs-identifier hs-var hs-var">tryCandidates</span></a></span></span><span> </span><span class="annot"><span class="annottext">Board
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">[Coord]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Board
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="MathDoku.Solver.html#tryCandidates"><span class="hs-identifier hs-var">tryCandidates</span></a></span><span> </span><span id="local-6989586621679086778"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086778"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span id="local-6989586621679086779"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086779"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679086780"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086780"><span class="hs-identifier hs-var">n</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679086781"><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679086781"><span class="hs-identifier hs-var">ns</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679086782"><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086782"><span class="hs-identifier hs-var">rest</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-52"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679086783"><span class="annot"><span class="annottext">newBoard :: Board
+</span><a href="#local-6989586621679086783"><span class="hs-identifier hs-var hs-var">newBoard</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Coord -&gt; Int -&gt; Board -&gt; Board
+</span><a href="MathDoku.Core.html#placeValue"><span class="hs-identifier hs-var">placeValue</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086779"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086780"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086778"><span class="hs-identifier hs-var">board</span></a></span><span>
+</span><span id="line-53"></span><span>  </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#solveStep"><span class="hs-identifier hs-var">solveStep</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086783"><span class="hs-identifier hs-var">newBoard</span></a></span><span> </span><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086782"><span class="hs-identifier hs-var">rest</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-54"></span><span>       </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679086785"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086785"><span class="hs-identifier hs-var">solution</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086785"><span class="hs-identifier hs-var">solution</span></a></span><span>
+</span><span id="line-55"></span><span>       </span><span class="annot"><span class="annottext">Maybe Board
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Coord -&gt; [Int] -&gt; [Coord] -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#tryCandidates"><span class="hs-identifier hs-var">tryCandidates</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086778"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086779"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679086781"><span class="hs-identifier hs-var">ns</span></a></span><span> </span><span class="annot"><span class="annottext">[Coord]
+</span><a href="#local-6989586621679086782"><span class="hs-identifier hs-var">rest</span></a></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- POSITION UTILITIES</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- | Return coordinates of all empty cells using list comprehension.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--   Identical to Generator for maximum compatibility.</span><span>
+</span><span id="line-63"></span><span class="annot"><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-type">emptyPositions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-64"></span><span id="emptyPositions"><span class="annot"><span class="annottext">emptyPositions :: Board -&gt; [Coord]
+</span><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-var hs-var">emptyPositions</span></a></span></span><span> </span><span id="local-6989586621679086786"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086786"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>  </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086787"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086788"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679086787"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086787"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679086788"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086788"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Coord -&gt; Board -&gt; Bool
+</span><a href="MathDoku.Core.html#isCellEmpty"><span class="hs-identifier hs-var">isCellEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086787"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086788"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086786"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- OPTIMIZATIONS (optional - enable for hard puzzles)</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- ============================================================================</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="annot"><span class="hs-comment">-- | Naked singles: fill cells with only one possible candidate</span></span><span>
+</span><span id="line-72"></span><span class="annot"><a href="MathDoku.Solver.html#nakedSingles"><span class="hs-identifier hs-type">nakedSingles</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span>
+</span><span id="line-73"></span><span id="nakedSingles"><span class="annot"><span class="annottext">nakedSingles :: Board -&gt; Maybe Board
+</span><a href="MathDoku.Solver.html#nakedSingles"><span class="hs-identifier hs-var hs-var">nakedSingles</span></a></span></span><span> </span><span id="local-6989586621679086791"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086791"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-74"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679086792"><span class="annot"><span class="annottext">singles :: [(Coord, Int)]
+</span><a href="#local-6989586621679086792"><span class="hs-identifier hs-var hs-var">singles</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086793"><span class="hs-identifier hs-var">pos</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086794"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679086793"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086793"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [Coord]
+</span><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-var">emptyPositions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086791"><span class="hs-identifier hs-var">board</span></a></span><span>
+</span><span id="line-75"></span><span>                          </span><span class="hs-special">,</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679086795"><span class="annot"><span class="annottext">cands :: [Int]
+</span><a href="#local-6989586621679086795"><span class="hs-identifier hs-var hs-var">cands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Coord -&gt; [Int]
+</span><a href="MathDoku.Solver.html#getCandidates"><span class="hs-identifier hs-var">getCandidates</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086791"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086793"><span class="hs-identifier hs-var">pos</span></a></span><span>
+</span><span id="line-76"></span><span>                          </span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679086794"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086794"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679086795"><span class="hs-identifier hs-var">cands</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-special">]</span><span>
+</span><span id="line-77"></span><span>  </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">[(Coord, Int)] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[(Coord, Int)]
+</span><a href="#local-6989586621679086792"><span class="hs-identifier hs-var">singles</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe Board
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-78"></span><span>     </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Board -&gt; (Coord, Int) -&gt; Board)
+-&gt; Board -&gt; [(Coord, Int)] -&gt; Board
+forall b a. (b -&gt; a -&gt; b) -&gt; b -&gt; [a] -&gt; b
+forall (t :: * -&gt; *) b a.
+Foldable t =&gt;
+(b -&gt; a -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldl</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679086798"><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086798"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679086799"><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086799"><span class="hs-identifier hs-var">p</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679086800"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086800"><span class="hs-identifier hs-var">v</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Coord -&gt; Int -&gt; Board -&gt; Board
+</span><a href="MathDoku.Core.html#placeValue"><span class="hs-identifier hs-var">placeValue</span></a></span><span> </span><span class="annot"><span class="annottext">Coord
+</span><a href="#local-6989586621679086799"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679086800"><span class="hs-identifier hs-var">v</span></a></span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086798"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
+</span><a href="#local-6989586621679086791"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="annot"><span class="annottext">[(Coord, Int)]
+</span><a href="#local-6989586621679086792"><span class="hs-identifier hs-var">singles</span></a></span><span class="hs-special">)</span></pre></body></html>

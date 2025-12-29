@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- </span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to a part of section 3.6.4 (Rasterization of Pixel</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- Rectangles) of the OpenGL 2.1 specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelData.html#PixelData"><span class="hs-identifier">PixelData</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelFormat.html#PixelFormat"><span class="hs-identifier">PixelFormat</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#drawPixels"><span class="hs-identifier">drawPixels</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#pixelZoom"><span class="hs-identifier">pixelZoom</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.CoordTrans</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelData.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelData</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelFormat.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixelFormat</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span id="local-6989586621679292899"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#drawPixels"><span class="hs-identifier hs-type">drawPixels</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelData.html#PixelData"><span class="hs-identifier hs-type">PixelData</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679292899"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-31"></span><span id="drawPixels"><span class="annot"><span class="annottext">drawPixels :: forall a. Size -&gt; PixelData a -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#drawPixels"><span class="hs-identifier hs-var hs-var">drawPixels</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.CoordTrans.html#Size"><span class="hs-identifier hs-type">Size</span></a></span><span> </span><span id="local-6989586621679292940"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679292940"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span id="local-6989586621679292941"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679292941"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679292942"><span class="annot"><span class="annottext">PixelData a
+</span><a href="#local-6989586621679292942"><span class="hs-identifier hs-var">pd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PixelData a -&gt; (GLenum -&gt; GLenum -&gt; Ptr a -&gt; IO ()) -&gt; IO ()
+forall a b. PixelData a -&gt; (GLenum -&gt; GLenum -&gt; Ptr a -&gt; b) -&gt; b
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelData.html#withPixelData"><span class="hs-identifier hs-var">withPixelData</span></a></span><span> </span><span class="annot"><span class="annottext">PixelData a
+</span><a href="#local-6989586621679292942"><span class="hs-identifier hs-var">pd</span></a></span><span> </span><span class="annot"><span class="annottext">((GLenum -&gt; GLenum -&gt; Ptr a -&gt; IO ()) -&gt; IO ())
+-&gt; (GLenum -&gt; GLenum -&gt; Ptr a -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; GLsizei -&gt; GLenum -&gt; GLenum -&gt; Ptr a -&gt; IO ()
+forall (m :: * -&gt; *) a.
+MonadIO m =&gt;
+GLsizei -&gt; GLsizei -&gt; GLenum -&gt; GLenum -&gt; Ptr a -&gt; m ()
+</span><span class="hs-identifier hs-var">glDrawPixels</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679292940"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679292941"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#pixelZoom"><span class="hs-identifier hs-type">pixelZoom</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLfloat</span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span id="pixelZoom"><span class="annot"><span class="annottext">pixelZoom :: StateVar (GLfloat, GLfloat)
+</span><a href="Graphics.Rendering.OpenGL.GL.PixelRectangles.Rasterization.html#pixelZoom"><span class="hs-identifier hs-var hs-var">pixelZoom</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-37"></span><span>   </span><span class="annot"><span class="annottext">IO (GLfloat, GLfloat)
+-&gt; ((GLfloat, GLfloat) -&gt; IO ()) -&gt; StateVar (GLfloat, GLfloat)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-38"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; (GLfloat, GLfloat))
+-&gt; IO GLfloat -&gt; IO GLfloat -&gt; IO (GLfloat, GLfloat)
+forall (m :: * -&gt; *) a1 a2 r.
+Monad m =&gt;
+(a1 -&gt; a2 -&gt; r) -&gt; m a1 -&gt; m a2 -&gt; m r
+</span><span class="hs-identifier hs-var">liftM2</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">,</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetZoomX"><span class="hs-identifier hs-var">GetZoomX</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat) -&gt; PName1F -&gt; IO GLfloat
+forall p a. GetPName1F p =&gt; (GLfloat -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLfloat -&gt; a) -&gt; PName1F -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getFloat1"><span class="hs-identifier hs-var">getFloat1</span></a></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">PName1F
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#GetZoomY"><span class="hs-identifier hs-var">GetZoomY</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(GLfloat -&gt; GLfloat -&gt; IO ()) -&gt; (GLfloat, GLfloat) -&gt; IO ()
+forall a b c. (a -&gt; b -&gt; c) -&gt; (a, b) -&gt; c
+</span><span class="hs-identifier hs-var">uncurry</span></span><span> </span><span class="annot"><span class="annottext">GLfloat -&gt; GLfloat -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLfloat -&gt; GLfloat -&gt; m ()
+</span><span class="hs-identifier hs-var">glPixelZoom</span></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span></pre></body></html>

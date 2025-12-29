@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.PixellikeObject</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2011-2019, Lars Corbijn 2011-2016</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PixellikeObject</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-14"></span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectGetPName"><span class="hs-identifier">PixellikeObjectGetPName</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>  </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectTarget"><span class="hs-identifier">PixellikeObjectTarget</span></a></span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixellikeObjTarParam"><span class="hs-identifier">pixellikeObjTarParam</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Utils</span></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjectAttachment.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjectAttachment</span></a></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget</span></a></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.RenderbufferTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.FramebufferObjects.RenderbufferTarget</span></a></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.PeekPoke</span></a></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.Specification</span></a></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget</span></a></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-----------------------------------------------------------------------------</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">data</span><span> </span><span id="PixellikeObjectGetPName"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectGetPName"><span class="hs-identifier hs-var">PixellikeObjectGetPName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-31"></span><span>     </span><span id="RedSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#RedSize"><span class="hs-identifier hs-var">RedSize</span></a></span></span><span>
+</span><span id="line-32"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="BlueSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#BlueSize"><span class="hs-identifier hs-var">BlueSize</span></a></span></span><span>
+</span><span id="line-33"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="GreenSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#GreenSize"><span class="hs-identifier hs-var">GreenSize</span></a></span></span><span>
+</span><span id="line-34"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="AlphaSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#AlphaSize"><span class="hs-identifier hs-var">AlphaSize</span></a></span></span><span>
+</span><span id="line-35"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="DepthSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#DepthSize"><span class="hs-identifier hs-var">DepthSize</span></a></span></span><span>
+</span><span id="line-36"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span id="StencilSize"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#StencilSize"><span class="hs-identifier hs-var">StencilSize</span></a></span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">class</span><span> </span><span id="PixellikeObjectTarget"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectTarget"><span class="hs-identifier hs-var">PixellikeObjectTarget</span></a></span></span><span> </span><span id="local-6989586621679297422"><span class="annot"><a href="#local-6989586621679297422"><span class="hs-identifier hs-type">t</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-39"></span><span>   </span><span class="hs-comment">--dummy t to include it in the type class</span><span>
+</span><span id="line-40"></span><span>   </span><span id="marshalPixellikeOT"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#marshalPixellikeOT"><span class="hs-identifier hs-type">marshalPixellikeOT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679297422"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectGetPName"><span class="hs-identifier hs-type">PixellikeObjectGetPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span>
+</span><span id="line-41"></span><span>   </span><span id="pixObjTarQueryFunc"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixObjTarQueryFunc"><span class="hs-identifier hs-type">pixObjTarQueryFunc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679297422"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLenum</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-42"></span><span>   </span><span id="pixellikeObjTarParam"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixellikeObjTarParam"><span class="hs-identifier hs-type">pixellikeObjTarParam</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679297422"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectGetPName"><span class="hs-identifier hs-type">PixellikeObjectGetPName</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-43"></span><span>   </span><span id="local-6989586621679297464"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixellikeObjTarParam"><span class="hs-identifier hs-var hs-var">pixellikeObjTarParam</span></a></span><span> </span><span id="local-6989586621679297467"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679297467"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679297468"><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297468"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLint -&gt; GettableStateVar GLint
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLenum -&gt; GettableStateVar GLint
+forall t.
+PixellikeObjectTarget t =&gt;
+t -&gt; GLenum -&gt; GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixObjTarQueryFunc"><span class="hs-identifier hs-var">pixObjTarQueryFunc</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679297467"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">(GLenum -&gt; GettableStateVar GLint)
+-&gt; GLenum -&gt; GettableStateVar GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; PixellikeObjectGetPName -&gt; GLenum
+forall t.
+PixellikeObjectTarget t =&gt;
+t -&gt; PixellikeObjectGetPName -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#marshalPixellikeOT"><span class="hs-identifier hs-var">marshalPixellikeOT</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679297467"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297468"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679297473"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectTarget"><span class="hs-identifier hs-type">PixellikeObjectTarget</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.RenderbufferTarget.html#RenderbufferTarget"><span class="hs-identifier hs-type">RenderbufferTarget</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-46"></span><span>   </span><span id="local-6989586621679297477"><span class="annot"><span class="annottext">marshalPixellikeOT :: RenderbufferTarget -&gt; PixellikeObjectGetPName -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#marshalPixellikeOT"><span class="hs-identifier hs-var hs-var hs-var hs-var">marshalPixellikeOT</span></a></span></span><span> </span><span class="annot"><span class="annottext">RenderbufferTarget
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679297478"><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297478"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297478"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-47"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#RedSize"><span class="hs-identifier hs-var">RedSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_RED_SIZE</span></span><span>
+</span><span id="line-48"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#BlueSize"><span class="hs-identifier hs-var">BlueSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_BLUE_SIZE</span></span><span>
+</span><span id="line-49"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#GreenSize"><span class="hs-identifier hs-var">GreenSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_GREEN_SIZE</span></span><span>
+</span><span id="line-50"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#AlphaSize"><span class="hs-identifier hs-var">AlphaSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_ALPHA_SIZE</span></span><span>
+</span><span id="line-51"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#DepthSize"><span class="hs-identifier hs-var">DepthSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_DEPTH_SIZE</span></span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#StencilSize"><span class="hs-identifier hs-var">StencilSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_RENDERBUFFER_STENCIL_SIZE</span></span><span>
+</span><span id="line-53"></span><span>   </span><span id="local-6989586621679297485"><span class="annot"><span class="annottext">pixObjTarQueryFunc :: RenderbufferTarget -&gt; GLenum -&gt; GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixObjTarQueryFunc"><span class="hs-identifier hs-var hs-var hs-var hs-var">pixObjTarQueryFunc</span></a></span></span><span> </span><span id="local-6989586621679297486"><span class="annot"><span class="annottext">RenderbufferTarget
+</span><a href="#local-6989586621679297486"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">RenderbufferTarget
+-&gt; (GLint -&gt; GLint) -&gt; GLenum -&gt; GettableStateVar GLint
+forall a. RenderbufferTarget -&gt; (GLint -&gt; a) -&gt; GLenum -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.RenderbufferTarget.html#getRBParameteriv"><span class="hs-identifier hs-var">getRBParameteriv</span></a></span><span> </span><span class="annot"><span class="annottext">RenderbufferTarget
+</span><a href="#local-6989586621679297486"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="hs-keyword">data</span><span> </span><span id="FramebufferTargetAttachment"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#FramebufferTargetAttachment"><span class="hs-identifier hs-var">FramebufferTargetAttachment</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-56"></span><span>    </span><span id="FramebufferTargetAttachment"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#FramebufferTargetAttachment"><span class="hs-identifier hs-var">FramebufferTargetAttachment</span></a></span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferTarget.html#FramebufferTarget"><span class="hs-identifier hs-type">FramebufferTarget</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjectAttachment.html#FramebufferObjectAttachment"><span class="hs-identifier hs-type">FramebufferObjectAttachment</span></a></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679297493"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectTarget"><span class="hs-identifier hs-type">PixellikeObjectTarget</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#FramebufferTargetAttachment"><span class="hs-identifier hs-type">FramebufferTargetAttachment</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-59"></span><span>   </span><span id="local-6989586621679297496"><span class="annot"><span class="annottext">marshalPixellikeOT :: FramebufferTargetAttachment -&gt; PixellikeObjectGetPName -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#marshalPixellikeOT"><span class="hs-identifier hs-var hs-var hs-var hs-var">marshalPixellikeOT</span></a></span></span><span> </span><span class="annot"><span class="annottext">FramebufferTargetAttachment
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679297497"><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297497"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297497"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#RedSize"><span class="hs-identifier hs-var">RedSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE</span></span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#BlueSize"><span class="hs-identifier hs-var">BlueSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE</span></span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#GreenSize"><span class="hs-identifier hs-var">GreenSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE</span></span><span>
+</span><span id="line-63"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#AlphaSize"><span class="hs-identifier hs-var">AlphaSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE</span></span><span>
+</span><span id="line-64"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#DepthSize"><span class="hs-identifier hs-var">DepthSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE</span></span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#StencilSize"><span class="hs-identifier hs-var">StencilSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE</span></span><span>
+</span><span id="line-66"></span><span>   </span><span id="local-6989586621679297506"><span class="annot"><span class="annottext">pixObjTarQueryFunc :: FramebufferTargetAttachment -&gt; GLenum -&gt; GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixObjTarQueryFunc"><span class="hs-identifier hs-var hs-var hs-var hs-var">pixObjTarQueryFunc</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#FramebufferTargetAttachment"><span class="hs-identifier hs-type">FramebufferTargetAttachment</span></a></span><span> </span><span id="local-6989586621679297507"><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679297507"><span class="hs-identifier hs-var">fbt</span></a></span></span><span> </span><span id="local-6989586621679297508"><span class="annot"><span class="annottext">FramebufferObjectAttachment
+</span><a href="#local-6989586621679297508"><span class="hs-identifier hs-var">fba</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><span class="annottext">FramebufferTarget
+-&gt; FramebufferObjectAttachment
+-&gt; (GLint -&gt; GLint)
+-&gt; GLenum
+-&gt; GettableStateVar GLint
+forall fba a.
+FramebufferAttachment fba =&gt;
+FramebufferTarget -&gt; fba -&gt; (GLint -&gt; a) -&gt; GLenum -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.FramebufferObjects.FramebufferObjectAttachment.html#getFBAParameteriv"><span class="hs-identifier hs-var">getFBAParameteriv</span></a></span><span> </span><span class="annot"><span class="annottext">FramebufferTarget
+</span><a href="#local-6989586621679297507"><span class="hs-identifier hs-var">fbt</span></a></span><span> </span><span class="annot"><span class="annottext">FramebufferObjectAttachment
+</span><a href="#local-6989586621679297508"><span class="hs-identifier hs-var">fba</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="hs-keyword">data</span><span> </span><span id="TextureTargetFull"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#TextureTargetFull"><span class="hs-identifier hs-var">TextureTargetFull</span></a></span></span><span> </span><span id="local-6989586621679297510"><span class="annot"><a href="#local-6989586621679297510"><span class="hs-identifier hs-type">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="TextureTargetFull"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#TextureTargetFull"><span class="hs-identifier hs-var">TextureTargetFull</span></a></span></span><span> </span><span class="annot"><a href="#local-6989586621679297510"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Specification.html#Level"><span class="hs-identifier hs-type">Level</span></a></span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679297445"><span id="local-6989586621679297517"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#QueryableTextureTarget"><span class="hs-identifier hs-type">QueryableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679297445"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#PixellikeObjectTarget"><span class="hs-identifier hs-type">PixellikeObjectTarget</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#TextureTargetFull"><span class="hs-identifier hs-type">TextureTargetFull</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679297445"><span class="hs-identifier hs-type">t</span></a></span><span class="hs-special">)</span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-72"></span><span>   </span><span id="local-6989586621679297520"><span class="annot"><span class="annottext">marshalPixellikeOT :: TextureTargetFull t -&gt; PixellikeObjectGetPName -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#marshalPixellikeOT"><span class="hs-identifier hs-var hs-var hs-var hs-var">marshalPixellikeOT</span></a></span></span><span> </span><span class="annot"><span class="annottext">TextureTargetFull t
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679297521"><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297521"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="#local-6989586621679297521"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#RedSize"><span class="hs-identifier hs-var">RedSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_RED_SIZE</span></span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#BlueSize"><span class="hs-identifier hs-var">BlueSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_BLUE_SIZE</span></span><span>
+</span><span id="line-75"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#GreenSize"><span class="hs-identifier hs-var">GreenSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_GREEN_SIZE</span></span><span>
+</span><span id="line-76"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#AlphaSize"><span class="hs-identifier hs-var">AlphaSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_ALPHA_SIZE</span></span><span>
+</span><span id="line-77"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#DepthSize"><span class="hs-identifier hs-var">DepthSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_DEPTH_SIZE</span></span><span>
+</span><span id="line-78"></span><span>      </span><span class="annot"><span class="annottext">PixellikeObjectGetPName
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#StencilSize"><span class="hs-identifier hs-var">StencilSize</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><span class="hs-identifier hs-var">GL_TEXTURE_STENCIL_SIZE</span></span><span>
+</span><span id="line-79"></span><span>   </span><span id="local-6989586621679297538"><span class="annot"><span class="annottext">pixObjTarQueryFunc :: TextureTargetFull t -&gt; GLenum -&gt; GettableStateVar GLint
+</span><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#pixObjTarQueryFunc"><span class="hs-identifier hs-var hs-var hs-var hs-var">pixObjTarQueryFunc</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.PixellikeObject.html#TextureTargetFull"><span class="hs-identifier hs-type">TextureTargetFull</span></a></span><span> </span><span id="local-6989586621679297539"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679297539"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679297540"><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679297540"><span class="hs-identifier hs-var">level</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679297541"><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679297541"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-80"></span><span>      </span><span class="annot"><span class="annottext">GLint
+-&gt; (Ptr GLint -&gt; GettableStateVar GLint) -&gt; GettableStateVar GLint
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="annot"><span class="annottext">GLint
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">((Ptr GLint -&gt; GettableStateVar GLint) -&gt; GettableStateVar GLint)
+-&gt; (Ptr GLint -&gt; GettableStateVar GLint) -&gt; GettableStateVar GLint
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679297543"><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679297543"><span class="hs-identifier hs-var">buf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><span class="annottext">GLenum -&gt; GLint -&gt; GLenum -&gt; Ptr GLint -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLenum -&gt; GLint -&gt; GLenum -&gt; Ptr GLint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGetTexLevelParameteriv</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLenum
+forall t. QueryableTextureTarget t =&gt; t -&gt; GLenum
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalQueryableTextureTarget"><span class="hs-identifier hs-var">marshalQueryableTextureTarget</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679297539"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">GLint
+</span><a href="#local-6989586621679297540"><span class="hs-identifier hs-var">level</span></a></span><span> </span><span class="annot"><span class="annottext">GLenum
+</span><a href="#local-6989586621679297541"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679297543"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-82"></span><span>      </span><span class="annot"><span class="annottext">(GLint -&gt; GLint) -&gt; Ptr GLint -&gt; GettableStateVar GLint
+forall a b. Storable a =&gt; (a -&gt; b) -&gt; Ptr a -&gt; IO b
+</span><a href="Graphics.Rendering.OpenGL.GL.PeekPoke.html#peek1"><span class="hs-identifier hs-var">peek1</span></a></span><span> </span><span class="annot"><span class="annottext">GLint -&gt; GLint
+forall a. a -&gt; a
+</span><span class="hs-identifier hs-var">id</span></span><span> </span><span class="annot"><span class="annottext">Ptr GLint
+</span><a href="#local-6989586621679297543"><span class="hs-identifier hs-var">buf</span></a></span><span>
+</span><span id="line-83"></span></pre></body></html>

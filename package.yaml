@@ -1,0 +1,123 @@
+# ============================================================================
+# MATHDOKU: SUDOKU MATEMÁTICO EN HASKELL
+# ============================================================================
+name:                MathDoku
+version:             1.0.0.0
+github:              "fabio2k3/MathDoku"
+license:             MIT
+author:              "Tu equipo"
+maintainer:          "tu@equipo.com"
+copyright:           "2025"
+
+synopsis:            Sudoku matemático interactivo con pistas
+category:            Game
+
+description:         |
+  MathDoku: Sudoku con pistas matemáticas (par/impar, primo, divisible).
+  Arquitectura profesional: library + executable + tests con Stack.
+
+extra-source-files:
+- README.md
+- LICENSE
+
+# ============================================================================
+# DEPENDENCIAS (compatibles GHC 9.6+)
+# ============================================================================
+dependencies:
+# Base
+- base >= 4.17 && < 5
+
+# Solver/Generator (Set/Map eficientes)
+- containers >= 0.6.7
+
+# GameState (State monad)
+- mtl >= 2.3
+
+# Generator (random)
+- random >= 1.2.1
+
+# Para Generator (MonadRandom)
+- MonadRandom >= 0.6
+
+# UI (gloss para gráficos)
+- gloss >= 1.13
+
+# UI (colores terminal)
+- ansi-terminal >= 1.0
+
+# Timestamps partidas
+- time >= 1.12
+
+# ============================================================================
+# GHC: WARNINGS + OPTIMIZACIÓN
+# ============================================================================
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-uni-patterns
+- -Wincomplete-record-updates
+- -Wmissing-export-lists
+- -O2
+
+# ============================================================================
+# LIBRERÍA: src/ (lógica pura)
+# ============================================================================
+library:
+  source-dirs: src
+  exposed-modules:
+  - MathDoku                    # Fachada
+  - MathDoku.Core               # Tablero
+  - MathDoku.Solver             # Backtracking
+  - MathDoku.Generator          # Puzzles únicos
+  - MathDoku.Hints              # Pistas matemáticas
+  - MathDoku.GameState          # Estado + score
+  - MathDoku.UI                 # UI normal (exposed)
+  - MathDoku.UIHints            # UI hints (exposed)
+
+
+#+ ============================================================================
+# EJECUTABLES: app/Main.hs y app/MainHints.hs
+# ============================================================================
+executables:
+  MathDoku-exe:
+    main:               Main.hs
+    source-dirs:        app
+    other-modules: []   
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - MathDoku
+    - text
+    - gloss
+
+  MathDoku-hints-exe:
+    main:               MainHints.hs
+    source-dirs:        app
+    other-modules: []   
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - MathDoku
+    - text
+    - gloss
+
+# ============================================================================
+# TESTS: test/*.Spec.hs
+# ============================================================================
+tests:
+  mathdoku-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - MathDoku
+    - hspec >= 2.11        # Test framework
+    - QuickCheck >= 2.14   # Property tests
+    - hspec-discover       # Auto-descubrimiento

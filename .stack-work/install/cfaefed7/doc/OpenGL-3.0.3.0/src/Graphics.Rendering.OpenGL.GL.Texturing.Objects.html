@@ -1,0 +1,316 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.Rendering.OpenGL.GL.Texturing.Objects</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2019</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- This module corresponds to section 3.8.12 (Texture Objects) of the OpenGL 2.1</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- specs.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.Objects</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-17"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier">TextureObject</span></a></span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier">TextureObject</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureBinding"><span class="hs-identifier">textureBinding</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureResident"><span class="hs-identifier">textureResident</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#areTexturesResident"><span class="hs-identifier">areTexturesResident</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#TexturePriority"><span class="hs-identifier">TexturePriority</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#texturePriority"><span class="hs-identifier">texturePriority</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#prioritizeTextures"><span class="hs-identifier">prioritizeTextures</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>   </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#generateMipmap%27"><span class="hs-identifier">generateMipmap'</span></a></span><span>
+</span><span id="line-21"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Maybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">fromMaybe</span></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.StateVar</span></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Array</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.GLboolean</span></a></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.QueryUtils</span></a></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TexParameter</span></a></span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TextureObject</span></a></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.GL</span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span id="local-6989586621679294751"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureBinding"><span class="hs-identifier hs-type">textureBinding</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#BindableTextureTarget"><span class="hs-identifier hs-type">BindableTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294751"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294751"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-37"></span><span id="textureBinding"><span class="annot"><span class="annottext">textureBinding :: forall t.
+BindableTextureTarget t =&gt;
+t -&gt; StateVar (Maybe TextureObject)
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureBinding"><span class="hs-identifier hs-var hs-var">textureBinding</span></a></span></span><span> </span><span id="local-6989586621679294868"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294868"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-38"></span><span>   </span><span class="annot"><span class="annottext">IO (Maybe TextureObject)
+-&gt; (Maybe TextureObject -&gt; IO ()) -&gt; StateVar (Maybe TextureObject)
+forall a. IO a -&gt; (a -&gt; IO ()) -&gt; StateVar a
+</span><span class="hs-identifier hs-var">makeStateVar</span></span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span> </span><span id="local-6989586621679294870"><span class="annot"><span class="annottext">TextureObject
+</span><a href="#local-6989586621679294870"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; TextureObject) -&gt; PName1I -&gt; IO TextureObject
+forall p a. GetPName1I p =&gt; (GLuint -&gt; a) -&gt; p -&gt; IO a
+forall a. (GLuint -&gt; a) -&gt; PName1I -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.QueryUtils.PName.html#getEnum1"><span class="hs-identifier hs-var">getEnum1</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLuint -&gt; TextureObject
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-var">TextureObject</span></a></span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; TextureObject)
+-&gt; (GLuint -&gt; GLuint) -&gt; GLuint -&gt; TextureObject
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; GLuint
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; PName1I
+forall t. BindableTextureTarget t =&gt; t -&gt; PName1I
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalBindableTextureTargetPName1I"><span class="hs-identifier hs-var">marshalBindableTextureTargetPName1I</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294868"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>          </span><span class="annot"><span class="annottext">Maybe TextureObject -&gt; IO (Maybe TextureObject)
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Maybe TextureObject -&gt; IO (Maybe TextureObject))
+-&gt; Maybe TextureObject -&gt; IO (Maybe TextureObject)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">TextureObject
+</span><a href="#local-6989586621679294870"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">TextureObject -&gt; TextureObject -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">TextureObject
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#defaultTextureObject"><span class="hs-identifier hs-var">defaultTextureObject</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe TextureObject
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">TextureObject -&gt; Maybe TextureObject
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">TextureObject
+</span><a href="#local-6989586621679294870"><span class="hs-identifier hs-var">o</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLuint -&gt; GLuint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLuint -&gt; GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glBindTexture</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">t -&gt; GLuint
+forall t. BindableTextureTarget t =&gt; t -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalBindableTextureTarget"><span class="hs-identifier hs-var">marshalBindableTextureTarget</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294868"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; IO ())
+-&gt; (Maybe TextureObject -&gt; GLuint) -&gt; Maybe TextureObject -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">TextureObject -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#textureID"><span class="hs-identifier hs-var">textureID</span></a></span><span> </span><span class="annot"><span class="annottext">(TextureObject -&gt; GLuint)
+-&gt; (Maybe TextureObject -&gt; TextureObject)
+-&gt; Maybe TextureObject
+-&gt; GLuint
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TextureObject -&gt; Maybe TextureObject -&gt; TextureObject
+forall a. a -&gt; Maybe a -&gt; a
+</span><span class="hs-identifier hs-var">fromMaybe</span></span><span> </span><span class="annot"><span class="annottext">TextureObject
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#defaultTextureObject"><span class="hs-identifier hs-var">defaultTextureObject</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#defaultTextureObject"><span class="hs-identifier hs-type">defaultTextureObject</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span>
+</span><span id="line-44"></span><span id="defaultTextureObject"><span class="annot"><span class="annottext">defaultTextureObject :: TextureObject
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#defaultTextureObject"><span class="hs-identifier hs-var hs-var">defaultTextureObject</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; TextureObject
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-var">TextureObject</span></a></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span id="local-6989586621679294777"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureResident"><span class="hs-identifier hs-type">textureResident</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294777"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294777"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GettableStateVar</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span></span><span>
+</span><span id="line-49"></span><span id="textureResident"><span class="annot"><span class="annottext">textureResident :: forall t.
+ParameterizedTextureTarget t =&gt;
+t -&gt; GettableStateVar Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#textureResident"><span class="hs-identifier hs-var hs-var">textureResident</span></a></span></span><span> </span><span id="local-6989586621679294883"><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294883"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>   </span><span class="annot"><span class="annottext">GettableStateVar Bool -&gt; GettableStateVar Bool
+forall a. IO a -&gt; IO a
+</span><span class="hs-identifier hs-var">makeGettableStateVar</span></span><span> </span><span class="annot"><span class="annottext">(GettableStateVar Bool -&gt; GettableStateVar Bool)
+-&gt; GettableStateVar Bool -&gt; GettableStateVar Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-51"></span><span>      </span><span class="annot"><span class="annottext">(GLsizei -&gt; Bool) -&gt; t -&gt; TexParameter -&gt; GettableStateVar Bool
+forall t a.
+ParameterizedTextureTarget t =&gt;
+(GLsizei -&gt; a) -&gt; t -&gt; TexParameter -&gt; IO a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#getTexParameteri"><span class="hs-identifier hs-var">getTexParameteri</span></a></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; Bool
+forall a. (Eq a, Num a) =&gt; a -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html#unmarshalGLboolean"><span class="hs-identifier hs-var">unmarshalGLboolean</span></a></span><span> </span><span class="annot"><span class="annottext">t
+</span><a href="#local-6989586621679294883"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TextureResident"><span class="hs-identifier hs-var">TextureResident</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#areTexturesResident"><span class="hs-identifier hs-type">areTexturesResident</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span class="hs-special">[</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span id="areTexturesResident"><span class="annot"><span class="annottext">areTexturesResident :: [TextureObject] -&gt; IO ([TextureObject], [TextureObject])
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#areTexturesResident"><span class="hs-identifier hs-var hs-var">areTexturesResident</span></a></span></span><span> </span><span id="local-6989586621679294888"><span class="annot"><span class="annottext">[TextureObject]
+</span><a href="#local-6989586621679294888"><span class="hs-identifier hs-var">texObjs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-55"></span><span>   </span><span class="annot"><span class="annottext">[GLuint]
+-&gt; (Int -&gt; Ptr GLuint -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; IO ([TextureObject], [TextureObject])
+forall a b. Storable a =&gt; [a] -&gt; (Int -&gt; Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">withArrayLen</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(TextureObject -&gt; GLuint) -&gt; [TextureObject] -&gt; [GLuint]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">TextureObject -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#textureID"><span class="hs-identifier hs-var">textureID</span></a></span><span> </span><span class="annot"><span class="annottext">[TextureObject]
+</span><a href="#local-6989586621679294888"><span class="hs-identifier hs-var">texObjs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Int -&gt; Ptr GLuint -&gt; IO ([TextureObject], [TextureObject]))
+ -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; (Int -&gt; Ptr GLuint -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; IO ([TextureObject], [TextureObject])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679294890"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294890"><span class="hs-identifier hs-var">len</span></a></span></span><span> </span><span id="local-6989586621679294891"><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679294891"><span class="hs-identifier hs-var">texObjsBuf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-56"></span><span>      </span><span class="annot"><span class="annottext">Int
+-&gt; (Ptr GLboolean -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; IO ([TextureObject], [TextureObject])
+forall a b. Storable a =&gt; Int -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">allocaArray</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294890"><span class="hs-identifier hs-var">len</span></a></span><span> </span><span class="annot"><span class="annottext">((Ptr GLboolean -&gt; IO ([TextureObject], [TextureObject]))
+ -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; (Ptr GLboolean -&gt; IO ([TextureObject], [TextureObject]))
+-&gt; IO ([TextureObject], [TextureObject])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679294893"><span class="annot"><span class="annottext">Ptr GLboolean
+</span><a href="#local-6989586621679294893"><span class="hs-identifier hs-var">residentBuf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-57"></span><span>         </span><span id="local-6989586621679294894"><span class="annot"><span class="annottext">GLboolean
+</span><a href="#local-6989586621679294894"><span class="hs-identifier hs-var">allResident</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span>
+</span><span id="line-58"></span><span>            </span><span class="annot"><span class="annottext">GLsizei -&gt; Ptr GLuint -&gt; Ptr GLboolean -&gt; IO GLboolean
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLsizei -&gt; Ptr GLuint -&gt; Ptr GLboolean -&gt; m GLboolean
+</span><span class="hs-identifier hs-var">glAreTexturesResident</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; GLsizei
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294890"><span class="hs-identifier hs-var">len</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679294891"><span class="hs-identifier hs-var">texObjsBuf</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLboolean
+</span><a href="#local-6989586621679294893"><span class="hs-identifier hs-var">residentBuf</span></a></span><span>
+</span><span id="line-59"></span><span>         </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">GLboolean -&gt; Bool
+forall a. (Eq a, Num a) =&gt; a -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html#unmarshalGLboolean"><span class="hs-identifier hs-var">unmarshalGLboolean</span></a></span><span> </span><span class="annot"><span class="annottext">GLboolean
+</span><a href="#local-6989586621679294894"><span class="hs-identifier hs-var">allResident</span></a></span><span>
+</span><span id="line-60"></span><span>            </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">([TextureObject], [TextureObject])
+-&gt; IO ([TextureObject], [TextureObject])
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[TextureObject]
+</span><a href="#local-6989586621679294888"><span class="hs-identifier hs-var">texObjs</span></a></span><span class="hs-special">,</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span><span>            </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-62"></span><span>               </span><span id="local-6989586621679294896"><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294896"><span class="hs-identifier hs-var">tr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">([GLboolean] -&gt; [(TextureObject, GLboolean)])
+-&gt; IO [GLboolean] -&gt; IO [(TextureObject, GLboolean)]
+forall a b. (a -&gt; b) -&gt; IO a -&gt; IO b
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[TextureObject] -&gt; [GLboolean] -&gt; [(TextureObject, GLboolean)]
+forall a b. [a] -&gt; [b] -&gt; [(a, b)]
+</span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="annot"><span class="annottext">[TextureObject]
+</span><a href="#local-6989586621679294888"><span class="hs-identifier hs-var">texObjs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(IO [GLboolean] -&gt; IO [(TextureObject, GLboolean)])
+-&gt; IO [GLboolean] -&gt; IO [(TextureObject, GLboolean)]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Ptr GLboolean -&gt; IO [GLboolean]
+forall a. Storable a =&gt; Int -&gt; Ptr a -&gt; IO [a]
+</span><span class="hs-identifier hs-var">peekArray</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294890"><span class="hs-identifier hs-var">len</span></a></span><span> </span><span class="annot"><span class="annottext">Ptr GLboolean
+</span><a href="#local-6989586621679294893"><span class="hs-identifier hs-var">residentBuf</span></a></span><span>
+</span><span id="line-63"></span><span>               </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679294900"><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294900"><span class="hs-identifier hs-var">resident</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679294901"><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294901"><span class="hs-identifier hs-var">nonResident</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((TextureObject, GLboolean) -&gt; Bool)
+-&gt; [(TextureObject, GLboolean)]
+-&gt; ([(TextureObject, GLboolean)], [(TextureObject, GLboolean)])
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; ([a], [a])
+</span><span class="hs-identifier hs-var">partition</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">GLboolean -&gt; Bool
+forall a. (Eq a, Num a) =&gt; a -&gt; Bool
+</span><a href="Graphics.Rendering.OpenGL.GL.GLboolean.html#unmarshalGLboolean"><span class="hs-identifier hs-var">unmarshalGLboolean</span></a></span><span> </span><span class="annot"><span class="annottext">(GLboolean -&gt; Bool)
+-&gt; ((TextureObject, GLboolean) -&gt; GLboolean)
+-&gt; (TextureObject, GLboolean)
+-&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(TextureObject, GLboolean) -&gt; GLboolean
+forall a b. (a, b) -&gt; b
+</span><span class="hs-identifier hs-var">snd</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294896"><span class="hs-identifier hs-var">tr</span></a></span><span>
+</span><span id="line-64"></span><span>               </span><span class="annot"><span class="annottext">([TextureObject], [TextureObject])
+-&gt; IO ([TextureObject], [TextureObject])
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((TextureObject, GLboolean) -&gt; TextureObject)
+-&gt; [(TextureObject, GLboolean)] -&gt; [TextureObject]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">(TextureObject, GLboolean) -&gt; TextureObject
+forall a b. (a, b) -&gt; a
+</span><span class="hs-identifier hs-var">fst</span></span><span> </span><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294900"><span class="hs-identifier hs-var">resident</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">((TextureObject, GLboolean) -&gt; TextureObject)
+-&gt; [(TextureObject, GLboolean)] -&gt; [TextureObject]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">(TextureObject, GLboolean) -&gt; TextureObject
+forall a b. (a, b) -&gt; a
+</span><span class="hs-identifier hs-var">fst</span></span><span> </span><span class="annot"><span class="annottext">[(TextureObject, GLboolean)]
+</span><a href="#local-6989586621679294901"><span class="hs-identifier hs-var">nonResident</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-keyword">type</span><span> </span><span id="TexturePriority"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#TexturePriority"><span class="hs-identifier hs-var">TexturePriority</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLclampf</span></span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span id="local-6989586621679294804"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#texturePriority"><span class="hs-identifier hs-type">texturePriority</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294804"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294804"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateVar</span></span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#TexturePriority"><span class="hs-identifier hs-type">TexturePriority</span></a></span></span><span>
+</span><span id="line-71"></span><span id="texturePriority"><span class="annot"><span class="annottext">texturePriority :: forall t.
+ParameterizedTextureTarget t =&gt;
+t -&gt; StateVar TexturePriority
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#texturePriority"><span class="hs-identifier hs-var hs-var">texturePriority</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(TexturePriority -&gt; TexturePriority)
+-&gt; (TexturePriority -&gt; TexturePriority)
+-&gt; TexParameter
+-&gt; t
+-&gt; StateVar TexturePriority
+forall t a.
+ParameterizedTextureTarget t =&gt;
+(TexturePriority -&gt; a)
+-&gt; (a -&gt; TexturePriority) -&gt; TexParameter -&gt; t -&gt; StateVar a
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#texParamf"><span class="hs-identifier hs-var">texParamf</span></a></span><span> </span><span class="annot"><span class="annottext">TexturePriority -&gt; TexturePriority
+forall a b. (Real a, Fractional b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">realToFrac</span></span><span> </span><span class="annot"><span class="annottext">TexturePriority -&gt; TexturePriority
+forall a b. (Real a, Fractional b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">realToFrac</span></span><span> </span><span class="annot"><span class="annottext">TexParameter
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TexParameter.html#TexturePriority"><span class="hs-identifier hs-var">TexturePriority</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#prioritizeTextures"><span class="hs-identifier hs-type">prioritizeTextures</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#TextureObject"><span class="hs-identifier hs-type">TextureObject</span></a></span><span class="hs-special">,</span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#TexturePriority"><span class="hs-identifier hs-type">TexturePriority</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span id="prioritizeTextures"><span class="annot"><span class="annottext">prioritizeTextures :: [(TextureObject, TexturePriority)] -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#prioritizeTextures"><span class="hs-identifier hs-var hs-var">prioritizeTextures</span></a></span></span><span> </span><span id="local-6989586621679294916"><span class="annot"><span class="annottext">[(TextureObject, TexturePriority)]
+</span><a href="#local-6989586621679294916"><span class="hs-identifier hs-var">tps</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>   </span><span class="annot"><span class="annottext">[GLuint] -&gt; (Int -&gt; Ptr GLuint -&gt; IO ()) -&gt; IO ()
+forall a b. Storable a =&gt; [a] -&gt; (Int -&gt; Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">withArrayLen</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((TextureObject, TexturePriority) -&gt; GLuint)
+-&gt; [(TextureObject, TexturePriority)] -&gt; [GLuint]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">TextureObject -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureObject.html#textureID"><span class="hs-identifier hs-var">textureID</span></a></span><span> </span><span class="annot"><span class="annottext">(TextureObject -&gt; GLuint)
+-&gt; ((TextureObject, TexturePriority) -&gt; TextureObject)
+-&gt; (TextureObject, TexturePriority)
+-&gt; GLuint
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">(TextureObject, TexturePriority) -&gt; TextureObject
+forall a b. (a, b) -&gt; a
+</span><span class="hs-identifier hs-var">fst</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[(TextureObject, TexturePriority)]
+</span><a href="#local-6989586621679294916"><span class="hs-identifier hs-var">tps</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Int -&gt; Ptr GLuint -&gt; IO ()) -&gt; IO ())
+-&gt; (Int -&gt; Ptr GLuint -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679294917"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294917"><span class="hs-identifier hs-var">len</span></a></span></span><span> </span><span id="local-6989586621679294918"><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679294918"><span class="hs-identifier hs-var">texObjsBuf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-76"></span><span>      </span><span class="annot"><span class="annottext">[TexturePriority] -&gt; (Ptr TexturePriority -&gt; IO ()) -&gt; IO ()
+forall a b. Storable a =&gt; [a] -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">withArray</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((TextureObject, TexturePriority) -&gt; TexturePriority)
+-&gt; [(TextureObject, TexturePriority)] -&gt; [TexturePriority]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">(TextureObject, TexturePriority) -&gt; TexturePriority
+forall a b. (a, b) -&gt; b
+</span><span class="hs-identifier hs-var">snd</span></span><span> </span><span class="annot"><span class="annottext">[(TextureObject, TexturePriority)]
+</span><a href="#local-6989586621679294916"><span class="hs-identifier hs-var">tps</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Ptr TexturePriority -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr TexturePriority -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-77"></span><span>         </span><span class="annot"><span class="annottext">GLsizei -&gt; Ptr GLuint -&gt; Ptr TexturePriority -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GLsizei -&gt; Ptr GLuint -&gt; Ptr TexturePriority -&gt; m ()
+</span><span class="hs-identifier hs-var">glPrioritizeTextures</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; GLsizei
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679294917"><span class="hs-identifier hs-var">len</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr GLuint
+</span><a href="#local-6989586621679294918"><span class="hs-identifier hs-var">texObjsBuf</span></a></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- | Generate mipmaps for the specified texture target. Note that from OpenGL</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- 3.1 onwards you should use this function instead of the texture parameter</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- 'Graphics.Rendering.OpenGL.GL.Texturing.Parameters.generateMipmap'.</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span id="local-6989586621679294813"><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#generateMipmap%27"><span class="hs-identifier hs-type">generateMipmap'</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#ParameterizedTextureTarget"><span class="hs-identifier hs-type">ParameterizedTextureTarget</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679294813"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679294813"><span class="hs-identifier hs-type">t</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-86"></span><span id="generateMipmap%27"><span class="annot"><span class="annottext">generateMipmap' :: forall t. ParameterizedTextureTarget t =&gt; t -&gt; IO ()
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.Objects.html#generateMipmap%27"><span class="hs-identifier hs-var hs-var">generateMipmap'</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; IO ()
+forall (m :: * -&gt; *). MonadIO m =&gt; GLuint -&gt; m ()
+</span><span class="hs-identifier hs-var">glGenerateMipmap</span></span><span> </span><span class="annot"><span class="annottext">(GLuint -&gt; IO ()) -&gt; (t -&gt; GLuint) -&gt; t -&gt; IO ()
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">t -&gt; GLuint
+forall t. ParameterizedTextureTarget t =&gt; t -&gt; GLuint
+</span><a href="Graphics.Rendering.OpenGL.GL.Texturing.TextureTarget.html#marshalParameterizedTextureTarget"><span class="hs-identifier hs-var">marshalParameterizedTextureTarget</span></a></span><span>
+</span><span id="line-87"></span></pre></body></html>

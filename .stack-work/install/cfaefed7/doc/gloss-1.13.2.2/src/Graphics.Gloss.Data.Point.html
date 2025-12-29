@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Data.Point</span><span>
+</span><span id="line-2"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Point</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Path</span></span><span>
+</span><span id="line-3"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Point.html#pointInBox"><span class="hs-identifier">pointInBox</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.Gloss.Data.Picture.html"><span class="hs-identifier">Graphics.Gloss.Data.Picture</span></a></span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- | Test whether a point lies within a rectangular box that is oriented</span><span>
+</span><span id="line-9"></span><span class="hs-comment">--   on the x-y plane. The points P1-P2 are opposing points of the box,</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--   but need not be in a particular order.</span><span>
+</span><span id="line-11"></span><span class="hs-comment">--</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-13"></span><span class="hs-comment">--    P2 +-------+</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--       |       |</span><span>
+</span><span id="line-15"></span><span class="hs-comment">--       | + P0  |</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--       |       |</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--       +-------+ P1</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- @</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--</span><span>
+</span><span id="line-20"></span><span class="annot"><a href="Graphics.Gloss.Data.Point.html#pointInBox"><span class="hs-identifier hs-type">pointInBox</span></a></span><span>
+</span><span id="line-21"></span><span>        </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-22"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span>
+</span><span id="line-23"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Point</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span id="pointInBox"><span class="annot"><span class="annottext">pointInBox :: Point -&gt; Point -&gt; Point -&gt; Bool
+</span><a href="Graphics.Gloss.Data.Point.html#pointInBox"><span class="hs-identifier hs-var hs-var">pointInBox</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104659"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104659"><span class="hs-identifier hs-var">x0</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104660"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104660"><span class="hs-identifier hs-var">y0</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104661"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104661"><span class="hs-identifier hs-var">x1</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104662"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104662"><span class="hs-identifier hs-var">y1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679104663"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104663"><span class="hs-identifier hs-var">x2</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679104664"><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104664"><span class="hs-identifier hs-var">y2</span></a></span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>        </span><span class="hs-glyph">=</span><span>  </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104659"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">min</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104661"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104663"><span class="hs-identifier hs-var">x2</span></a></span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104659"><span class="hs-identifier hs-var">x0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">max</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104661"><span class="hs-identifier hs-var">x1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104663"><span class="hs-identifier hs-var">x2</span></a></span><span>
+</span><span id="line-28"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104660"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">min</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104662"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104664"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104660"><span class="hs-identifier hs-var">y0</span></a></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Float -&gt; Float -&gt; Float
+forall a. Ord a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">max</span></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104662"><span class="hs-identifier hs-var">y1</span></a></span><span> </span><span class="annot"><span class="annottext">Float
+</span><a href="#local-6989586621679104664"><span class="hs-identifier hs-var">y2</span></a></span><span>
+</span><span id="line-30"></span></pre></body></html>

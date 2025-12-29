@@ -1,0 +1,395 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# OPTIONS_HADDOCK hide #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Implements functions to dump portions of the OpenGL state to stdout.</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--      Used for debugging.</span><span>
+</span><span id="line-5"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.Gloss.Internals.Interface.Debug</span><span>
+</span><span id="line-6"></span><span>        </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFramebufferState"><span class="hs-identifier">dumpFramebufferState</span></a></span><span>
+</span><span id="line-7"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFragmentState"><span class="hs-identifier">dumpFragmentState</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL.GL</span></span><span>   </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">GL</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL</span></span><span>                </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="annot"><span class="hs-comment">-- | Dump internal state of the OpenGL framebuffer</span></span><span>
+</span><span id="line-13"></span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFramebufferState"><span class="hs-identifier hs-type">dumpFramebufferState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span id="dumpFramebufferState"><span class="annot"><span class="annottext">dumpFramebufferState :: IO ()
+</span><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFramebufferState"><span class="hs-identifier hs-var hs-var">dumpFramebufferState</span></a></span></span><span>
+</span><span id="line-15"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-16"></span><span>        </span><span id="local-6989586621679106332"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106332"><span class="hs-identifier hs-var">auxBuffers</span></a></span></span><span>      </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei -&gt; GettableStateVar GLsizei
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GettableStateVar GLsizei -&gt; m GLsizei
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei
+</span><span class="hs-identifier hs-var">GL.auxBuffers</span></span><span>
+</span><span id="line-17"></span><span>        </span><span id="local-6989586621679106334"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106334"><span class="hs-identifier hs-var">doubleBuffer</span></a></span></span><span>    </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar Bool -&gt; GettableStateVar Bool
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *). MonadIO m =&gt; GettableStateVar Bool -&gt; m Bool
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar Bool
+</span><span class="hs-identifier hs-var">GL.doubleBuffer</span></span><span>
+</span><span id="line-18"></span><span>        </span><span id="local-6989586621679106336"><span class="annot"><span class="annottext">BufferMode
+</span><a href="#local-6989586621679106336"><span class="hs-identifier hs-var">drawBuffer</span></a></span></span><span>      </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar BufferMode -&gt; IO BufferMode
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar BufferMode -&gt; m BufferMode
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar BufferMode
+</span><span class="hs-identifier hs-var">GL.drawBuffer</span></span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span>        </span><span id="local-6989586621679106338"><span class="annot"><span class="annottext">Color4 GLsizei
+</span><a href="#local-6989586621679106338"><span class="hs-identifier hs-var">rgbaBits</span></a></span></span><span>        </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar (Color4 GLsizei)
+-&gt; GettableStateVar (Color4 GLsizei)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GettableStateVar (Color4 GLsizei) -&gt; m (Color4 GLsizei)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar (Color4 GLsizei)
+</span><span class="hs-identifier hs-var">GL.rgbaBits</span></span><span>
+</span><span id="line-21"></span><span>        </span><span id="local-6989586621679106340"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106340"><span class="hs-identifier hs-var">stencilBits</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei -&gt; GettableStateVar GLsizei
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GettableStateVar GLsizei -&gt; m GLsizei
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei
+</span><span class="hs-identifier hs-var">GL.stencilBits</span></span><span>
+</span><span id="line-22"></span><span>        </span><span id="local-6989586621679106342"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106342"><span class="hs-identifier hs-var">depthBits</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei -&gt; GettableStateVar GLsizei
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GettableStateVar GLsizei -&gt; m GLsizei
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar GLsizei
+</span><span class="hs-identifier hs-var">GL.depthBits</span></span><span>
+</span><span id="line-23"></span><span>        </span><span id="local-6989586621679106344"><span class="annot"><span class="annottext">Color4 GLsizei
+</span><a href="#local-6989586621679106344"><span class="hs-identifier hs-var">accumBits</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">GettableStateVar (Color4 GLsizei)
+-&gt; GettableStateVar (Color4 GLsizei)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+GettableStateVar (Color4 GLsizei) -&gt; m (Color4 GLsizei)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">GettableStateVar (Color4 GLsizei)
+</span><span class="hs-identifier hs-var">GL.accumBits</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span>        </span><span id="local-6989586621679106346"><span class="annot"><span class="annottext">Color4 GLfloat
+</span><a href="#local-6989586621679106346"><span class="hs-identifier hs-var">clearColor</span></a></span></span><span>      </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat) -&gt; IO (Color4 GLfloat)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (Color4 GLfloat) -&gt; m (Color4 GLfloat)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat)
+</span><span class="hs-identifier hs-var">GL.clearColor</span></span><span>
+</span><span id="line-26"></span><span>        </span><span id="local-6989586621679106348"><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106348"><span class="hs-identifier hs-var">clearStencil</span></a></span></span><span>    </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar GLsizei -&gt; GettableStateVar GLsizei
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *). MonadIO m =&gt; StateVar GLsizei -&gt; m GLsizei
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar GLsizei
+</span><span class="hs-identifier hs-var">GL.clearStencil</span></span><span>
+</span><span id="line-27"></span><span>        </span><span id="local-6989586621679106350"><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679106350"><span class="hs-identifier hs-var">clearDepth</span></a></span></span><span>      </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar GLdouble -&gt; IO GLdouble
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *). MonadIO m =&gt; StateVar GLdouble -&gt; m GLdouble
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar GLdouble
+</span><span class="hs-identifier hs-var">GL.clearDepth</span></span><span>
+</span><span id="line-28"></span><span>        </span><span id="local-6989586621679106352"><span class="annot"><span class="annottext">Color4 GLfloat
+</span><a href="#local-6989586621679106352"><span class="hs-identifier hs-var">clearAccum</span></a></span></span><span>      </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat) -&gt; IO (Color4 GLfloat)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (Color4 GLfloat) -&gt; m (Color4 GLfloat)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 GLfloat)
+</span><span class="hs-identifier hs-var">GL.clearAccum</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span>        </span><span id="local-6989586621679106354"><span class="annot"><span class="annottext">Color4 Capability
+</span><a href="#local-6989586621679106354"><span class="hs-identifier hs-var">colorMask</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 Capability) -&gt; IO (Color4 Capability)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (Color4 Capability) -&gt; m (Color4 Capability)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar (Color4 Capability)
+</span><span class="hs-identifier hs-var">GL.colorMask</span></span><span>
+</span><span id="line-31"></span><span>        </span><span id="local-6989586621679106356"><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679106356"><span class="hs-identifier hs-var">stencilMask</span></a></span></span><span>     </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar GLuint -&gt; IO GLuint
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *). MonadIO m =&gt; StateVar GLuint -&gt; m GLuint
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar GLuint
+</span><span class="hs-identifier hs-var">GL.stencilMask</span></span><span>
+</span><span id="line-32"></span><span>        </span><span id="local-6989586621679106358"><span class="annot"><span class="annottext">Capability
+</span><a href="#local-6989586621679106358"><span class="hs-identifier hs-var">depthMask</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar Capability -&gt; IO Capability
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar Capability -&gt; m Capability
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar Capability
+</span><span class="hs-identifier hs-var">GL.depthMask</span></span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStr</span></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;* dumpFramebufferState\n&quot;</span></span><span>
+</span><span id="line-35"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  auxBuffers         = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106332"><span class="hs-identifier hs-var">auxBuffers</span></a></span><span>         </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-36"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  doubleBuffer       = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679106334"><span class="hs-identifier hs-var">doubleBuffer</span></a></span><span>       </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-37"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  drawBuffer         = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">BufferMode -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">BufferMode
+</span><a href="#local-6989586621679106336"><span class="hs-identifier hs-var">drawBuffer</span></a></span><span>         </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-38"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-39"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  bits       rgba    = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLsizei
+</span><a href="#local-6989586621679106338"><span class="hs-identifier hs-var">rgbaBits</span></a></span><span>           </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-40"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             stencil = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106340"><span class="hs-identifier hs-var">stencilBits</span></a></span><span>        </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-41"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             depth   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106342"><span class="hs-identifier hs-var">depthBits</span></a></span><span>          </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-42"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             accum   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLsizei
+</span><a href="#local-6989586621679106344"><span class="hs-identifier hs-var">accumBits</span></a></span><span>          </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-43"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-44"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  clear      color   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat
+</span><a href="#local-6989586621679106346"><span class="hs-identifier hs-var">clearColor</span></a></span><span>         </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-45"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             stencil = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLsizei -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLsizei
+</span><a href="#local-6989586621679106348"><span class="hs-identifier hs-var">clearStencil</span></a></span><span>       </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-46"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             depth   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLdouble -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLdouble
+</span><a href="#local-6989586621679106350"><span class="hs-identifier hs-var">clearDepth</span></a></span><span>         </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-47"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             accum   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Color4 GLfloat
+</span><a href="#local-6989586621679106352"><span class="hs-identifier hs-var">clearAccum</span></a></span><span>         </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-48"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-49"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  mask       color   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Color4 Capability -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Color4 Capability
+</span><a href="#local-6989586621679106354"><span class="hs-identifier hs-var">colorMask</span></a></span><span>          </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-50"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             stencil = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">GLuint -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">GLuint
+</span><a href="#local-6989586621679106356"><span class="hs-identifier hs-var">stencilMask</span></a></span><span>        </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-51"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;             depth   = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Capability -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Capability
+</span><a href="#local-6989586621679106358"><span class="hs-identifier hs-var">depthMask</span></a></span><span>          </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-52"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span class="annot"><span class="hs-comment">-- | Dump internal state of the fragment renderer.</span></span><span>
+</span><span id="line-56"></span><span class="annot"><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFragmentState"><span class="hs-identifier hs-type">dumpFragmentState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span id="dumpFragmentState"><span class="annot"><span class="annottext">dumpFragmentState :: IO ()
+</span><a href="Graphics.Gloss.Internals.Interface.Debug.html#dumpFragmentState"><span class="hs-identifier hs-var hs-var">dumpFragmentState</span></a></span></span><span>
+</span><span id="line-58"></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-59"></span><span>        </span><span id="local-6989586621679106362"><span class="annot"><span class="annottext">Capability
+</span><a href="#local-6989586621679106362"><span class="hs-identifier hs-var">blend</span></a></span></span><span>           </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar Capability -&gt; IO Capability
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar Capability -&gt; m Capability
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar Capability
+</span><span class="hs-identifier hs-var">GL.blend</span></span><span>
+</span><span id="line-60"></span><span>        </span><span id="local-6989586621679106364"><span class="annot"><span class="annottext">BlendEquation
+</span><a href="#local-6989586621679106364"><span class="hs-identifier hs-var">blendEquation</span></a></span></span><span>   </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar BlendEquation -&gt; IO BlendEquation
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar BlendEquation -&gt; m BlendEquation
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar BlendEquation
+</span><span class="hs-identifier hs-var">GL.blendEquation</span></span><span>
+</span><span id="line-61"></span><span>        </span><span id="local-6989586621679106366"><span class="annot"><span class="annottext">(BlendingFactor, BlendingFactor)
+</span><a href="#local-6989586621679106366"><span class="hs-identifier hs-var">blendFunc</span></a></span></span><span>       </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateVar (BlendingFactor, BlendingFactor)
+-&gt; IO (BlendingFactor, BlendingFactor)
+forall t a (m :: * -&gt; *). (HasGetter t a, MonadIO m) =&gt; t -&gt; m a
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+StateVar (BlendingFactor, BlendingFactor)
+-&gt; m (BlendingFactor, BlendingFactor)
+</span><span class="hs-identifier hs-var">get</span></span><span> </span><span class="annot"><span class="annottext">StateVar (BlendingFactor, BlendingFactor)
+</span><span class="hs-identifier hs-var">GL.blendFunc</span></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStr</span></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>  </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;* dumpFragmentState\n&quot;</span></span><span>
+</span><span id="line-64"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  blend              = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Capability -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Capability
+</span><a href="#local-6989586621679106362"><span class="hs-identifier hs-var">blend</span></a></span><span>              </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-65"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  blend equation     = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">BlendEquation -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">BlendEquation
+</span><a href="#local-6989586621679106364"><span class="hs-identifier hs-var">blendEquation</span></a></span><span>      </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-66"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;  blend func         = &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">(BlendingFactor, BlendingFactor) -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">(BlendingFactor, BlendingFactor)
+</span><a href="#local-6989586621679106366"><span class="hs-identifier hs-var">blendFunc</span></a></span><span>          </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-67"></span><span>                </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\n&quot;</span></span><span>
+</span><span id="line-68"></span></pre></body></html>

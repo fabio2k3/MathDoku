@@ -1,0 +1,538 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- |</span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- Module      :  Graphics.UI.GLUT.Objects</span><span>
+</span><span id="line-4"></span><span class="hs-comment">-- Copyright   :  (c) Sven Panne 2002-2018</span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- License     :  BSD3</span><span>
+</span><span id="line-6"></span><span class="hs-comment">--</span><span>
+</span><span id="line-7"></span><span class="hs-comment">-- Maintainer  :  Sven Panne &lt;svenpanne@gmail.com&gt;</span><span>
+</span><span id="line-8"></span><span class="hs-comment">-- Stability   :  stable</span><span>
+</span><span id="line-9"></span><span class="hs-comment">-- Portability :  portable</span><span>
+</span><span id="line-10"></span><span class="hs-comment">--</span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- GLUT includes a number of routines for generating easily recognizable 3D</span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- geometric objects. These routines reflect functionality available in the</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- @aux@ toolkit described in the /OpenGL Programmer\'s Guide/ and are included</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- in GLUT to allow the construction of simple GLUT programs that render</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- recognizable objects. These routines can be implemented as pure OpenGL</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- rendering routines. The routines do not generate display lists for the</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- objects they create. The routines generate normals appropriate for lighting</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- but do not generate texture coordinates (except for the solid teapot, teacup</span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- and teaspoon). If VBOs should be used instead of the fixed function pipeline,</span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- specify at least one of the attribute locations</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.State.vertexAttribCoord3' or</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- 'Graphics.UI.GLUT.State.vertexAttribNormal'.</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--</span><span>
+</span><span id="line-24"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Graphics.UI.GLUT.Objects</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-27"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Rendering flavour</span></span><span>
+</span><span id="line-28"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Flavour"><span class="hs-identifier">Flavour</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Object description</span></span><span>
+</span><span id="line-31"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Object"><span class="hs-identifier">Object</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>
+</span><span id="line-33"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Type synonyms</span></span><span>
+</span><span id="line-34"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sides"><span class="hs-identifier">Sides</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Rings"><span class="hs-identifier">Rings</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier">NumLevels</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>   </span><span class="annot"><span class="hs-comment">-- * Rendering</span></span><span>
+</span><span id="line-37"></span><span>   </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier">renderObject</span></a></span><span>
+</span><span id="line-38"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.C.Types</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">CInt</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Marshal.Utils</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">with</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Foreign.Ptr</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Ptr</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">castPtr</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Graphics.Rendering.OpenGL</span></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-45"></span><span>  </span><span class="annot"><span class="hs-identifier">Height</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Radius</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Slices</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Stacks</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Vertex3</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">GLdouble</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">GLint</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Raw.html"><span class="hs-identifier">Graphics.UI.GLUT.Raw</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="annot"><span class="hs-comment">-- | Flavour of object rendering</span></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-keyword">data</span><span> </span><span id="Flavour"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Flavour"><span class="hs-identifier hs-var">Flavour</span></a></span></span><span>
+</span><span id="line-54"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-comment">-- | Object is rendered as a solid with shading and surface normals.</span></span><span>
+</span><span id="line-55"></span><span>     </span><span id="Solid"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span></span><span>
+</span><span id="line-56"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | Object is rendered as a wireframe without surface normals.</span></span><span>
+</span><span id="line-57"></span><span>     </span><span id="Wireframe"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span></span><span>
+</span><span id="line-58"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679139364"><span id="local-6989586621679139366"><span class="annot"><span class="annottext">Flavour -&gt; Flavour -&gt; Bool
+(Flavour -&gt; Flavour -&gt; Bool)
+-&gt; (Flavour -&gt; Flavour -&gt; Bool) -&gt; Eq Flavour
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Flavour -&gt; Flavour -&gt; Bool
+== :: Flavour -&gt; Flavour -&gt; Bool
+$c/= :: Flavour -&gt; Flavour -&gt; Bool
+/= :: Flavour -&gt; Flavour -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679139373"><span id="local-6989586621679139375"><span id="local-6989586621679139377"><span id="local-6989586621679139381"><span id="local-6989586621679139384"><span id="local-6989586621679139387"><span id="local-6989586621679139390"><span class="annot"><span class="annottext">Eq Flavour
+Eq Flavour =&gt;
+(Flavour -&gt; Flavour -&gt; Ordering)
+-&gt; (Flavour -&gt; Flavour -&gt; Bool)
+-&gt; (Flavour -&gt; Flavour -&gt; Bool)
+-&gt; (Flavour -&gt; Flavour -&gt; Bool)
+-&gt; (Flavour -&gt; Flavour -&gt; Bool)
+-&gt; (Flavour -&gt; Flavour -&gt; Flavour)
+-&gt; (Flavour -&gt; Flavour -&gt; Flavour)
+-&gt; Ord Flavour
+Flavour -&gt; Flavour -&gt; Bool
+Flavour -&gt; Flavour -&gt; Ordering
+Flavour -&gt; Flavour -&gt; Flavour
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Flavour -&gt; Flavour -&gt; Ordering
+compare :: Flavour -&gt; Flavour -&gt; Ordering
+$c&lt; :: Flavour -&gt; Flavour -&gt; Bool
+&lt; :: Flavour -&gt; Flavour -&gt; Bool
+$c&lt;= :: Flavour -&gt; Flavour -&gt; Bool
+&lt;= :: Flavour -&gt; Flavour -&gt; Bool
+$c&gt; :: Flavour -&gt; Flavour -&gt; Bool
+&gt; :: Flavour -&gt; Flavour -&gt; Bool
+$c&gt;= :: Flavour -&gt; Flavour -&gt; Bool
+&gt;= :: Flavour -&gt; Flavour -&gt; Bool
+$cmax :: Flavour -&gt; Flavour -&gt; Flavour
+max :: Flavour -&gt; Flavour -&gt; Flavour
+$cmin :: Flavour -&gt; Flavour -&gt; Flavour
+min :: Flavour -&gt; Flavour -&gt; Flavour
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679139394"><span id="local-6989586621679139396"><span id="local-6989586621679139400"><span class="annot"><span class="annottext">Int -&gt; Flavour -&gt; ShowS
+[Flavour] -&gt; ShowS
+Flavour -&gt; String
+(Int -&gt; Flavour -&gt; ShowS)
+-&gt; (Flavour -&gt; String) -&gt; ([Flavour] -&gt; ShowS) -&gt; Show Flavour
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Flavour -&gt; ShowS
+showsPrec :: Int -&gt; Flavour -&gt; ShowS
+$cshow :: Flavour -&gt; String
+show :: Flavour -&gt; String
+$cshowList :: [Flavour] -&gt; ShowS
+showList :: [Flavour] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-61"></span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- | GLUT offers five types of objects:</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="hs-comment">-- *  The five Platonic solids, see</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--    &lt;http://mathworld.wolfram.com/PlatonicSolid.html&gt;.</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- * A rhombic dodecahedron, see</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--   &lt;http://mathworld.wolfram.com/RhombicDodecahedron.html&gt;.</span><span>
+</span><span id="line-69"></span><span class="hs-comment">--</span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- * Approximations to rounded objects.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- * The classic teaset modeled by Martin Newell in 1975. Both surface normals</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--   and texture coordinates for the teaset are generated.</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--</span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- * A Sierpinski sponge, see</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--   &lt;http://mathworld.wolfram.com/Tetrix.html&gt;.</span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="hs-keyword">data</span><span> </span><span id="Object"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Object"><span class="hs-identifier hs-var">Object</span></a></span></span><span>
+</span><span id="line-79"></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="hs-comment">-- | A cube centered at the modeling coordinates origin with sides of the</span><span>
+</span><span id="line-80"></span><span>     </span><span class="hs-comment">--   given length.</span><span>
+</span><span id="line-81"></span><span>     </span><span id="Cube"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cube"><span class="hs-identifier hs-var">Cube</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span>
+</span><span id="line-82"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | A dodecahedron (12-sided regular solid) centered at the modeling</span><span>
+</span><span id="line-83"></span><span>     </span><span class="hs-comment">--   coordinates origin with a radius of @sqrt 3@.</span><span>
+</span><span id="line-84"></span><span>     </span><span id="Dodecahedron"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Dodecahedron"><span class="hs-identifier hs-var">Dodecahedron</span></a></span></span><span>
+</span><span id="line-85"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | A icosahedron (20-sided regular solid) centered at the modeling</span><span>
+</span><span id="line-86"></span><span>     </span><span class="hs-comment">--   coordinates origin with a radius of 1.0.</span><span>
+</span><span id="line-87"></span><span>     </span><span id="Icosahedron"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Icosahedron"><span class="hs-identifier hs-var">Icosahedron</span></a></span></span><span>
+</span><span id="line-88"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Render a solid octahedron (8-sided regular solid) centered at the</span><span>
+</span><span id="line-89"></span><span>     </span><span class="hs-comment">--   modeling coordinates origin with a radius of 1.0.</span><span>
+</span><span id="line-90"></span><span>     </span><span id="Octahedron"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Octahedron"><span class="hs-identifier hs-var">Octahedron</span></a></span></span><span>
+</span><span id="line-91"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | Render a solid tetrahedron (4-sided regular solid) centered at the</span><span>
+</span><span id="line-92"></span><span>     </span><span class="hs-comment">--   modeling coordinates origin with a radius of @sqrt 3@.</span><span>
+</span><span id="line-93"></span><span>     </span><span id="Tetrahedron"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Tetrahedron"><span class="hs-identifier hs-var">Tetrahedron</span></a></span></span><span>
+</span><span id="line-94"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | (/freeglut only/) A rhombic dodecahedron whose corners are at most a</span><span>
+</span><span id="line-95"></span><span>     </span><span class="hs-comment">-- distance of one from the origin. The rhombic dodecahedron has faces</span><span>
+</span><span id="line-96"></span><span>     </span><span class="hs-comment">-- which are identical rhombi, but which have some vertices at which three</span><span>
+</span><span id="line-97"></span><span>     </span><span class="hs-comment">-- faces meet and some vertices at which four faces meet. The length of</span><span>
+</span><span id="line-98"></span><span>     </span><span class="hs-comment">-- each side is @(sqrt 3)\/2@. Vertices at which four faces meet are found</span><span>
+</span><span id="line-99"></span><span>     </span><span class="hs-comment">-- at @(0, 0, +\/-1)@ and @(+\/-(sqrt 2)\/2, +\/-(sqrt 2)\/2, 0)@.</span><span>
+</span><span id="line-100"></span><span>     </span><span id="RhombicDodecahedron"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#RhombicDodecahedron"><span class="hs-identifier hs-var">RhombicDodecahedron</span></a></span></span><span>
+</span><span id="line-101"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | A sphere centered at the modeling coordinates origin of the specified</span><span>
+</span><span id="line-102"></span><span>     </span><span class="hs-comment">--   radius. The sphere is subdivided around the Z axis into slices</span><span>
+</span><span id="line-103"></span><span>     </span><span class="hs-comment">--   (similar to lines of longitude) and along the Z axis into stacks</span><span>
+</span><span id="line-104"></span><span>     </span><span class="hs-comment">--   (similar to lines of latitude).</span><span>
+</span><span id="line-105"></span><span>     </span><span id="Sphere%27"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sphere%27"><span class="hs-identifier hs-var">Sphere'</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Radius</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Slices</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Stacks</span></span><span>
+</span><span id="line-106"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | A cone oriented along the Z axis. The base of the cone is placed at Z</span><span>
+</span><span id="line-107"></span><span>     </span><span class="hs-comment">--   = 0, and the top at Z = the given height. The cone is subdivided</span><span>
+</span><span id="line-108"></span><span>     </span><span class="hs-comment">--   around the Z axis into slices, and along the Z axis into stacks.</span><span>
+</span><span id="line-109"></span><span>     </span><span id="Cone"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cone"><span class="hs-identifier hs-var">Cone</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Radius</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Slices</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Stacks</span></span><span>
+</span><span id="line-110"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- |(/freeglut only/) A cylinder oriented along the Z axis. The base of the</span><span>
+</span><span id="line-111"></span><span>     </span><span class="hs-comment">--  cylinder is placed at Z = 0, and the top at Z = the given height. The</span><span>
+</span><span id="line-112"></span><span>     </span><span class="hs-comment">--  cylinder is subdivided around the Z axis into slices, and along the Z</span><span>
+</span><span id="line-113"></span><span>     </span><span class="hs-comment">-- axis into stacks.</span><span>
+</span><span id="line-114"></span><span>     </span><span id="Cylinder%27"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cylinder%27"><span class="hs-identifier hs-var">Cylinder'</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Radius</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Slices</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Stacks</span></span><span>
+</span><span id="line-115"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- | A torus (doughnut) centered at the modeling coordinates origin</span><span>
+</span><span id="line-116"></span><span>     </span><span class="hs-comment">-- whose axis is aligned with the Z axis. The torus is described by its</span><span>
+</span><span id="line-117"></span><span>     </span><span class="hs-comment">-- inner and outer radius, the number of sides for each radial section,</span><span>
+</span><span id="line-118"></span><span>     </span><span class="hs-comment">-- and the number of radial divisions (rings).</span><span>
+</span><span id="line-119"></span><span>     </span><span id="Torus"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Torus"><span class="hs-identifier hs-var">Torus</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Radius</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Radius</span></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sides"><span class="hs-identifier hs-type">Sides</span></a></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Rings"><span class="hs-identifier hs-type">Rings</span></a></span><span>
+</span><span id="line-120"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- | A teapot with a given relative size.</span></span><span>
+</span><span id="line-121"></span><span>     </span><span id="Teapot"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teapot"><span class="hs-identifier hs-var">Teapot</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span>
+</span><span id="line-122"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- |(/freeglut only/) A teacup with a given relative size.</span></span><span>
+</span><span id="line-123"></span><span>     </span><span id="Teacup"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teacup"><span class="hs-identifier hs-var">Teacup</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span>
+</span><span id="line-124"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-comment">-- |(/freeglut only/) A teaspoon with a given relative size.</span></span><span>
+</span><span id="line-125"></span><span>     </span><span id="Teaspoon"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teaspoon"><span class="hs-identifier hs-var">Teaspoon</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span>
+</span><span id="line-126"></span><span>   </span><span class="hs-glyph">|</span><span> </span><span class="hs-comment">-- |(/freeglut only/) A Sierpinski sponge of a given level, where a level</span><span>
+</span><span id="line-127"></span><span>     </span><span class="hs-comment">-- 0 sponge is the same as a 'Tetrahedron'.</span><span>
+</span><span id="line-128"></span><span>     </span><span id="SierpinskiSponge"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#SierpinskiSponge"><span class="hs-identifier hs-var">SierpinskiSponge</span></a></span></span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier hs-type">NumLevels</span></a></span><span>
+</span><span id="line-129"></span><span>   </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679139418"><span id="local-6989586621679139442"><span class="annot"><span class="annottext">Object -&gt; Object -&gt; Bool
+(Object -&gt; Object -&gt; Bool)
+-&gt; (Object -&gt; Object -&gt; Bool) -&gt; Eq Object
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Object -&gt; Object -&gt; Bool
+== :: Object -&gt; Object -&gt; Bool
+$c/= :: Object -&gt; Object -&gt; Bool
+/= :: Object -&gt; Object -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679139448"><span id="local-6989586621679139472"><span id="local-6989586621679139476"><span id="local-6989586621679139479"><span id="local-6989586621679139482"><span id="local-6989586621679139485"><span id="local-6989586621679139488"><span class="annot"><span class="annottext">Eq Object
+Eq Object =&gt;
+(Object -&gt; Object -&gt; Ordering)
+-&gt; (Object -&gt; Object -&gt; Bool)
+-&gt; (Object -&gt; Object -&gt; Bool)
+-&gt; (Object -&gt; Object -&gt; Bool)
+-&gt; (Object -&gt; Object -&gt; Bool)
+-&gt; (Object -&gt; Object -&gt; Object)
+-&gt; (Object -&gt; Object -&gt; Object)
+-&gt; Ord Object
+Object -&gt; Object -&gt; Bool
+Object -&gt; Object -&gt; Ordering
+Object -&gt; Object -&gt; Object
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: Object -&gt; Object -&gt; Ordering
+compare :: Object -&gt; Object -&gt; Ordering
+$c&lt; :: Object -&gt; Object -&gt; Bool
+&lt; :: Object -&gt; Object -&gt; Bool
+$c&lt;= :: Object -&gt; Object -&gt; Bool
+&lt;= :: Object -&gt; Object -&gt; Bool
+$c&gt; :: Object -&gt; Object -&gt; Bool
+&gt; :: Object -&gt; Object -&gt; Bool
+$c&gt;= :: Object -&gt; Object -&gt; Bool
+&gt;= :: Object -&gt; Object -&gt; Bool
+$cmax :: Object -&gt; Object -&gt; Object
+max :: Object -&gt; Object -&gt; Object
+$cmin :: Object -&gt; Object -&gt; Object
+min :: Object -&gt; Object -&gt; Object
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679139491"><span id="local-6989586621679139525"><span id="local-6989586621679139529"><span class="annot"><span class="annottext">Int -&gt; Object -&gt; ShowS
+[Object] -&gt; ShowS
+Object -&gt; String
+(Int -&gt; Object -&gt; ShowS)
+-&gt; (Object -&gt; String) -&gt; ([Object] -&gt; ShowS) -&gt; Show Object
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Object -&gt; ShowS
+showsPrec :: Int -&gt; Object -&gt; ShowS
+$cshow :: Object -&gt; String
+show :: Object -&gt; String
+$cshowList :: [Object] -&gt; ShowS
+showList :: [Object] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span><span>
+</span><span id="line-131"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-132"></span><span>
+</span><span id="line-133"></span><span class="hs-keyword">type</span><span> </span><span id="Sides"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sides"><span class="hs-identifier hs-var">Sides</span></a></span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-134"></span><span class="hs-keyword">type</span><span> </span><span id="Rings"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Rings"><span class="hs-identifier hs-var">Rings</span></a></span></span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-135"></span><span class="hs-keyword">type</span><span> </span><span id="NumLevels"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier hs-var">NumLevels</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLint</span></span><span>
+</span><span id="line-136"></span><span>
+</span><span id="line-137"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-138"></span><span>
+</span><span id="line-139"></span><span class="annot"><span class="hs-comment">-- | Render an object in the given flavour.</span></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span id="local-6989586621679139321"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-type">renderObject</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679139321"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Flavour"><span class="hs-identifier hs-type">Flavour</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Object"><span class="hs-identifier hs-type">Object</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679139321"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-142"></span><span id="renderObject"><span class="annot"><span class="annottext">renderObject :: forall (m :: * -&gt; *). MonadIO m =&gt; Flavour -&gt; Object -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var hs-var">renderObject</span></a></span></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cube"><span class="hs-identifier hs-type">Cube</span></a></span><span> </span><span id="local-6989586621679139560"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139560"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidCube"><span class="hs-identifier hs-var">glutSolidCube</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139560"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-143"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cube"><span class="hs-identifier hs-type">Cube</span></a></span><span> </span><span id="local-6989586621679139562"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139562"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireCube"><span class="hs-identifier hs-var">glutWireCube</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139562"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-144"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Dodecahedron"><span class="hs-identifier hs-var">Dodecahedron</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidDodecahedron"><span class="hs-identifier hs-var">glutSolidDodecahedron</span></a></span><span>
+</span><span id="line-145"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Dodecahedron"><span class="hs-identifier hs-var">Dodecahedron</span></a></span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireDodecahedron"><span class="hs-identifier hs-var">glutWireDodecahedron</span></a></span><span>
+</span><span id="line-146"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Icosahedron"><span class="hs-identifier hs-var">Icosahedron</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidIcosahedron"><span class="hs-identifier hs-var">glutSolidIcosahedron</span></a></span><span>
+</span><span id="line-147"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Icosahedron"><span class="hs-identifier hs-var">Icosahedron</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireIcosahedron"><span class="hs-identifier hs-var">glutWireIcosahedron</span></a></span><span>
+</span><span id="line-148"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Octahedron"><span class="hs-identifier hs-var">Octahedron</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidOctahedron"><span class="hs-identifier hs-var">glutSolidOctahedron</span></a></span><span>
+</span><span id="line-149"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Octahedron"><span class="hs-identifier hs-var">Octahedron</span></a></span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireOctahedron"><span class="hs-identifier hs-var">glutWireOctahedron</span></a></span><span>
+</span><span id="line-150"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Tetrahedron"><span class="hs-identifier hs-var">Tetrahedron</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidTetrahedron"><span class="hs-identifier hs-var">glutSolidTetrahedron</span></a></span><span>
+</span><span id="line-151"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#Tetrahedron"><span class="hs-identifier hs-var">Tetrahedron</span></a></span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireTetrahedron"><span class="hs-identifier hs-var">glutWireTetrahedron</span></a></span><span>
+</span><span id="line-152"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#RhombicDodecahedron"><span class="hs-identifier hs-var">RhombicDodecahedron</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidRhombicDodecahedron"><span class="hs-identifier hs-var">glutSolidRhombicDodecahedron</span></a></span><span>
+</span><span id="line-153"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="annot"><span class="annottext">Object
+</span><a href="Graphics.UI.GLUT.Objects.html#RhombicDodecahedron"><span class="hs-identifier hs-var">RhombicDodecahedron</span></a></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireRhombicDodecahedron"><span class="hs-identifier hs-var">glutWireRhombicDodecahedron</span></a></span><span>
+</span><span id="line-154"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sphere%27"><span class="hs-identifier hs-type">Sphere'</span></a></span><span> </span><span id="local-6989586621679139574"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139574"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139575"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139575"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139576"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139576"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidSphere"><span class="hs-identifier hs-var">glutSolidSphere</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139574"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139575"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139576"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-155"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Sphere%27"><span class="hs-identifier hs-type">Sphere'</span></a></span><span> </span><span id="local-6989586621679139578"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139578"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139579"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139579"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139580"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139580"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireSphere"><span class="hs-identifier hs-var">glutWireSphere</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139578"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139579"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139580"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-156"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cone"><span class="hs-identifier hs-type">Cone</span></a></span><span> </span><span id="local-6989586621679139582"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139582"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139583"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139583"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679139584"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139584"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139585"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139585"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidCone"><span class="hs-identifier hs-var">glutSolidCone</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139582"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139583"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139584"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139585"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-157"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cone"><span class="hs-identifier hs-type">Cone</span></a></span><span> </span><span id="local-6989586621679139587"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139587"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139588"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139588"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679139589"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139589"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139590"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139590"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireCone"><span class="hs-identifier hs-var">glutWireCone</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139587"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139588"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139589"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139590"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-158"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cylinder%27"><span class="hs-identifier hs-type">Cylinder'</span></a></span><span> </span><span id="local-6989586621679139592"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139592"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139593"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139593"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679139594"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139594"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139595"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139595"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidCylinder"><span class="hs-identifier hs-var">glutSolidCylinder</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139592"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139593"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139594"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139595"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-159"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Cylinder%27"><span class="hs-identifier hs-type">Cylinder'</span></a></span><span> </span><span id="local-6989586621679139597"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139597"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679139598"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139598"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679139599"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139599"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139600"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139600"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireCylinder"><span class="hs-identifier hs-var">glutWireCylinder</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139597"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139598"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139599"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139600"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-160"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Torus"><span class="hs-identifier hs-type">Torus</span></a></span><span> </span><span id="local-6989586621679139602"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139602"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679139603"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139603"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span id="local-6989586621679139604"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139604"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139605"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139605"><span class="hs-identifier hs-var">r</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidTorus"><span class="hs-identifier hs-var">glutSolidTorus</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139602"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139603"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139604"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139605"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-161"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Torus"><span class="hs-identifier hs-type">Torus</span></a></span><span> </span><span id="local-6989586621679139607"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139607"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679139608"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139608"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span id="local-6989586621679139609"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139609"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span id="local-6989586621679139610"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139610"><span class="hs-identifier hs-var">r</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+Height -&gt; Height -&gt; Slices -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireTorus"><span class="hs-identifier hs-var">glutWireTorus</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139607"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139608"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139609"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139610"><span class="hs-identifier hs-var">r</span></a></span><span>
+</span><span id="line-162"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teapot"><span class="hs-identifier hs-type">Teapot</span></a></span><span> </span><span id="local-6989586621679139612"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139612"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidTeapot"><span class="hs-identifier hs-var">glutSolidTeapot</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139612"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-163"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teapot"><span class="hs-identifier hs-type">Teapot</span></a></span><span> </span><span id="local-6989586621679139614"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139614"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireTeapot"><span class="hs-identifier hs-var">glutWireTeapot</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139614"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-164"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teacup"><span class="hs-identifier hs-type">Teacup</span></a></span><span> </span><span id="local-6989586621679139616"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139616"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidTeacup"><span class="hs-identifier hs-var">glutSolidTeacup</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139616"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teacup"><span class="hs-identifier hs-type">Teacup</span></a></span><span> </span><span id="local-6989586621679139618"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139618"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>           </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireTeacup"><span class="hs-identifier hs-var">glutWireTeacup</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139618"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-166"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teaspoon"><span class="hs-identifier hs-type">Teaspoon</span></a></span><span> </span><span id="local-6989586621679139620"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139620"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidTeaspoon"><span class="hs-identifier hs-var">glutSolidTeaspoon</span></a></span><span> </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139620"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#Teaspoon"><span class="hs-identifier hs-type">Teaspoon</span></a></span><span> </span><span id="local-6989586621679139622"><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139622"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Height -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireTeaspoon"><span class="hs-identifier hs-var">glutWireTeaspoon</span></a></span><span>  </span><span class="annot"><span class="annottext">Height
+</span><a href="#local-6989586621679139622"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-168"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Solid"><span class="hs-identifier hs-var">Solid</span></a></span><span>     </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#SierpinskiSponge"><span class="hs-identifier hs-type">SierpinskiSponge</span></a></span><span> </span><span id="local-6989586621679139624"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139624"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Slices -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#solidSierpinskiSponge"><span class="hs-identifier hs-var">solidSierpinskiSponge</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139624"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-169"></span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#renderObject"><span class="hs-identifier hs-var">renderObject</span></a></span><span> </span><span class="annot"><span class="annottext">Flavour
+</span><a href="Graphics.UI.GLUT.Objects.html#Wireframe"><span class="hs-identifier hs-var">Wireframe</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#SierpinskiSponge"><span class="hs-identifier hs-type">SierpinskiSponge</span></a></span><span> </span><span id="local-6989586621679139626"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139626"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Slices -&gt; m ()
+forall (m :: * -&gt; *). MonadIO m =&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#wireSierpinskiSponge"><span class="hs-identifier hs-var">wireSierpinskiSponge</span></a></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139626"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-170"></span><span>
+</span><span id="line-171"></span><span class="hs-comment">--------------------------------------------------------------------------------</span><span>
+</span><span id="line-172"></span><span>
+</span><span id="line-173"></span><span id="local-6989586621679139328"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#solidSierpinskiSponge"><span class="hs-identifier hs-type">solidSierpinskiSponge</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679139328"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier hs-type">NumLevels</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679139328"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-174"></span><span id="solidSierpinskiSponge"><span class="annot"><span class="annottext">solidSierpinskiSponge :: forall (m :: * -&gt; *). MonadIO m =&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#solidSierpinskiSponge"><span class="hs-identifier hs-var hs-var">solidSierpinskiSponge</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()) -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+(CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()) -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#sierpinskiSponge"><span class="hs-identifier hs-var">sierpinskiSponge</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+CInt -&gt; Ptr Height -&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutSolidSierpinskiSponge"><span class="hs-identifier hs-var">glutSolidSierpinskiSponge</span></a></span><span>
+</span><span id="line-175"></span><span>
+</span><span id="line-176"></span><span id="local-6989586621679139634"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#wireSierpinskiSponge"><span class="hs-identifier hs-type">wireSierpinskiSponge</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679139634"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier hs-type">NumLevels</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679139634"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-177"></span><span id="wireSierpinskiSponge"><span class="annot"><span class="annottext">wireSierpinskiSponge :: forall (m :: * -&gt; *). MonadIO m =&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#wireSierpinskiSponge"><span class="hs-identifier hs-var hs-var">wireSierpinskiSponge</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()) -&gt; Slices -&gt; m ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+(CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()) -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#sierpinskiSponge"><span class="hs-identifier hs-var">sierpinskiSponge</span></a></span><span> </span><span class="annot"><span class="annottext">CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()
+forall (m :: * -&gt; *).
+MonadIO m =&gt;
+CInt -&gt; Ptr Height -&gt; Height -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Raw.Functions.html#glutWireSierpinskiSponge"><span class="hs-identifier hs-var">glutWireSierpinskiSponge</span></a></span><span>
+</span><span id="line-178"></span><span>
+</span><span id="line-179"></span><span class="hs-comment">-- for consistency, we hide the offset and scale on the Haskell side</span><span>
+</span><span id="line-180"></span><span id="local-6989586621679139331"><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#sierpinskiSponge"><span class="hs-identifier hs-type">sierpinskiSponge</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679139331"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">CInt</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLdouble</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Height</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Graphics.UI.GLUT.Objects.html#NumLevels"><span class="hs-identifier hs-type">NumLevels</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679139331"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-181"></span><span id="sierpinskiSponge"><span class="annot"><span class="annottext">sierpinskiSponge :: forall (m :: * -&gt; *).
+MonadIO m =&gt;
+(CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()) -&gt; Slices -&gt; m ()
+</span><a href="Graphics.UI.GLUT.Objects.html#sierpinskiSponge"><span class="hs-identifier hs-var hs-var">sierpinskiSponge</span></a></span></span><span> </span><span id="local-6989586621679139653"><span class="annot"><span class="annottext">CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()
+</span><a href="#local-6989586621679139653"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679139654"><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139654"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; m ()
+forall a. IO a -&gt; m a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; m ()) -&gt; IO () -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-182"></span><span>   </span><span class="annot"><span class="annottext">Vertex3 Height -&gt; (Ptr (Vertex3 Height) -&gt; IO ()) -&gt; IO ()
+forall a b. Storable a =&gt; a -&gt; (Ptr a -&gt; IO b) -&gt; IO b
+</span><span class="hs-identifier hs-var">with</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Height -&gt; Height -&gt; Height -&gt; Vertex3 Height
+forall a. a -&gt; a -&gt; a -&gt; Vertex3 a
+</span><span class="hs-identifier hs-var">Vertex3</span></span><span> </span><span class="annot"><span class="annottext">Height
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Height
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Height
+</span><span class="hs-number">0</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Ptr (Vertex3 Height) -&gt; IO ()) -&gt; IO ())
+-&gt; (Ptr (Vertex3 Height) -&gt; IO ()) -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679139657"><span class="annot"><span class="annottext">Ptr (Vertex3 Height)
+</span><a href="#local-6989586621679139657"><span class="hs-identifier hs-var">offsetBuf</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-183"></span><span>      </span><span class="annot"><span class="annottext">CInt -&gt; Ptr Height -&gt; Height -&gt; IO ()
+</span><a href="#local-6989586621679139653"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Slices -&gt; CInt
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Slices
+</span><a href="#local-6989586621679139654"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ptr (Vertex3 Height) -&gt; Ptr Height
+forall a b. Ptr a -&gt; Ptr b
+</span><span class="hs-identifier hs-var">castPtr</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Vertex3</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLdouble</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ptr</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">GLdouble</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Ptr (Vertex3 Height)
+</span><a href="#local-6989586621679139657"><span class="hs-identifier hs-var">offsetBuf</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Height
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-184"></span></pre></body></html>
