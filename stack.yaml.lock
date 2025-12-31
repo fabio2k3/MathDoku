@@ -3,24 +3,10 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/topics/lock_files
 
-packages:
-- completed:
-    hackage: gloss-1.13.2.2@sha256:31467330073c706f28a640b1c891f527b11b5489f2566930a05f29fb872fd0ef,4099
-    pantry-tree:
-      sha256: b0271ac1e9b76774055098136432ac2cef706e12a55bfceaa682f361d102f236
-      size: 3807
-  original:
-    hackage: gloss-1.13.2.2
-- completed:
-    hackage: MonadRandom-0.6.2@sha256:a5f8a837e993c008dbcdb61a92a8dbfbbb1231c7fe41439e5ecccd1e9114d8d1,1481
-    pantry-tree:
-      sha256: ccc961213ddc5d940014316228c4f91035f515173c198ff22d01d73ac41ad28d
-      size: 709
-  original:
-    hackage: MonadRandom-0.6.2
+packages: []
 snapshots:
 - completed:
-    sha256: 04c9d37f2a00c2bd51bf6b25eb98872059bc58f225d50b5f306ac58f760a178c
-    size: 680567
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/9.yaml
-  original: lts-23.9
+    sha256: 428ec8d5ce932190d3cbe266b9eb3c175cd81e984babf876b64019e2cbe4ea68
+    size: 590100
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/28.yaml
+  original: lts-18.28

@@ -41,24 +41,23 @@ data Hint = Hint { hintCoord :: Coord
 -- MAIN HINT LOGIC
 -- ============================================================================
 
--- | Get hint for specific cell using solution
+
+-- | Get hint for specific cell using solution (no solver needed)
 getHint :: HintType -> Board -> Coord -> Either HintError Hint
-getHint hType board coord@(r, c)
+getHint hType sol coord@(r, c)
     | r < 0 || r > 8 || c < 0 || c > 8 = Left $ CellOutOfBounds coord
-    | not (isCellEmpty coord board) = Left $ CellAlreadyFilled coord
-    | otherwise =
-            case resolverSudoku board of
-                Nothing -> Left PuzzleHasNoSolution
-                Just sol -> Right $ constructHint hType coord sol
+    | otherwise = Right $ constructHint hType coord sol
 
 constructHint :: HintType -> Coord -> Board -> Hint
 constructHint hType coord sol = Hint
     { hintCoord = coord
     , hintType = hType
-    , hintValue = cellValue coord sol
+    , hintValue = value
     , hintMessage = message }
     where
-        value = cellValue coord sol
+        value = case cellToValue (getCell coord sol) of
+                  Just n  -> n
+                  Nothing -> error "Solución inválida: celda vacía en la solución"
         message = case hType of
             Parity -> "The number is " ++ isParity value
             Prime -> if isPrime value then "PRIME" else "COMPOSITE"

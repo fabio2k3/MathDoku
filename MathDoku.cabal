@@ -6,14 +6,12 @@ cabal-version: 1.12
 
 name:           MathDoku
 version:        1.0.0.0
-synopsis:       Sudoku matemático interactivo con pistas
-description:    MathDoku: Sudoku con pistas matemáticas (par/impar, primo, divisible).
-                Arquitectura profesional: library + executable + tests con Stack.
+synopsis:       Interactive mathematical sudoku with hints
 category:       Game
 homepage:       https://github.com/fabio2k3/MathDoku#readme
 bug-reports:    https://github.com/fabio2k3/MathDoku/issues
-author:         Tu equipo
-maintainer:     tu@equipo.com
+author:         Your team
+maintainer:     you@team.com
 copyright:      2025
 license:        MIT
 license-file:   LICENSE
@@ -40,52 +38,54 @@ library
       Paths_MathDoku
   hs-source-dirs:
       src
-  ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-export-lists -O2
+  ghc-options: -Wall -Wcompat -O2
   build-depends:
-      MonadRandom >=0.6
-    , ansi-terminal >=1.0
-    , base >=4.17 && <5
-    , containers >=0.6.7
-    , gloss >=1.13
-    , mtl >=2.3
-    , random >=1.2.1
-    , time >=1.12
+      MonadRandom
+    , base >=4.12 && <4.15
+    , containers
+    , gloss ==1.13.*
+    , mtl
+    , random
+    , text
+    , time
   default-language: Haskell2010
 
 executable MathDoku-exe
   main-is: Main.hs
+  other-modules:
+      Paths_MathDoku
   hs-source-dirs:
       app
-  ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-export-lists -O2 -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MathDoku
-    , MonadRandom >=0.6
-    , ansi-terminal >=1.0
-    , base >=4.17 && <5
-    , containers >=0.6.7
-    , gloss
-    , mtl >=2.3
-    , random >=1.2.1
+    , MonadRandom
+    , base >=4.12 && <4.15
+    , containers
+    , gloss ==1.13.*
+    , mtl
+    , random
     , text
-    , time >=1.12
+    , time
   default-language: Haskell2010
 
 executable MathDoku-hints-exe
-  main-is: MainHints.hs
+  main-is: Main.hs
+  other-modules:
+      Paths_MathDoku
   hs-source-dirs:
-      app
-  ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-export-lists -O2 -threaded -rtsopts -with-rtsopts=-N
+      app/hints
+  ghc-options: -Wall -Wcompat -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MathDoku
-    , MonadRandom >=0.6
-    , ansi-terminal >=1.0
-    , base >=4.17 && <5
-    , containers >=0.6.7
-    , gloss
-    , mtl >=2.3
-    , random >=1.2.1
+    , MonadRandom
+    , base >=4.12 && <4.15
+    , containers
+    , gloss ==1.13.*
+    , mtl
+    , random
     , text
-    , time >=1.12
+    , time
   default-language: Haskell2010
 
 test-suite mathdoku-test
@@ -95,18 +95,18 @@ test-suite mathdoku-test
       Paths_MathDoku
   hs-source-dirs:
       test
-  ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wincomplete-record-updates -Wmissing-export-lists -O2 -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Wall -Wcompat -O2 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       MathDoku
-    , MonadRandom >=0.6
-    , QuickCheck >=2.14
-    , ansi-terminal >=1.0
-    , base >=4.17 && <5
-    , containers >=0.6.7
-    , gloss >=1.13
-    , hspec >=2.11
+    , MonadRandom
+    , QuickCheck
+    , base >=4.12 && <4.15
+    , containers
+    , gloss ==1.13.*
+    , hspec
     , hspec-discover
-    , mtl >=2.3
-    , random >=1.2.1
-    , time >=1.12
+    , mtl
+    , random
+    , text
+    , time
   default-language: Haskell2010

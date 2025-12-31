@@ -60,7 +60,7 @@ data Cell
 
 -- | 9x9 Sudoku board with size invariant enforced by smart constructors
 newtype Board = Board { unBoard :: [[Cell]] }
-  deriving (Eq)
+  deriving (Eq, Show)
 
 -- | Puzzle difficulty levels
 data Difficulty
@@ -95,11 +95,11 @@ mkBoard cells
 -- | Parse board from character grid representation
 --   '.' = Empty, '1'-'9' = Fixed values
 fromList :: [[Char]] -> Either String Board
-fromList lines
-  | length lines /= 9 = Left "Must have 9 rows"
-  | any ((/= 9) . length) lines = Left "Each row must have 9 characters"
+fromList boardLines
+  | length boardLines /= 9 = Left "Must have 9 rows"
+  | any ((/= 9) . length) boardLines = Left "Each row must have 9 characters"
   | otherwise = do
-      cells <- traverse (traverse parseCell) lines
+      cells <- traverse (traverse parseCell) boardLines
       mkBoard cells
   where
     parseCell :: Char -> Either String Cell

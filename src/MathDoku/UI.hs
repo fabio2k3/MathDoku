@@ -68,7 +68,7 @@ drawUI :: UIState -> IO Picture
 drawUI UIState{..} = return $
 	pictures
 		[ translate 0 gridYOffset $ drawGrid
-		, drawBoard board
+		, translate 0 gridYOffset $ drawBoard board
 		, drawSelection selected
 		, drawResolveButton
 		, drawMessage message
@@ -90,17 +90,16 @@ drawBoard board = pictures
 	[ translate x y $
 			scale 0.2 0.2 $
 				color cellColor $
-					text (show v)
+					text (show n)
 	| i <- [0..8]
 	, j <- [0..8]
 	, let cell = getCell (i,j) board
-	, let v = cellToValue cell
-	, v /= Nothing
+	, Just n <- [cellToValue cell]
 	, let x = -halfGrid + (fromIntegral j + 0.35) * cellSize
-	, let y =  halfGrid - (fromIntegral i + 0.65) * cellSize + gridYOffset
-	, let cellColor = case cell of 
-											Fixed _ -> greyN 0.3 
-											_ -> black
+	, let y =  halfGrid - (fromIntegral i + 0.65) * cellSize
+	, let cellColor = case cell of
+						Fixed _ -> greyN 0.3
+						_       -> black
 	]
 
 drawSelection :: Maybe Coord -> Picture

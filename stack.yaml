@@ -1,21 +1,10 @@
 # ============================================================================
-# MATHDOKU STACK CONFIGURACIÓN 2025
+# MATHDOKU STACK CONFIGURATION (GLOSS COMPATIBLE)
 # ============================================================================
-resolver: lts-23.9          # GHC 9.6.x ESTABLE
+resolver: lts-18.28  # GHC 8.10.7 - LAST gloss/OpenGL stable
 
 packages:
-- .                        # Paquete local
+- .
 
-# Opciones globales de GHC
 ghc-options:
-  "$everything": "-Wall -Wcompat -O2"
-
-# Dependencias extra para gráficos
-extra-deps:
- - gloss-1.13.2.2
- - MonadRandom-0.6.2
-
-# Build profesional
-build:
-  haddock: true            # Documentación HTML
-  copy-bins: true          # Copia a ~/.local/bin
+  "$everything": "-Wall -O2"

@@ -1,465 +1,0 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE FlexibleContexts #-}</span><span>
-</span><span id="line-2"></span><span>
-</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">MathDoku.Generator</span><span>
-</span><span id="line-4"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-comment">-- * Public API</span></span><span>
-</span><span id="line-5"></span><span>        </span><span class="annot"><a href="MathDoku.Generator.html#generatePuzzle"><span class="hs-identifier">generatePuzzle</span></a></span><span>
-</span><span id="line-6"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Difficulty"><span class="hs-identifier">Difficulty</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
-</span><span id="line-7"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier">cellsToRemove</span></a></span><span>
-</span><span id="line-8"></span><span>    </span><span>
-</span><span id="line-9"></span><span>        </span><span class="annot"><span class="hs-comment">-- * Internal utilities (for testing)</span></span><span>
-</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="MathDoku.Generator.html#filledPositions"><span class="hs-identifier">filledPositions</span></a></span><span>
-</span><span id="line-11"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
-</span><span id="line-12"></span><span>
-</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MathDoku.Core.html"><span class="hs-identifier">MathDoku.Core</span></a></span><span>
-</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.Random</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">MonadRandom</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">evalRandIO</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">getRandomR</span></span><span class="hs-special">)</span><span>
-</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="MathDoku.Solver.html"><span class="hs-identifier">MathDoku.Solver</span></a></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Solver</span></span><span>
-</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">delete</span></span><span class="hs-special">)</span><span>
-</span><span id="line-17"></span><span>
-</span><span id="line-18"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-19"></span><span class="hs-comment">-- DIFFICULTY CONFIGURATION</span><span>
-</span><span id="line-20"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-21"></span><span>
-</span><span id="line-22"></span><span class="hs-comment">-- | Number of cells to remove for each puzzle difficulty level.</span><span>
-</span><span id="line-23"></span><span class="hs-comment">--   Values follow industry standards ensuring solvability with unique solution.</span><span>
-</span><span id="line-24"></span><span class="annot"><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-type">cellsToRemove</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Difficulty"><span class="hs-identifier hs-type">Difficulty</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
-</span><span id="line-25"></span><span id="cellsToRemove"><span class="annot"><span class="annottext">cellsToRemove :: Difficulty -&gt; Int
-</span><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-var hs-var">cellsToRemove</span></a></span></span><span> </span><span class="annot"><span class="annottext">Difficulty
-</span><a href="MathDoku.Core.html#Easy"><span class="hs-identifier hs-var">Easy</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">40</span></span><span>  </span><span class="hs-comment">-- 41 clues remaining</span><span>
-</span><span id="line-26"></span><span class="annot"><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-var">cellsToRemove</span></a></span><span> </span><span class="annot"><span class="annottext">Difficulty
-</span><a href="MathDoku.Core.html#Medium"><span class="hs-identifier hs-var">Medium</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">50</span></span><span>  </span><span class="hs-comment">-- 31 clues remaining</span><span>
-</span><span id="line-27"></span><span class="annot"><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-var">cellsToRemove</span></a></span><span> </span><span class="annot"><span class="annottext">Difficulty
-</span><a href="MathDoku.Core.html#Hard"><span class="hs-identifier hs-var">Hard</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">60</span></span><span>  </span><span class="hs-comment">-- 21 clues remaining</span><span>
-</span><span id="line-28"></span><span class="annot"><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-var">cellsToRemove</span></a></span><span> </span><span class="annot"><span class="annottext">Difficulty
-</span><a href="MathDoku.Core.html#Expert"><span class="hs-identifier hs-var">Expert</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">77</span></span><span>  </span><span class="hs-comment">-- 4 clues minimum (professional standard)</span><span>
-</span><span id="line-29"></span><span>
-</span><span id="line-30"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-31"></span><span class="hs-comment">-- MAIN GENERATION PIPELINE</span><span>
-</span><span id="line-32"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-33"></span><span>
-</span><span id="line-34"></span><span class="hs-comment">-- | Generate a Sudoku puzzle of specified difficulty with guaranteed unique solution.</span><span>
-</span><span id="line-35"></span><span class="hs-comment">--</span><span>
-</span><span id="line-36"></span><span class="hs-comment">--   Algorithm:</span><span>
-</span><span id="line-37"></span><span class="hs-comment">--   1. Generate complete valid Sudoku grid using optimized backtracking</span><span>
-</span><span id="line-38"></span><span class="hs-comment">--   2. Remove cells while preserving exactly one solution</span><span>
-</span><span id="line-39"></span><span class="annot"><a href="MathDoku.Generator.html#generatePuzzle"><span class="hs-identifier hs-type">generatePuzzle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Difficulty"><span class="hs-identifier hs-type">Difficulty</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span>
-</span><span id="line-40"></span><span id="generatePuzzle"><span class="annot"><span class="annottext">generatePuzzle :: Difficulty -&gt; IO Board
-</span><a href="MathDoku.Generator.html#generatePuzzle"><span class="hs-identifier hs-var hs-var">generatePuzzle</span></a></span></span><span> </span><span id="local-6989586621679087245"><span class="annot"><span class="annottext">Difficulty
-</span><a href="#local-6989586621679087245"><span class="hs-identifier hs-var">diff</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Rand StdGen Board -&gt; IO Board
-forall a. Rand StdGen a -&gt; IO a
-</span><span class="hs-identifier hs-var">evalRandIO</span></span><span> </span><span class="annot"><span class="annottext">(Rand StdGen Board -&gt; IO Board) -&gt; Rand StdGen Board -&gt; IO Board
-forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-41"></span><span>    </span><span id="local-6989586621679087246"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087246"><span class="hs-identifier hs-var">fullBoard</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Rand StdGen Board
-forall (m :: * -&gt; *). MonadRandom m =&gt; m Board
-</span><a href="MathDoku.Generator.html#generateFullBoard"><span class="hs-identifier hs-var">generateFullBoard</span></a></span><span>
-</span><span id="line-42"></span><span>    </span><span class="annot"><span class="annottext">Int -&gt; Board -&gt; Rand StdGen Board
-forall (m :: * -&gt; *). MonadRandom m =&gt; Int -&gt; Board -&gt; m Board
-</span><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-var">removeCellsKeepingUniqueness</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Difficulty -&gt; Int
-</span><a href="MathDoku.Generator.html#cellsToRemove"><span class="hs-identifier hs-var">cellsToRemove</span></a></span><span> </span><span class="annot"><span class="annottext">Difficulty
-</span><a href="#local-6989586621679087245"><span class="hs-identifier hs-var">diff</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087246"><span class="hs-identifier hs-var">fullBoard</span></a></span><span>
-</span><span id="line-43"></span><span>
-</span><span id="line-44"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-45"></span><span class="hs-comment">-- COMPLETE GRID GENERATION</span><span>
-</span><span id="line-46"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-47"></span><span>
-</span><span id="line-48"></span><span id="local-6989586621679087171"><span class="annot"><a href="MathDoku.Generator.html#generateFullBoard"><span class="hs-identifier hs-type">generateFullBoard</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadRandom</span></span><span> </span><span class="annot"><a href="#local-6989586621679087171"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679087171"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span></span><span>
-</span><span id="line-49"></span><span id="generateFullBoard"><span class="annot"><span class="annottext">generateFullBoard :: forall (m :: * -&gt; *). MonadRandom m =&gt; m Board
-</span><a href="MathDoku.Generator.html#generateFullBoard"><span class="hs-identifier hs-var hs-var">generateFullBoard</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-50"></span><span>    </span><span class="hs-comment">-- Step 1: Fill first row with random permutation [1-9]</span><span>
-</span><span id="line-51"></span><span>    </span><span class="hs-comment">-- Significantly accelerates backtracking convergence</span><span>
-</span><span id="line-52"></span><span>    </span><span id="local-6989586621679087262"><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087262"><span class="hs-identifier hs-var">firstRow</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; m [Int]
-forall (m :: * -&gt; *) a. (MonadRandom m, Eq a) =&gt; [a] -&gt; m [a]
-</span><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var">shuffleM</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">9</span></span><span class="hs-special">]</span><span>
-</span><span id="line-53"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679087268"><span class="annot"><span class="annottext">boardWithFirstRow :: Board
-</span><a href="#local-6989586621679087268"><span class="hs-identifier hs-var hs-var">boardWithFirstRow</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">((Int, Int) -&gt; Board -&gt; Board) -&gt; Board -&gt; [(Int, Int)] -&gt; Board
-forall a b. (a -&gt; b -&gt; b) -&gt; b -&gt; [a] -&gt; b
-forall (t :: * -&gt; *) a b.
-Foldable t =&gt;
-(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
-</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679087270"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087270"><span class="hs-identifier hs-var">col</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679087271"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087271"><span class="hs-identifier hs-var">num</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679087272"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087272"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Int -&gt; Board -&gt; Board
-</span><a href="MathDoku.Core.html#placeValue"><span class="hs-identifier hs-var">placeValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087270"><span class="hs-identifier hs-var">col</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087271"><span class="hs-identifier hs-var">num</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087272"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-54"></span><span>                                                                </span><span class="annot"><span class="annottext">Board
-</span><a href="MathDoku.Core.html#emptyBoard"><span class="hs-identifier hs-var">emptyBoard</span></a></span><span>
-</span><span id="line-55"></span><span>                                                                </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Int] -&gt; [Int] -&gt; [(Int, Int)]
-forall a b. [a] -&gt; [b] -&gt; [(a, b)]
-</span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087262"><span class="hs-identifier hs-var">firstRow</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-56"></span><span>    </span><span class="hs-comment">-- Step 2: Backtracking fill remaining rows</span><span>
-</span><span id="line-57"></span><span>    </span><span id="local-6989586621679087275"><span class="annot"><span class="annottext">Maybe Board
-</span><a href="#local-6989586621679087275"><span class="hs-identifier hs-var">mb</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Board -&gt; m (Maybe Board)
-forall (m :: * -&gt; *). MonadRandom m =&gt; Board -&gt; m (Maybe Board)
-</span><a href="MathDoku.Generator.html#fillBoardBacktrack"><span class="hs-identifier hs-var">fillBoardBacktrack</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087268"><span class="hs-identifier hs-var">boardWithFirstRow</span></a></span><span>
-</span><span id="line-58"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Board
-</span><a href="#local-6989586621679087275"><span class="hs-identifier hs-var">mb</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-59"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679087277"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087277"><span class="hs-identifier hs-var">solution</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Board -&gt; m Board
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087277"><span class="hs-identifier hs-var">solution</span></a></span><span>
-</span><span id="line-60"></span><span>        </span><span class="annot"><span class="annottext">Maybe Board
-</span><span class="hs-identifier hs-var">Nothing</span></span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">m Board
-forall (m :: * -&gt; *). MonadRandom m =&gt; m Board
-</span><a href="MathDoku.Generator.html#generateFullBoard"><span class="hs-identifier hs-var">generateFullBoard</span></a></span><span>  </span><span class="hs-comment">-- Retry (extremely rare)</span><span>
-</span><span id="line-61"></span><span>
-</span><span id="line-62"></span><span class="annot"><span class="hs-comment">-- | Backtracking solver with randomized move ordering for complete grid generation.</span></span><span>
-</span><span id="line-63"></span><span id="local-6989586621679087182"><span class="annot"><a href="MathDoku.Generator.html#fillBoardBacktrack"><span class="hs-identifier hs-type">fillBoardBacktrack</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadRandom</span></span><span> </span><span class="annot"><a href="#local-6989586621679087182"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679087182"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span class="hs-special">)</span></span><span>
-</span><span id="line-64"></span><span id="fillBoardBacktrack"><span class="annot"><span class="annottext">fillBoardBacktrack :: forall (m :: * -&gt; *). MonadRandom m =&gt; Board -&gt; m (Maybe Board)
-</span><a href="MathDoku.Generator.html#fillBoardBacktrack"><span class="hs-identifier hs-var hs-var">fillBoardBacktrack</span></a></span></span><span> </span><span id="local-6989586621679087289"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span></span><span>
-</span><span id="line-65"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isComplete"><span class="hs-identifier hs-var">isComplete</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Board -&gt; m (Maybe Board)
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
-forall a. a -&gt; Maybe a
-</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-66"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-67"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [(Int, Int)]
-</span><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-var">Solver.emptyPositions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-68"></span><span>            </span><span class="hs-special">[</span><span class="hs-special">]</span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Board -&gt; m (Maybe Board)
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
-forall a. a -&gt; Maybe a
-</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-69"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679087292"><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087292"><span class="hs-identifier hs-var">pos</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span class="annot"><span class="annottext">[(Int, Int)]
-</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-70"></span><span>                </span><span class="hs-comment">-- Try numbers in random order for better exploration</span><span>
-</span><span id="line-71"></span><span>                </span><span id="local-6989586621679087293"><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087293"><span class="hs-identifier hs-var">shuffledNums</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; m [Int]
-forall (m :: * -&gt; *) a. (MonadRandom m, Eq a) =&gt; [a] -&gt; m [a]
-</span><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var">shuffleM</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">9</span></span><span class="hs-special">]</span><span>
-</span><span id="line-72"></span><span>                </span><span class="annot"><span class="annottext">(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-forall (m :: * -&gt; *).
-MonadRandom m =&gt;
-(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-</span><a href="#local-6989586621679087294"><span class="hs-identifier hs-var">tryNumbers</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087292"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087293"><span class="hs-identifier hs-var">shuffledNums</span></a></span><span>
-</span><span id="line-73"></span><span>  </span><span class="hs-keyword">where</span><span>
-</span><span id="line-74"></span><span>    </span><span class="hs-comment">-- Try numbers at position until solution found or exhausted</span><span>
-</span><span id="line-75"></span><span>    </span><span id="local-6989586621679087187"><span class="annot"><a href="#local-6989586621679087294"><span class="hs-identifier hs-type">tryNumbers</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadRandom</span></span><span> </span><span class="annot"><a href="#local-6989586621679087187"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679087187"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span class="hs-special">)</span></span><span>
-</span><span id="line-76"></span><span>    </span><span id="local-6989586621679087294"><span class="annot"><span class="annottext">tryNumbers :: forall (m :: * -&gt; *).
-MonadRandom m =&gt;
-(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-</span><a href="#local-6989586621679087294"><span class="hs-identifier hs-var hs-var">tryNumbers</span></a></span></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>                  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Board -&gt; m (Maybe Board)
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Maybe Board
-forall a. Maybe a
-</span><span class="hs-identifier hs-var">Nothing</span></span><span>
-</span><span id="line-77"></span><span>    </span><span class="annot"><a href="#local-6989586621679087294"><span class="hs-identifier hs-var">tryNumbers</span></a></span><span> </span><span id="local-6989586621679087304"><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087304"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679087305"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087305"><span class="hs-identifier hs-var">n</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679087306"><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087306"><span class="hs-identifier hs-var">remainingNums</span></a></span></span><span class="hs-special">)</span><span>
-</span><span id="line-78"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
-</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int, Int) -&gt; Int -&gt; Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isValidMove"><span class="hs-identifier hs-var">isValidMove</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087304"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087305"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-79"></span><span>            </span><span class="annot"><span class="annottext">(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-forall (m :: * -&gt; *).
-MonadRandom m =&gt;
-(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-</span><a href="#local-6989586621679087294"><span class="hs-identifier hs-var">tryNumbers</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087304"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087306"><span class="hs-identifier hs-var">remainingNums</span></a></span><span>
-</span><span id="line-80"></span><span>        </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-81"></span><span>            </span><span id="local-6989586621679087309"><span class="annot"><span class="annottext">Maybe Board
-</span><a href="#local-6989586621679087309"><span class="hs-identifier hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Board -&gt; m (Maybe Board)
-forall (m :: * -&gt; *). MonadRandom m =&gt; Board -&gt; m (Maybe Board)
-</span><a href="MathDoku.Generator.html#fillBoardBacktrack"><span class="hs-identifier hs-var">fillBoardBacktrack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int, Int) -&gt; Int -&gt; Board -&gt; Board
-</span><a href="MathDoku.Core.html#placeValue"><span class="hs-identifier hs-var">placeValue</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087304"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087305"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087289"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-82"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe Board
-</span><a href="#local-6989586621679087309"><span class="hs-identifier hs-var">result</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-83"></span><span>                </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679087310"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087310"><span class="hs-identifier hs-var">solution</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Board -&gt; m (Maybe Board)
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Board -&gt; Maybe Board
-forall a. a -&gt; Maybe a
-</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087310"><span class="hs-identifier hs-var">solution</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-84"></span><span>                </span><span class="annot"><span class="annottext">Maybe Board
-</span><span class="hs-identifier hs-var">Nothing</span></span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-forall (m :: * -&gt; *).
-MonadRandom m =&gt;
-(Int, Int) -&gt; [Int] -&gt; m (Maybe Board)
-</span><a href="#local-6989586621679087294"><span class="hs-identifier hs-var">tryNumbers</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087304"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087306"><span class="hs-identifier hs-var">remainingNums</span></a></span><span>
-</span><span id="line-85"></span><span>
-</span><span id="line-86"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-87"></span><span class="hs-comment">-- CELL REMOVAL WITH UNIQUENESS PRESERVATION</span><span>
-</span><span id="line-88"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-89"></span><span>
-</span><span id="line-90"></span><span class="hs-comment">-- | Remove exactly N cells from complete board while ensuring unique solvability.</span><span>
-</span><span id="line-91"></span><span class="hs-comment">--   Uses randomized selection with uniqueness verification at each step.</span><span>
-</span><span id="line-92"></span><span id="local-6989586621679087172"><span class="annot"><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-type">removeCellsKeepingUniqueness</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadRandom</span></span><span> </span><span class="annot"><a href="#local-6989586621679087172"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679087172"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span></span><span>
-</span><span id="line-93"></span><span id="removeCellsKeepingUniqueness"><span class="annot"><span class="annottext">removeCellsKeepingUniqueness :: forall (m :: * -&gt; *). MonadRandom m =&gt; Int -&gt; Board -&gt; m Board
-</span><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-var hs-var">removeCellsKeepingUniqueness</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span> </span><span id="local-6989586621679087330"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087330"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Board -&gt; m Board
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087330"><span class="hs-identifier hs-var">board</span></a></span><span>
-</span><span id="line-94"></span><span class="annot"><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-var">removeCellsKeepingUniqueness</span></a></span><span> </span><span id="local-6989586621679087331"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087331"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679087332"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087332"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-95"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679087333"><span class="annot"><span class="annottext">filledPositionsList :: [(Int, Int)]
-</span><a href="#local-6989586621679087333"><span class="hs-identifier hs-var hs-var">filledPositionsList</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [(Int, Int)]
-</span><a href="MathDoku.Generator.html#filledPositions"><span class="hs-identifier hs-var">filledPositions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087332"><span class="hs-identifier hs-var">board</span></a></span><span>
-</span><span id="line-96"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">[(Int, Int)] -&gt; Bool
-forall a. [a] -&gt; Bool
-forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
-</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[(Int, Int)]
-</span><a href="#local-6989586621679087333"><span class="hs-identifier hs-var">filledPositionsList</span></a></span><span>
-</span><span id="line-97"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Board -&gt; m Board
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087332"><span class="hs-identifier hs-var">board</span></a></span><span>
-</span><span id="line-98"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-99"></span><span>            </span><span class="hs-comment">-- Select random filled cell</span><span>
-</span><span id="line-100"></span><span>            </span><span id="local-6989586621679087335"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087335"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; m Int
-forall a. Random a =&gt; (a, a) -&gt; m a
-forall (m :: * -&gt; *) a. (MonadRandom m, Random a) =&gt; (a, a) -&gt; m a
-</span><span class="hs-identifier hs-var">getRandomR</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[(Int, Int)] -&gt; Int
-forall a. [a] -&gt; Int
-forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
-</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[(Int, Int)]
-</span><a href="#local-6989586621679087333"><span class="hs-identifier hs-var">filledPositionsList</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
-</span><span id="line-101"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679087339"><span class="annot"><span class="annottext">pos :: (Int, Int)
-</span><a href="#local-6989586621679087339"><span class="hs-identifier hs-var hs-var">pos</span></a></span></span><span>             </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(Int, Int)]
-</span><a href="#local-6989586621679087333"><span class="hs-identifier hs-var">filledPositionsList</span></a></span><span> </span><span class="annot"><span class="annottext">[(Int, Int)] -&gt; Int -&gt; (Int, Int)
-forall a. HasCallStack =&gt; [a] -&gt; Int -&gt; a
-</span><span class="hs-operator hs-var">!!</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087335"><span class="hs-identifier hs-var">idx</span></a></span><span>
-</span><span id="line-102"></span><span>                </span><span id="local-6989586621679087341"><span class="annot"><span class="annottext">boardWithHole :: Board
-</span><a href="#local-6989586621679087341"><span class="hs-identifier hs-var hs-var">boardWithHole</span></a></span></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Cell -&gt; Board -&gt; Board
-</span><a href="MathDoku.Core.html#setCell"><span class="hs-identifier hs-var">setCell</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087339"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Cell
-</span><a href="MathDoku.Core.html#Empty"><span class="hs-identifier hs-var">Empty</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087332"><span class="hs-identifier hs-var">board</span></a></span><span>
-</span><span id="line-103"></span><span>            </span><span>
-</span><span id="line-104"></span><span>            </span><span class="hs-comment">-- Verify puzzle still has exactly one solution</span><span>
-</span><span id="line-105"></span><span>            </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
-</span><a href="MathDoku.Generator.html#hasUniqueSolution"><span class="hs-identifier hs-var">hasUniqueSolution</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087341"><span class="hs-identifier hs-var">boardWithHole</span></a></span><span>
-</span><span id="line-106"></span><span>                </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Board -&gt; m Board
-forall (m :: * -&gt; *). MonadRandom m =&gt; Int -&gt; Board -&gt; m Board
-</span><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-var">removeCellsKeepingUniqueness</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087331"><span class="hs-identifier hs-var">n</span></a></span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-glyph hs-var">-</span></span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087341"><span class="hs-identifier hs-var">boardWithHole</span></a></span><span>
-</span><span id="line-107"></span><span>                </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Board -&gt; m Board
-forall (m :: * -&gt; *). MonadRandom m =&gt; Int -&gt; Board -&gt; m Board
-</span><a href="MathDoku.Generator.html#removeCellsKeepingUniqueness"><span class="hs-identifier hs-var">removeCellsKeepingUniqueness</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087331"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087332"><span class="hs-identifier hs-var">board</span></a></span><span>  </span><span class="hs-comment">-- Try different cell</span><span>
-</span><span id="line-108"></span><span>
-</span><span id="line-109"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-110"></span><span class="hs-comment">-- UNIQUENESS VERIFICATION</span><span>
-</span><span id="line-111"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-112"></span><span>
-</span><span id="line-113"></span><span class="annot"><span class="hs-comment">-- | Check if puzzle has exactly one valid solution using bounded search.</span></span><span>
-</span><span id="line-114"></span><span class="annot"><a href="MathDoku.Generator.html#hasUniqueSolution"><span class="hs-identifier hs-type">hasUniqueSolution</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
-</span><span id="line-115"></span><span id="hasUniqueSolution"><span class="annot"><span class="annottext">hasUniqueSolution :: Board -&gt; Bool
-</span><a href="MathDoku.Generator.html#hasUniqueSolution"><span class="hs-identifier hs-var hs-var">hasUniqueSolution</span></a></span></span><span> </span><span id="local-6989586621679087345"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087345"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Board] -&gt; Int
-forall a. [a] -&gt; Int
-forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
-</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; [Board] -&gt; [Board]
-forall a. Int -&gt; [a] -&gt; [a]
-</span><span class="hs-identifier hs-var">take</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">2</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Board -&gt; [Board]
-</span><a href="MathDoku.Generator.html#findAllSolutions"><span class="hs-identifier hs-var">findAllSolutions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087345"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
-forall a. Eq a =&gt; a -&gt; a -&gt; Bool
-</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span>
-</span><span id="line-116"></span><span>
-</span><span id="line-117"></span><span class="annot"><span class="hs-comment">-- | Lazily enumerate all valid solutions (stops after finding 2 for efficiency).</span></span><span>
-</span><span id="line-118"></span><span class="annot"><a href="MathDoku.Generator.html#findAllSolutions"><span class="hs-identifier hs-type">findAllSolutions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-119"></span><span id="findAllSolutions"><span class="annot"><span class="annottext">findAllSolutions :: Board -&gt; [Board]
-</span><a href="MathDoku.Generator.html#findAllSolutions"><span class="hs-identifier hs-var hs-var">findAllSolutions</span></a></span></span><span> </span><span id="local-6989586621679087348"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span></span><span>
-</span><span id="line-120"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isComplete"><span class="hs-identifier hs-var">isComplete</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isValidBoard"><span class="hs-identifier hs-var">isValidBoard</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-121"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-122"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [(Int, Int)]
-</span><a href="MathDoku.Solver.html#emptyPositions"><span class="hs-identifier hs-var">Solver.emptyPositions</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-123"></span><span>            </span><span class="hs-special">[</span><span class="hs-special">]</span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
-</span><span id="line-124"></span><span>            </span><span class="hs-special">(</span><span id="local-6989586621679087350"><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087350"><span class="hs-identifier hs-var">pos</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span class="annot"><span class="annottext">[(Int, Int)]
-</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">-&gt;</span><span>
-</span><span id="line-125"></span><span>                </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679087354"><span class="annot"><span class="annottext">validMoves :: [Int]
-</span><a href="#local-6989586621679087354"><span class="hs-identifier hs-var hs-var">validMoves</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087355"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679087355"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087355"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">9</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Int -&gt; Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isValidMove"><span class="hs-identifier hs-var">isValidMove</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087350"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087355"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-126"></span><span>                </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; [Board]) -&gt; [Int] -&gt; [Board]
-forall (t :: * -&gt; *) a b. Foldable t =&gt; (a -&gt; [b]) -&gt; t a -&gt; [b]
-</span><span class="hs-identifier hs-var">concatMap</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679087357"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087357"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Board -&gt; [Board]
-</span><a href="MathDoku.Generator.html#findAllSolutions"><span class="hs-identifier hs-var">findAllSolutions</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int, Int) -&gt; Int -&gt; Board -&gt; Board
-</span><a href="MathDoku.Core.html#placeValue"><span class="hs-identifier hs-var">placeValue</span></a></span><span> </span><span class="annot"><span class="annottext">(Int, Int)
-</span><a href="#local-6989586621679087350"><span class="hs-identifier hs-var">pos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087357"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087348"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
-</span><span id="line-127"></span><span>                             </span><span class="annot"><span class="annottext">[Int]
-</span><a href="#local-6989586621679087354"><span class="hs-identifier hs-var">validMoves</span></a></span><span>
-</span><span id="line-128"></span><span>
-</span><span id="line-129"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-130"></span><span class="hs-comment">-- POSITION UTILITIES</span><span>
-</span><span id="line-131"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-132"></span><span>
-</span><span id="line-133"></span><span class="annot"><span class="hs-comment">-- | Return coordinates of all empty cells using list comprehension.</span></span><span>
-</span><span id="line-134"></span><span class="annot"><a href="MathDoku.Generator.html#emptyPositions"><span class="hs-identifier hs-type">emptyPositions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-135"></span><span id="emptyPositions"><span class="annot"><span class="annottext">emptyPositions :: Board -&gt; [(Int, Int)]
-</span><a href="MathDoku.Generator.html#emptyPositions"><span class="hs-identifier hs-var hs-var">emptyPositions</span></a></span></span><span> </span><span id="local-6989586621679087359"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087359"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-136"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087360"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087361"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679087360"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087360"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679087361"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087361"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isCellEmpty"><span class="hs-identifier hs-var">isCellEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087360"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087361"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087359"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-137"></span><span>
-</span><span id="line-138"></span><span class="annot"><span class="hs-comment">-- | Return coordinates of all filled cells (Fixed or Filled).</span></span><span>
-</span><span id="line-139"></span><span class="annot"><a href="MathDoku.Generator.html#filledPositions"><span class="hs-identifier hs-type">filledPositions</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="MathDoku.Core.html#Board"><span class="hs-identifier hs-type">Board</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="MathDoku.Core.html#Coord"><span class="hs-identifier hs-type">Coord</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-140"></span><span id="filledPositions"><span class="annot"><span class="annottext">filledPositions :: Board -&gt; [(Int, Int)]
-</span><a href="MathDoku.Generator.html#filledPositions"><span class="hs-identifier hs-var hs-var">filledPositions</span></a></span></span><span> </span><span id="local-6989586621679087363"><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087363"><span class="hs-identifier hs-var">board</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-141"></span><span>    </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087364"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087365"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679087364"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087364"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span id="local-6989586621679087365"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087365"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-glyph">..</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">8</span></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
-</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Int, Int) -&gt; Board -&gt; Bool
-</span><a href="MathDoku.Core.html#isCellEmpty"><span class="hs-identifier hs-var">isCellEmpty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087364"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087365"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Board
-</span><a href="#local-6989586621679087363"><span class="hs-identifier hs-var">board</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
-</span><span id="line-142"></span><span>
-</span><span id="line-143"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-144"></span><span class="hs-comment">-- SHUFFLING (OPTIMIZED FISHER-YATES)</span><span>
-</span><span id="line-145"></span><span class="hs-comment">-- ============================================================================</span><span>
-</span><span id="line-146"></span><span>
-</span><span id="line-147"></span><span class="hs-comment">-- | Fisher-Yates shuffle algorithm (O(n) using delete operation).</span><span>
-</span><span id="line-148"></span><span class="hs-comment">--   Essential for randomized backtracking efficiency.</span><span>
-</span><span id="line-149"></span><span id="local-6989586621679087175"><span id="local-6989586621679087176"><span class="annot"><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-type">shuffleM</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadRandom</span></span><span> </span><span class="annot"><a href="#local-6989586621679087175"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Eq</span></span><span> </span><span class="annot"><a href="#local-6989586621679087176"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679087176"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679087175"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="#local-6989586621679087176"><span class="hs-identifier hs-type">a</span></a></span><span class="hs-special">]</span></span></span><span>
-</span><span id="line-150"></span><span id="shuffleM"><span class="annot"><span class="annottext">shuffleM :: forall (m :: * -&gt; *) a. (MonadRandom m, Eq a) =&gt; [a] -&gt; m [a]
-</span><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var hs-var">shuffleM</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>     </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; m [a]
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
-</span><span id="line-151"></span><span class="annot"><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var">shuffleM</span></a></span><span> </span><span class="hs-special">[</span><span id="local-6989586621679087383"><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679087383"><span class="hs-identifier hs-var">x</span></a></span></span><span class="hs-special">]</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; m [a]
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679087383"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">]</span><span>
-</span><span id="line-152"></span><span class="annot"><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var">shuffleM</span></a></span><span> </span><span id="local-6989586621679087384"><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087384"><span class="hs-identifier hs-var">xs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-153"></span><span>    </span><span id="local-6989586621679087385"><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087385"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">(Int, Int) -&gt; m Int
-forall a. Random a =&gt; (a, a) -&gt; m a
-forall (m :: * -&gt; *) a. (MonadRandom m, Random a) =&gt; (a, a) -&gt; m a
-</span><span class="hs-identifier hs-var">getRandomR</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; Int
-forall a. [a] -&gt; Int
-forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
-</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087384"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
-forall a. Num a =&gt; a -&gt; a -&gt; a
-</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
-</span><span id="line-154"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679087388"><span class="annot"><span class="annottext">selected :: a
-</span><a href="#local-6989586621679087388"><span class="hs-identifier hs-var hs-var">selected</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087384"><span class="hs-identifier hs-var">xs</span></a></span><span> </span><span class="annot"><span class="annottext">[a] -&gt; Int -&gt; a
-forall a. HasCallStack =&gt; [a] -&gt; Int -&gt; a
-</span><span class="hs-operator hs-var">!!</span></span><span> </span><span class="annot"><span class="annottext">Int
-</span><a href="#local-6989586621679087385"><span class="hs-identifier hs-var">i</span></a></span><span>
-</span><span id="line-155"></span><span>    </span><span id="local-6989586621679087389"><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087389"><span class="hs-identifier hs-var">rest</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[a] -&gt; m [a]
-forall (m :: * -&gt; *) a. (MonadRandom m, Eq a) =&gt; [a] -&gt; m [a]
-</span><a href="MathDoku.Generator.html#shuffleM"><span class="hs-identifier hs-var">shuffleM</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a -&gt; [a] -&gt; [a]
-forall a. Eq a =&gt; a -&gt; [a] -&gt; [a]
-</span><span class="hs-identifier hs-var">delete</span></span><span> </span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679087388"><span class="hs-identifier hs-var">selected</span></a></span><span> </span><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087384"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-156"></span><span>    </span><span class="annot"><span class="annottext">[a] -&gt; m [a]
-forall a. a -&gt; m a
-forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
-</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
-</span><a href="#local-6989586621679087388"><span class="hs-identifier hs-var">selected</span></a></span><span> </span><span class="annot"><span class="annottext">a -&gt; [a] -&gt; [a]
-forall a. a -&gt; [a] -&gt; [a]
-</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">[a]
-</span><a href="#local-6989586621679087389"><span class="hs-identifier hs-var">rest</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-157"></span></pre></body></html>
